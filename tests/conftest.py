@@ -60,6 +60,37 @@ def monorepo_repo(git_repo: Path) -> Path:
 
 
 @pytest.fixture()
+def rust_repo(git_repo: Path) -> Path:
+    (git_repo / "Cargo.toml").write_text(
+        "[package]\nname='demo'\nversion='0.1.0'\nedition='2021'\n",
+        encoding="utf-8",
+    )
+    (git_repo / "src").mkdir()
+    (git_repo / "src" / "main.rs").write_text("fn main() {}\n", encoding="utf-8")
+    return git_repo
+
+
+@pytest.fixture()
+def c_repo(git_repo: Path) -> Path:
+    (git_repo / "CMakeLists.txt").write_text(
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo_c C)\nadd_executable(demo main.c)\n",
+        encoding="utf-8",
+    )
+    (git_repo / "main.c").write_text("int main(void){return 0;}\n", encoding="utf-8")
+    return git_repo
+
+
+@pytest.fixture()
+def cpp_repo(git_repo: Path) -> Path:
+    (git_repo / "CMakeLists.txt").write_text(
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo_cpp CXX)\nadd_executable(demo main.cpp)\n",
+        encoding="utf-8",
+    )
+    (git_repo / "main.cpp").write_text("int main(){return 0;}\n", encoding="utf-8")
+    return git_repo
+
+
+@pytest.fixture()
 def python_repo(git_repo: Path) -> Path:
     (git_repo / "pyproject.toml").write_text(
         "[project]\nname='demo'\ndependencies=['fastapi']\n",

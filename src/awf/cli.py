@@ -16,6 +16,7 @@ from awf.commands import release as release_cmd
 from awf.commands import status as status_cmd
 from awf.commands import sync as sync_cmd
 from awf.commands import vscode as vscode_cmd
+from awf.commands import watch as watch_cmd
 
 app = typer.Typer(help="Attach a local-only AI workflow layer to any git repository.")
 console = Console()
@@ -64,6 +65,21 @@ def sync(
 
 
 @app.command()
+def watch(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    duration: float = typer.Option(30.0, help="How long to watch for changes in seconds."),
+    interval: float = typer.Option(1.0, help="Polling interval in seconds."),
+):
+    """Watch the repo for local file changes and auto-sync the workflow."""
+    result = watch_cmd.run(_target(path), duration=duration, interval=interval)
+    if result["changes_detected"]:
+        console.print(f"Detected change(s): {result['changes_detected']}")
+        console.print(f"Last sync repo: {result['last_sync']}")
+    else:
+        console.print("No file changes detected during watch window.")
+
+
+@app.command()
 def status(path: str | None = typer.Option(None, help="Target repository path")):
     """Show workflow health and next action."""
     result = status_cmd.run(_target(path))
@@ -109,7 +125,7 @@ def export_command(
 
 @app.command()
 def release(
-    version: str = typer.Option(..., help="Release version, e.g. 0.3.0 or v0.3.0"),
+    version: str = typer.Option(..., help="Release version, e.g. 0.4.0 or v0.4.0"),
     path: str | None = typer.Option(None, help="Target repository path"),
     skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
 ):
@@ -117,6 +133,7 @@ def release(
     result = release_cmd.run(_target(path), version=version, skip_build=skip_build)
     console.print(f"Release bundle created: [bold]{result['release_dir']}[/bold]")
     console.print(f"Release notes: {result['notes_path']}")
+    console.print(f"Manifest: {result['manifest_path']}")
     if result['assets']:
         console.print({"assets": result['assets']})
 

@@ -16,6 +16,8 @@ IMPORTANT_FILES = [
     "pnpm-workspace.yaml",
     "turbo.json",
     "nx.json",
+    "CMakeLists.txt",
+    "Makefile",
 ]
 
 SOURCE_DIR_CANDIDATES = {
@@ -30,6 +32,7 @@ SOURCE_DIR_CANDIDATES = {
     "apps",
     "packages",
     "services",
+    "include",
 }
 
 
@@ -156,6 +159,38 @@ def _detect_rust(repo_root: Path, scan: dict) -> None:
     scan["commands"].setdefault("build", "cargo build")
 
 
+def _detect_c_family(repo_root: Path, scan: dict) -> None:
+    cmake_text = _read_text(repo_root / "CMakeLists.txt")
+    file_names = {path.name for path in repo_root.iterdir() if path.is_file()}
+    has_c = any(name.endswith((".c", ".h")) for name in file_names)
+    has_cpp = any(name.endswith((".cpp", ".cc", ".cxx", ".hpp", ".hh", ".hxx")) for name in file_names)
+
+    if not cmake_text and not has_c and not has_cpp:
+        return
+
+    language = None
+    if "cxx" in cmake_text or has_cpp:
+        language = "cpp"
+    elif " project(" in f" {cmake_text}" or has_c:
+        language = "c"
+
+    if not language:
+        return
+
+    scan["stack"].append(language)
+    if cmake_text:
+        scan["framework"].append("cmake")
+        scan["package_manager"].append("cmake")
+        scan["commands"].setdefault("configure", "cmake -S . -B build")
+        scan["commands"].setdefault("build", "cmake -S . -B build && cmake --build build")
+        scan["commands"].setdefault("test", "ctest --test-dir build")
+    else:
+        compiler = "g++" if language == "cpp" else "gcc"
+        source = "main.cpp" if language == "cpp" else "main.c"
+        scan["package_manager"].append(compiler)
+        scan["commands"].setdefault("build", f"{compiler} {source} -o app")
+
+
 def _unique(values: list[str]) -> list[str]:
     seen = set()
     ordered = []
@@ -185,6 +220,7 @@ def scan_repo(repo_root: Path) -> dict:
     _detect_python(repo_root, scan)
     _detect_go(repo_root, scan)
     _detect_rust(repo_root, scan)
+    _detect_c_family(repo_root, scan)
 
     scan["stack"] = _unique(scan["stack"]) or ["generic"]
     scan["framework"] = _unique(scan["framework"]) or ["generic"]
@@ -206,4 +242,8 @@ def recommend_next_action(scan: dict) -> str:
         return "Confirm the package manager and run the main test or lint command before touching code."
     if "go" in scan.get("stack", []):
         return "Run the Go test command first, then map the smallest safe next change."
+    if any(lang in scan.get("stack", []) for lang in ["c", "cpp"]):
+        return "Confirm the C/C++ build command first, then isolate the smallest compilation target before editing."
+    if "rust" in scan.get("stack", []):
+        return "Run cargo test first, then change the smallest crate or module needed."
     return "Validate the local run/test commands, then choose the smallest next task from TASKS.md."

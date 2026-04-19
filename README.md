@@ -1,45 +1,104 @@
 # AI Workflow CLI
 
-Turn **any repository** into an **AI-ready local development workspace** while keeping the formal release version clean.
+[![CI](https://github.com/keguihua/ai-workflow-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/keguihua/ai-workflow-cli/actions/workflows/ci.yml)
+[![Release Packages](https://github.com/keguihua/ai-workflow-cli/actions/workflows/release.yml/badge.svg)](https://github.com/keguihua/ai-workflow-cli/actions/workflows/release.yml)
 
-`awf` gives Claude Code, Codex, Hermes, Cursor, and similar coding agents a shared repo-local workflow layer:
+**Make any repository AI-ready for local development, while keeping release output clean.**
+
+`awf` is a local-first workflow CLI for Claude Code, Codex, Hermes, Cursor, and similar coding agents. It gives every repo a shared workflow core:
 - project context
-- current tasks
+- tasks
 - decisions
 - session history
 - next action
 - per-agent adapter instructions
 
-At the same time, it keeps `.ai-workflow/` out of the formal release output.
+At the same time, it keeps `.ai-workflow/` out of the formal release version.
 
 ---
 
-## Why this is different
-Most AI coding tools are good at editing code, but weak at:
-- resuming a project cleanly tomorrow
+## What problem it solves
+Most AI coding tools can edit code, but they are weak at:
+- resuming cleanly tomorrow
+- carrying project memory across sessions
 - working safely inside cloned open-source repos
 - separating private workflow state from public release output
 - staying useful across editors instead of being locked into one IDE
 
-AI Workflow CLI is built around four product directions:
-1. **Installation system** — installable like a real developer tool
-2. **Stronger project detection** — not just one stack or one framework
-3. **Unified workflow core layer** — one repo-local workflow shared by all coding agents
-4. **Editors as entry points, not the core** — VS Code can plug in, but the CLI stays the source of truth
+AI Workflow CLI solves this by acting as a **workflow layer**, not just another chat wrapper.
+
+---
+
+## Product principles
+This project is built around four product directions:
+
+1. **Installation system**
+   - behaves like a real developer CLI
+   - ships release assets
+   - is ready for `pipx` / PyPI style distribution
+
+2. **Stronger project detection**
+   - understands common stacks, workspace layouts, and build systems
+   - gives agents immediate context in existing repos
+
+3. **Unified workflow core layer**
+   - the workflow lives in `.ai-workflow/`
+   - agents plug into that shared context instead of inventing their own memory format
+
+4. **Editors are entry points, not the core**
+   - VS Code can auto-sync on folder open
+   - the CLI remains the source of truth
+   - this makes future support for other editors easier
 
 ---
 
 ## Current version
-**0.3.0**
+**0.4.0**
 
-### New in 0.3.0
-- `awf release` creates a formal release bundle with clean export + release notes
-- stronger detection for monorepos / pnpm workspaces / Turborepo
-- stronger detection for Next.js + pnpm, Go, Rust, Python, and common Node stacks
-- enhanced `awf doctor` with checks for workflow files, git exclude, hooks, VS Code, pre-commit, and package artifacts
-- `awf completion` for shell setup instructions
-- `awf hooks --with-pre-commit` for team-friendly repo validation
-- improved packaging story for real installation and release assets
+### New in 0.4.0
+- adds `awf watch` for polling-based local auto-sync during development
+- adds C and C++ detection (including CMake-based projects)
+- strengthens Rust, Python, Node, monorepo, pnpm workspace, and Turborepo support
+- improves release bundles with a `MANIFEST.json`
+- prepares the project for more polished external presentation
+
+### Previously added in 0.3.0
+- `awf release`
+- `awf completion`
+- `awf hooks --with-pre-commit`
+- stronger `awf doctor`
+- monorepo / workspace / Turborepo detection
+
+---
+
+## Supported project types today
+### Web / app / service stacks
+- npm / pnpm / yarn / bun
+- React
+- Next.js
+- Vite
+- Vue
+- Nuxt
+- Svelte / SvelteKit
+- Express
+- NestJS
+- monorepos / pnpm workspaces / Turborepo / Nx signals
+
+### Python
+- pip
+- poetry
+- uv
+- FastAPI
+- Django
+- Flask
+- Streamlit
+
+### Systems / compiled languages
+- Go
+- Rust
+- C
+- C++
+- CMake-based C/C++ projects
 
 ---
 
@@ -54,21 +113,19 @@ source .venv/bin/activate
 pip install -e .[dev]
 ```
 
-### Option B — preferred user install once public / published
+### Option B — install from release asset
 ```bash
-pipx install ai-workflow-cli
+pip install ai_workflow_cli-0.4.0-py3-none-any.whl
 ```
 
-### Option C — install from GitHub release asset
+### Planned public install path
 ```bash
-pip install ai_workflow_cli-0.3.0-py3-none-any.whl
+pipx install ai-workflow-cli
 ```
 
 ---
 
 ## Build installable packages
-This project now behaves like a real Python CLI product.
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -79,8 +136,6 @@ python -m build
 Build artifacts:
 - `dist/*.whl`
 - `dist/*.tar.gz`
-
-These can be attached to GitHub Releases and installed directly by users.
 
 ---
 
@@ -102,12 +157,17 @@ awf adopt
 awf adopt --with-vscode
 ```
 
-### Refresh workflow after meaningful work
+### Refresh after meaningful work
 ```bash
 awf sync --note "Finished auth fix, next handle dashboard filters"
 ```
 
-### Check health
+### Watch local changes and auto-sync
+```bash
+awf watch --duration 60 --interval 1
+```
+
+### Health check
 ```bash
 awf doctor
 ```
@@ -117,9 +177,9 @@ awf doctor
 awf export
 ```
 
-### Build a release bundle
+### Build release bundle
 ```bash
-awf release --version 0.3.0
+awf release --version 0.4.0
 ```
 
 ---
@@ -127,7 +187,7 @@ awf release --version 0.3.0
 ## Core commands
 
 ### `awf init`
-Create a workflow layer for a repo.
+Create the workflow layer.
 
 ```bash
 awf init
@@ -135,7 +195,7 @@ awf init --with-vscode
 ```
 
 ### `awf adopt`
-Scan an existing repo and generate workflow docs.
+Scan an existing repository and generate workflow docs.
 
 ```bash
 awf adopt
@@ -143,15 +203,14 @@ awf adopt --with-vscode
 ```
 
 ### `awf sync`
-Refresh inferred state and append a manual note.
+Refresh workflow state and append a manual note.
+
+### `awf watch`
+Watch the repository for file changes and auto-run sync.
 
 ```bash
-awf sync
-awf sync --note "Finished payments bugfix"
+awf watch --duration 120 --interval 1
 ```
-
-### `awf status`
-Show workflow health and next action.
 
 ### `awf doctor`
 Validate:
@@ -163,12 +222,13 @@ Validate:
 - package artifacts
 
 ### `awf export`
-Create a clean export without `.ai-workflow/`.
+Create a clean formal export without `.ai-workflow/`.
 
 ### `awf release`
 Create a release bundle under `.dist-release/releases/vX.Y.Z/` with:
 - clean repo export
 - release notes
+- `MANIFEST.json`
 - optional package assets
 
 ### `awf hooks`
@@ -213,32 +273,12 @@ awf completion fish
     └── latest.json
 ```
 
-This is the shared core layer. Editors and coding tools can come and go, but the project workflow stays the same.
-
----
-
-## Stronger project detection
-Current detection covers:
-- generic git repos
-- npm / pnpm / yarn / bun
-- React / Next.js / Vite / Vue / Nuxt / Svelte / Express / NestJS
-- Python / pip / poetry / uv / FastAPI / Django / Flask / Streamlit
-- Go projects
-- Rust projects
-- monorepos / pnpm workspaces / Turborepo / Nx signals
-
-The tool infers:
-- stack
-- framework
-- package manager
-- likely run / test / build commands
-- important files
-- source directories
+This is the shared workflow core. Editors and coding tools can come and go, but the project workflow stays stable.
 
 ---
 
 ## VS Code integration
-VS Code is treated as an **entry point**, not the system core.
+VS Code is treated as an entry point, not the system core.
 
 If you run:
 
@@ -261,14 +301,12 @@ The generated task uses `runOn: folderOpen`, so VS Code can auto-trigger `awf sy
 
 ---
 
-## Team-friendly workflow
-Use git hooks and pre-commit support to bring the workflow into team repos without making editors the center of everything.
-
+## Team-friendly usage
 ```bash
 awf hooks --with-pre-commit
 ```
 
-That gives you:
+This gives you:
 - post-checkout sync
 - post-merge sync
 - pre-commit validation via `awf doctor`
@@ -288,22 +326,23 @@ This keeps local workflow state out of normal repo history.
 So you get:
 - rich local AI workflow during development
 - safe adoption for cloned open-source repos
-- clean release/export output
+- clean formal release output
 
 ---
 
 ## Validation status
 Validated locally for:
 - generic repo initialization
-- Node / React / Vite adoption
-- Next.js + pnpm detection
-- monorepo workspace detection
-- Python / FastAPI adoption
+- Node / React / Vite / Next.js / pnpm workspace / Turborepo detection
+- Python / FastAPI detection
 - Go detection
+- Rust detection
+- C and C++ / CMake detection
 - VS Code auto integration
 - release bundle generation
 - shell completion output
 - pre-commit and hook installation
+- watcher-based auto-sync flow
 
 Automated validation:
 - `pytest`
@@ -312,13 +351,31 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.3.0
-- PyPI publishing
-- `pipx`-first public install flow
-- shell completion install shortcuts
-- file watcher mode for auto-sync
-- deeper monorepo awareness
-- more editor integrations beyond VS Code
+## Install/use path for other developers
+### New project
+1. create a repo
+2. run `awf init`
+3. point the coding agent at `.ai-workflow/`
+4. work from `NEXT_ACTION.md`
+5. run `awf sync` or `awf watch`
+6. run `awf export` or `awf release`
+
+### Existing repo / cloned open-source repo
+1. clone the repo normally
+2. run `awf adopt`
+3. optionally run `awf adopt --with-vscode`
+4. keep `.ai-workflow/` local-only
+5. export or release a clean formal version when needed
+
+---
+
+## Roadmap after 0.4.0
+- publish to PyPI
+- public `pipx` install flow
+- smarter file watcher / daemon mode
+- deeper monorepo graph awareness
+- more editor entrypoints beyond VS Code
+- stronger release automation (`awf release` + tag + changelog)
 
 ---
 

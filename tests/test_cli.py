@@ -1,5 +1,7 @@
 import json
 import os
+import threading
+import time
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -66,6 +68,21 @@ def test_sync_appends_note(python_repo: Path):
     assert "checked auth flow" in log_text
 
 
+def test_watch_detects_file_changes_and_syncs(node_repo: Path):
+    _run_in(node_repo, ["adopt"])
+
+    def mutate_file():
+        time.sleep(0.2)
+        (node_repo / "src" / "index.js").write_text("console.log('changed')\n", encoding="utf-8")
+
+    thread = threading.Thread(target=mutate_file)
+    thread.start()
+    result = _run_in(node_repo, ["watch", "--duration", "0.8", "--interval", "0.1"])
+    thread.join()
+    assert result.exit_code == 0
+    assert "Detected change" in result.stdout
+
+
 def test_doctor_warns_when_workflow_missing(git_repo: Path):
     result = _run_in(git_repo, ["doctor"])
     assert result.exit_code == 1
@@ -94,13 +111,14 @@ def test_export_creates_clean_copy_without_ai_workflow(node_repo: Path):
     assert (export_dir / "package.json").exists()
 
 
-def test_release_creates_notes_and_clean_export(node_repo: Path):
+def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.3.0", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.4.0", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.3.0"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.4.0"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
+    assert (release_dir / "MANIFEST.json").exists()
     assert not (release_dir / "repo" / ".ai-workflow").exists()
 
 

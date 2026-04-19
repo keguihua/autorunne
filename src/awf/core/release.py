@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -9,6 +10,13 @@ from awf.core.exporter import export_clean_copy
 
 def _run(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, check=True, text=True)
+
+
+def _git_commit_sha(repo_root: Path) -> str | None:
+    result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo_root, text=True, capture_output=True)
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
 
 
 def create_release_bundle(repo_root: Path, version: str, build_packages: bool = True) -> dict:
@@ -40,10 +48,16 @@ def create_release_bundle(repo_root: Path, version: str, build_packages: bool = 
             shutil.copy2(artifact, destination)
             built_assets.append(str(destination))
 
-    return {
+    manifest = {
         "version": clean_version,
+        "repo_name": repo_root.name,
+        "git_commit": _git_commit_sha(repo_root),
         "release_dir": str(release_dir),
         "exported_repo": str(target_repo),
         "notes_path": str(notes_path),
         "assets": built_assets,
     }
+    manifest_path = release_dir / "MANIFEST.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    return {**manifest, "manifest_path": str(manifest_path)}

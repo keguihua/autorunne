@@ -32,6 +32,27 @@ def test_scan_repo_detects_go_projects(go_repo):
     assert scan["commands"]["test"] == "go test ./..."
 
 
+def test_scan_repo_detects_rust_projects(rust_repo):
+    scan = scan_repo(rust_repo)
+    assert scan["stack"] == ["rust"]
+    assert scan["framework"] == ["rust"]
+    assert scan["commands"]["run"] == "cargo run"
+
+
+def test_scan_repo_detects_c_projects(c_repo):
+    scan = scan_repo(c_repo)
+    assert scan["stack"] == ["c"]
+    assert "cmake" in scan["framework"]
+    assert scan["commands"]["build"] == "cmake -S . -B build && cmake --build build"
+
+
+def test_scan_repo_detects_cpp_projects(cpp_repo):
+    scan = scan_repo(cpp_repo)
+    assert scan["stack"] == ["cpp"]
+    assert "cmake" in scan["framework"]
+    assert scan["commands"]["build"] == "cmake -S . -B build && cmake --build build"
+
+
 def test_scan_repo_detects_monorepo_workspace(monorepo_repo):
     scan = scan_repo(monorepo_repo)
     assert "node" in scan["stack"]

@@ -9,14 +9,43 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.3.0
-- adds `awf release` for clean formal release bundles with release notes
-- stronger detection for monorepos / pnpm workspaces / Turborepo / Next.js / Go / Rust
-- stronger `awf doctor` checks for workflow files, git exclude, hooks, VS Code, pre-commit, and package artifacts
-- adds `awf completion` for bash / zsh / fish
-- adds `awf hooks --with-pre-commit` for team-friendly repository setup
+## 2. Core upgrades in 0.4.0
+- adds `awf watch` for polling-based local auto-sync
+- adds C and C++ detection, including CMake-style projects
+- strengthens Rust / Python / Node / monorepo / pnpm workspace / Turborepo detection
+- adds `MANIFEST.json` to `awf release` bundles
+- improves product-facing presentation for public launch readiness
 
-## 3. Installation
+## 3. Supported languages / project types
+### Web / app / service
+- npm / pnpm / yarn / bun
+- React
+- Next.js
+- Vite
+- Vue
+- Nuxt
+- Svelte / SvelteKit
+- Express
+- NestJS
+- monorepo / pnpm workspace / Turborepo / Nx signals
+
+### Python
+- pip
+- poetry
+- uv
+- FastAPI
+- Django
+- Flask
+- Streamlit
+
+### Systems / compiled languages
+- Go
+- Rust
+- C
+- C++
+- CMake-style C/C++ projects
+
+## 4. Installation
 ### Development install
 ```bash
 python -m venv .venv
@@ -24,17 +53,17 @@ source .venv/bin/activate
 pip install -e .[dev]
 ```
 
+### Install from release artifact
+```bash
+pip install ai_workflow_cli-0.4.0-py3-none-any.whl
+```
+
 ### Recommended public install path later
 ```bash
 pipx install ai-workflow-cli
 ```
 
-### Install from release artifact
-```bash
-pip install ai_workflow_cli-0.3.0-py3-none-any.whl
-```
-
-## 4. Main commands
+## 5. Main commands
 ### Initialize a new repository
 ```bash
 awf init
@@ -53,6 +82,11 @@ awf sync
 awf sync --note "Finished auth fix, next check the order page"
 ```
 
+### Watch local file changes
+```bash
+awf watch --duration 60 --interval 1
+```
+
 ### Validate workflow health
 ```bash
 awf doctor
@@ -65,7 +99,7 @@ awf export
 
 ### Create a release bundle
 ```bash
-awf release --version 0.3.0
+awf release --version 0.4.0
 ```
 
 ### Install hooks and pre-commit support
@@ -78,7 +112,7 @@ awf hooks --with-pre-commit
 awf completion zsh
 ```
 
-## 5. Generated structure
+## 6. Generated structure
 ```text
 .ai-workflow/
 ├── PROJECT_CONTEXT.md
@@ -97,7 +131,7 @@ awf completion zsh
     └── latest.json
 ```
 
-## 6. VS Code auto integration
+## 7. VS Code auto integration
 Run:
 ```bash
 awf adopt --with-vscode
@@ -110,25 +144,26 @@ This generates:
 
 and allows VS Code to auto-run `awf sync` on folder open.
 
-## 7. Clean release separation
+## 8. Clean release separation
 The tool isolates `.ai-workflow/` with `.git/info/exclude` by default.
 That means:
 - local development keeps a rich AI workflow layer
 - upstream/public repositories stay clean by default
 - `awf export` and `awf release` outputs do not include `.ai-workflow/`
 
-## 8. Validation status
+## 9. Validation status
 This version has been validated for:
 - generic empty repo initialization
 - Node / React / Vite / Next.js / pnpm workspace / Turborepo detection
 - Python / FastAPI detection
-- Go detection
-- `sync`, `doctor`, `export`, `release`, `hooks`, and `completion`
+- Go / Rust detection
+- C / C++ / CMake detection
+- `sync`, `watch`, `doctor`, `export`, `release`, `hooks`, and `completion`
 - local pytest coverage
 - wheel installation validation
 - GitHub Actions on Python 3.11 and 3.12
 
-## 9. Model compatibility
+## 10. Model compatibility
 The workflow is model-agnostic and intended for:
 - Claude Code
 - Codex
@@ -136,10 +171,10 @@ The workflow is model-agnostic and intended for:
 - Cursor Agent
 - other coding agents that can read project files
 
-## 10. Suggested next steps
+## 11. Suggested next steps
 Good future upgrades:
 - publish to PyPI
 - public `pipx` install flow
-- file watcher based auto-sync
+- smarter watcher / background daemon mode
 - deeper monorepo awareness
 - more editor entrypoints beyond VS Code
