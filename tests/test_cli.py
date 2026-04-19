@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -34,6 +35,21 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     content = (node_repo / ".ai-workflow" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
     assert "Stack: node" in content
     assert "Framework: react, vite" in content
+
+
+def test_init_can_install_vscode_workspace_integration(git_repo: Path):
+    result = _run_in(git_repo, ["init", "--with-vscode"])
+    assert result.exit_code == 0
+    tasks_path = git_repo / ".vscode" / "tasks.json"
+    settings_path = git_repo / ".vscode" / "settings.json"
+    assert tasks_path.exists()
+    assert settings_path.exists()
+    tasks = json.loads(tasks_path.read_text(encoding="utf-8"))
+    first_task = tasks["tasks"][0]
+    assert first_task["label"] == "AWF: Sync on folder open"
+    assert first_task["runOptions"]["runOn"] == "folderOpen"
+    settings = json.loads(settings_path.read_text(encoding="utf-8"))
+    assert settings["task.allowAutomaticTasks"] == "on"
 
 
 def test_status_reports_missing_before_init(git_repo: Path):

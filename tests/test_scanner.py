@@ -16,6 +16,22 @@ def test_scan_repo_detects_python_stack(python_repo):
     assert scan["commands"]["test"] == "pytest"
 
 
+def test_scan_repo_detects_nextjs_and_pnpm(next_pnpm_repo):
+    scan = scan_repo(next_pnpm_repo)
+    assert scan["package_manager"] == ["pnpm"]
+    assert "nextjs" in scan["framework"]
+    assert scan["commands"]["run"] == "pnpm run dev"
+    assert scan["commands"]["build"] == "pnpm run build"
+
+
+def test_scan_repo_detects_go_projects(go_repo):
+    scan = scan_repo(go_repo)
+    assert scan["stack"] == ["go"]
+    assert scan["framework"] == ["go"]
+    assert scan["commands"]["run"] == "go run ."
+    assert scan["commands"]["test"] == "go test ./..."
+
+
 def test_recommend_next_action_uses_readme_signal(git_repo):
     scan = scan_repo(git_repo)
     assert recommend_next_action(scan).startswith("Create or improve the project README")

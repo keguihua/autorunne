@@ -1,3 +1,3 @@
-from . import adopt, doctor, export, hooks, init, status, sync
+from . import adopt, doctor, export, hooks, init, status, sync, vscode
 
-__all__ = ["adopt", "doctor", "export", "hooks", "init", "status", "sync"]
+__all__ = ["adopt", "doctor", "export", "hooks", "init", "status", "sync", "vscode"]

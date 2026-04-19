@@ -13,6 +13,7 @@ from awf.commands import hooks as hooks_cmd
 from awf.commands import init as init_cmd
 from awf.commands import status as status_cmd
 from awf.commands import sync as sync_cmd
+from awf.commands import vscode as vscode_cmd
 
 app = typer.Typer(help="Attach a local-only AI workflow layer to any git repository.")
 console = Console()
@@ -23,20 +24,30 @@ def _target(path: str | None) -> Path:
 
 
 @app.command()
-def init(path: str | None = typer.Option(None, help="Target repository path")):
+def init(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    with_vscode: bool = typer.Option(False, "--with-vscode", help="Also create VS Code auto-sync integration."),
+):
     """Initialize workflow files in a git repository."""
-    result = init_cmd.run(_target(path))
+    result = init_cmd.run(_target(path), with_vscode=with_vscode)
     console.print(f"Initialized AI workflow in [bold]{result['repo_root']}[/bold]")
     console.print(f"Local git exclude updated: {result['exclude_path']}")
+    if result.get("vscode"):
+        console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 
 
 @app.command()
-def adopt(path: str | None = typer.Option(None, help="Target repository path")):
+def adopt(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    with_vscode: bool = typer.Option(False, "--with-vscode", help="Also create VS Code auto-sync integration."),
+):
     """Adopt an existing repository into the workflow."""
-    result = adopt_cmd.run(_target(path))
+    result = adopt_cmd.run(_target(path), with_vscode=with_vscode)
     console.print(f"Adopted repository: [bold]{result['repo_root']}[/bold]")
     console.print(f"Detected stack: {', '.join(result['scan']['stack'])}")
     console.print(f"Detected framework: {', '.join(result['scan']['framework'])}")
+    if result.get("vscode"):
+        console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 
 
 @app.command()
@@ -91,6 +102,14 @@ def hooks(path: str | None = typer.Option(None, help="Target repository path")):
     result = hooks_cmd.run(_target(path))
     for hook in result["hooks"]:
         console.print(f"Installed hook: {hook}")
+
+
+@app.command("vscode")
+def vscode_command(path: str | None = typer.Option(None, help="Target repository path")):
+    """Create VS Code integration that auto-syncs on folder open."""
+    result = vscode_cmd.run(_target(path))
+    console.print(f"VS Code tasks: {result['tasks_path']}")
+    console.print(f"VS Code settings: {result['settings_path']}")
 
 
 if __name__ == "__main__":

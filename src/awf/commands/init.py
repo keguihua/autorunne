@@ -6,11 +6,12 @@ from awf.core.gitops import detect_repo_root, ensure_local_exclude
 from awf.core.paths import save_config
 from awf.core.scanner import recommend_next_action, scan_repo
 from awf.core.templater import render_bundle
+from awf.core.vscode import install_vscode_integration
 from awf.core.writer import write_workflow_files
 from awf.models.config import WorkflowConfig
 
 
-def run(target: Path) -> dict:
+def run(target: Path, with_vscode: bool = False) -> dict:
     repo_root = detect_repo_root(target) or target
     repo_root.mkdir(parents=True, exist_ok=True)
     if not (repo_root / ".git").exists():
@@ -20,4 +21,7 @@ def run(target: Path) -> dict:
     write_workflow_files(repo_root, render_bundle(scan, mode="init"), scan)
     save_config(repo_root, WorkflowConfig())
     exclude_path = ensure_local_exclude(repo_root)
-    return {"repo_root": str(repo_root), "exclude_path": str(exclude_path), "scan": scan}
+    result = {"repo_root": str(repo_root), "exclude_path": str(exclude_path), "scan": scan}
+    if with_vscode:
+        result["vscode"] = install_vscode_integration(repo_root)
+    return result

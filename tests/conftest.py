@@ -28,6 +28,25 @@ def node_repo(git_repo: Path) -> Path:
 
 
 @pytest.fixture()
+def next_pnpm_repo(git_repo: Path) -> Path:
+    (git_repo / "package.json").write_text(
+        '{"name":"next-demo","scripts":{"test":"vitest","dev":"next dev","build":"next build"},"dependencies":{"next":"15.0.0","react":"19.0.0"}}',
+        encoding="utf-8",
+    )
+    (git_repo / "pnpm-lock.yaml").write_text("lockfile\n", encoding="utf-8")
+    (git_repo / "app").mkdir()
+    (git_repo / "app" / "page.tsx").write_text("export default function Page(){return null}\n", encoding="utf-8")
+    return git_repo
+
+
+@pytest.fixture()
+def go_repo(git_repo: Path) -> Path:
+    (git_repo / "go.mod").write_text("module example.com/demo\n\ngo 1.22\n", encoding="utf-8")
+    (git_repo / "main.go").write_text("package main\nfunc main(){}\n", encoding="utf-8")
+    return git_repo
+
+
+@pytest.fixture()
 def python_repo(git_repo: Path) -> Path:
     (git_repo / "pyproject.toml").write_text(
         "[project]\nname='demo'\ndependencies=['fastapi']\n",
