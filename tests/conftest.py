@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+import pytest
+
+
+@pytest.fixture()
+def git_repo(tmp_path: Path) -> Path:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    return repo
+
+
+@pytest.fixture()
+def node_repo(git_repo: Path) -> Path:
+    (git_repo / "package.json").write_text(
+        '{"name":"demo","scripts":{"test":"vitest","dev":"vite"},"dependencies":{"react":"18.0.0","vite":"5.0.0"}}',
+        encoding="utf-8",
+    )
+    (git_repo / "src").mkdir()
+    (git_repo / "src" / "index.js").write_text("console.log('hi')\n", encoding="utf-8")
+    return git_repo
+
+
+@pytest.fixture()
+def python_repo(git_repo: Path) -> Path:
+    (git_repo / "pyproject.toml").write_text(
+        "[project]\nname='demo'\ndependencies=['fastapi']\n",
+        encoding="utf-8",
+    )
+    (git_repo / "src").mkdir()
+    (git_repo / "src" / "app.py").write_text("print('hi')\n", encoding="utf-8")
+    (git_repo / "tests").mkdir()
+    (git_repo / "tests" / "test_basic.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    return git_repo
