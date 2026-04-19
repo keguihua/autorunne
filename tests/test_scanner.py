@@ -32,6 +32,16 @@ def test_scan_repo_detects_go_projects(go_repo):
     assert scan["commands"]["test"] == "go test ./..."
 
 
+def test_scan_repo_detects_monorepo_workspace(monorepo_repo):
+    scan = scan_repo(monorepo_repo)
+    assert "node" in scan["stack"]
+    assert "monorepo" in scan["framework"]
+    assert "turborepo" in scan["framework"]
+    assert scan["package_manager"] == ["pnpm"]
+    assert "apps" in scan["source_dirs"]
+    assert "packages" in scan["source_dirs"]
+
+
 def test_recommend_next_action_uses_readme_signal(git_repo):
     scan = scan_repo(git_repo)
     assert recommend_next_action(scan).startswith("Create or improve the project README")

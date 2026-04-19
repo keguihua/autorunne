@@ -72,6 +72,18 @@ def test_doctor_warns_when_workflow_missing(git_repo: Path):
     assert "Workflow directory does not exist yet" in result.stdout
 
 
+def test_doctor_checks_vscode_and_hooks(git_repo: Path):
+    _run_in(git_repo, ["init", "--with-vscode"])
+    result = _run_in(git_repo, ["doctor"])
+    assert result.exit_code == 1
+    assert "Git hooks are not installed" in result.stdout
+    assert "Pre-commit config is not installed" in result.stdout
+    _run_in(git_repo, ["hooks", "--with-pre-commit"])
+    result_ok = _run_in(git_repo, ["doctor"])
+    assert result_ok.exit_code == 0
+    assert "ok" in result_ok.stdout.lower()
+
+
 def test_export_creates_clean_copy_without_ai_workflow(node_repo: Path):
     _run_in(node_repo, ["adopt"])
     result = _run_in(node_repo, ["export"])
@@ -82,8 +94,26 @@ def test_export_creates_clean_copy_without_ai_workflow(node_repo: Path):
     assert (export_dir / "package.json").exists()
 
 
-def test_hooks_install_writes_git_hooks(git_repo: Path):
-    result = _run_in(git_repo, ["hooks"])
+def test_release_creates_notes_and_clean_export(node_repo: Path):
+    _run_in(node_repo, ["adopt"])
+    result = _run_in(node_repo, ["release", "--version", "0.3.0", "--skip-build"])
+    assert result.exit_code == 0
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.3.0"
+    assert (release_dir / "repo").exists()
+    assert (release_dir / "RELEASE_NOTES.md").exists()
+    assert not (release_dir / "repo" / ".ai-workflow").exists()
+
+
+def test_completion_command_outputs_shell_snippet(git_repo: Path):
+    result = _run_in(git_repo, ["completion", "zsh"])
+    assert result.exit_code == 0
+    assert "_AWF_COMPLETE=zsh_source awf" in result.stdout
+
+
+def test_hooks_install_writes_git_hooks_and_precommit(git_repo: Path):
+    result = _run_in(git_repo, ["hooks", "--with-pre-commit"])
     assert result.exit_code == 0
     assert (git_repo / ".git" / "hooks" / "post-checkout").exists()
     assert (git_repo / ".git" / "hooks" / "post-merge").exists()
+    assert (git_repo / ".git" / "hooks" / "pre-commit").exists()
+    assert (git_repo / ".pre-commit-config.yaml").exists()

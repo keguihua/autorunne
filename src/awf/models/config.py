@@ -3,10 +3,21 @@ from pydantic import BaseModel, Field
 
 
 class WorkflowConfig(BaseModel):
-    version: str = "0.1.0"
+    version: str = "0.3.0"
     workflow_dir: str = ".ai-workflow"
     export_dir: str = ".dist-release"
-    excluded_paths: list[str] = Field(default_factory=lambda: [".ai-workflow", ".dist-release", ".git", ".venv", "__pycache__", ".pytest_cache"])
+    excluded_paths: list[str] = Field(
+        default_factory=lambda: [
+            ".ai-workflow",
+            ".dist-release",
+            ".git",
+            ".venv",
+            "__pycache__",
+            ".pytest_cache",
+            "dist",
+            "build",
+        ]
+    )
     preferred_agent: str = "common"
 
     @property

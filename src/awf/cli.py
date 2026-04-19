@@ -7,10 +7,12 @@ from rich.console import Console
 from rich.table import Table
 
 from awf.commands import adopt as adopt_cmd
+from awf.commands import completion as completion_cmd
 from awf.commands import doctor as doctor_cmd
 from awf.commands import export as export_cmd
 from awf.commands import hooks as hooks_cmd
 from awf.commands import init as init_cmd
+from awf.commands import release as release_cmd
 from awf.commands import status as status_cmd
 from awf.commands import sync as sync_cmd
 from awf.commands import vscode as vscode_cmd
@@ -82,7 +84,16 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
 def doctor(path: str | None = typer.Option(None, help="Target repository path")):
     """Validate workflow structure and git isolation."""
     result = doctor_cmd.run(_target(path))
-    console.print(result)
+    table = Table(title="AI Workflow Doctor")
+    table.add_column("Check")
+    table.add_column("Status")
+    for name, status in result["checks"].items():
+        table.add_row(name, status)
+    console.print(table)
+    if result["missing"]:
+        console.print({"missing": result["missing"]})
+    if result["warnings"]:
+        console.print({"warnings": result["warnings"]})
     raise typer.Exit(1 if result["warnings"] or result["missing"] else 0)
 
 
@@ -97,11 +108,30 @@ def export_command(
 
 
 @app.command()
-def hooks(path: str | None = typer.Option(None, help="Target repository path")):
+def release(
+    version: str = typer.Option(..., help="Release version, e.g. 0.3.0 or v0.3.0"),
+    path: str | None = typer.Option(None, help="Target repository path"),
+    skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
+):
+    """Create a formal release bundle with a clean export and release notes."""
+    result = release_cmd.run(_target(path), version=version, skip_build=skip_build)
+    console.print(f"Release bundle created: [bold]{result['release_dir']}[/bold]")
+    console.print(f"Release notes: {result['notes_path']}")
+    if result['assets']:
+        console.print({"assets": result['assets']})
+
+
+@app.command()
+def hooks(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    with_pre_commit: bool = typer.Option(False, "--with-pre-commit", help="Also install a pre-commit hook and config."),
+):
     """Install lightweight git hooks that auto-sync on checkout/merge."""
-    result = hooks_cmd.run(_target(path))
+    result = hooks_cmd.run(_target(path), with_pre_commit=with_pre_commit)
     for hook in result["hooks"]:
         console.print(f"Installed hook: {hook}")
+    if result.get("precommit_config"):
+        console.print(f"Pre-commit config: {result['precommit_config']}")
 
 
 @app.command("vscode")
@@ -110,6 +140,13 @@ def vscode_command(path: str | None = typer.Option(None, help="Target repository
     result = vscode_cmd.run(_target(path))
     console.print(f"VS Code tasks: {result['tasks_path']}")
     console.print(f"VS Code settings: {result['settings_path']}")
+
+
+@app.command()
+def completion(shell: str = typer.Argument(..., help="Shell: bash, zsh, or fish")):
+    """Print shell completion setup instructions."""
+    result = completion_cmd.run(shell)
+    console.print(result["script"], end="")
 
 
 if __name__ == "__main__":

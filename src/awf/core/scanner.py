@@ -13,9 +13,24 @@ IMPORTANT_FILES = [
     ".env.example",
     "go.mod",
     "Cargo.toml",
+    "pnpm-workspace.yaml",
+    "turbo.json",
+    "nx.json",
 ]
 
-SOURCE_DIR_CANDIDATES = {"src", "app", "server", "backend", "frontend", "tests", "cmd", "internal"}
+SOURCE_DIR_CANDIDATES = {
+    "src",
+    "app",
+    "server",
+    "backend",
+    "frontend",
+    "tests",
+    "cmd",
+    "internal",
+    "apps",
+    "packages",
+    "services",
+}
 
 
 def _safe_read_json(path: Path) -> dict:
@@ -39,7 +54,7 @@ def _detect_node(repo_root: Path, scan: dict) -> None:
     deps = {**package_json.get("dependencies", {}), **package_json.get("devDependencies", {})}
 
     scan["stack"].append("node")
-    if (repo_root / "pnpm-lock.yaml").exists():
+    if (repo_root / "pnpm-lock.yaml").exists() or (repo_root / "pnpm-workspace.yaml").exists():
         package_manager = "pnpm"
     elif (repo_root / "yarn.lock").exists():
         package_manager = "yarn"
@@ -63,6 +78,14 @@ def _detect_node(repo_root: Path, scan: dict) -> None:
     for dep, name in framework_map.items():
         if dep in deps and name not in scan["framework"]:
             scan["framework"].append(name)
+
+    workspaces = package_json.get("workspaces")
+    if workspaces or (repo_root / "pnpm-workspace.yaml").exists():
+        scan["framework"].append("monorepo")
+    if (repo_root / "turbo.json").exists() or "turbo" in deps:
+        scan["framework"].append("turborepo")
+    if (repo_root / "nx.json").exists() or "nx" in deps:
+        scan["framework"].append("nx")
 
     if scripts.get("test"):
         scan["commands"]["test"] = f"{package_manager} test"
@@ -107,6 +130,8 @@ def _detect_python(repo_root: Path, scan: dict) -> None:
     else:
         scan["commands"].setdefault("test", "python -m unittest")
     scan["commands"].setdefault("run", "python -m <entrypoint>")
+    if "build-system" in pyproject_text:
+        scan["commands"].setdefault("build", "python -m build")
 
 
 def _detect_go(repo_root: Path, scan: dict) -> None:
@@ -131,7 +156,6 @@ def _detect_rust(repo_root: Path, scan: dict) -> None:
     scan["commands"].setdefault("build", "cargo build")
 
 
-
 def _unique(values: list[str]) -> list[str]:
     seen = set()
     ordered = []
@@ -140,7 +164,6 @@ def _unique(values: list[str]) -> list[str]:
             seen.add(value)
             ordered.append(value)
     return ordered
-
 
 
 def scan_repo(repo_root: Path) -> dict:
@@ -172,12 +195,13 @@ def scan_repo(repo_root: Path) -> dict:
     return scan
 
 
-
 def recommend_next_action(scan: dict) -> str:
     if "README.md" not in scan.get("important_files", []):
         return "Create or improve the project README so both humans and agents know how to run the project."
     if scan.get("commands", {}).get("test") == "pytest":
         return "Run the Python test command and record any failing modules before changing code."
+    if "monorepo" in scan.get("framework", []):
+        return "Map the workspace packages first, then choose the smallest affected app or package before changing code."
     if "node" in scan.get("stack", []):
         return "Confirm the package manager and run the main test or lint command before touching code."
     if "go" in scan.get("stack", []):

@@ -47,6 +47,19 @@ def go_repo(git_repo: Path) -> Path:
 
 
 @pytest.fixture()
+def monorepo_repo(git_repo: Path) -> Path:
+    (git_repo / "package.json").write_text(
+        '{"name":"mono-demo","private":true,"workspaces":["apps/*","packages/*"],"scripts":{"test":"turbo test","dev":"turbo dev","build":"turbo build"},"devDependencies":{"turbo":"2.0.0"}}',
+        encoding="utf-8",
+    )
+    (git_repo / "pnpm-workspace.yaml").write_text("packages:\n  - apps/*\n  - packages/*\n", encoding="utf-8")
+    (git_repo / "turbo.json").write_text('{"pipeline":{}}\n', encoding="utf-8")
+    (git_repo / "apps").mkdir()
+    (git_repo / "packages").mkdir()
+    return git_repo
+
+
+@pytest.fixture()
 def python_repo(git_repo: Path) -> Path:
     (git_repo / "pyproject.toml").write_text(
         "[project]\nname='demo'\ndependencies=['fastapi']\n",

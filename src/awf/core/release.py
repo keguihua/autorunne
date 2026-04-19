@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+import shutil
+import subprocess
+from pathlib import Path
+
+from awf.core.exporter import export_clean_copy
+
+
+def _run(command: list[str], cwd: Path) -> None:
+    subprocess.run(command, cwd=cwd, check=True, text=True)
+
+
+def create_release_bundle(repo_root: Path, version: str, build_packages: bool = True) -> dict:
+    clean_version = version if version.startswith("v") else f"v{version}"
+    releases_root = repo_root / ".dist-release" / "releases"
+    release_dir = releases_root / clean_version
+    if release_dir.exists():
+        shutil.rmtree(release_dir)
+    release_dir.mkdir(parents=True, exist_ok=True)
+
+    exported_repo = export_clean_copy(repo_root, output_name="repo")
+    target_repo = release_dir / "repo"
+    if target_repo.exists():
+        shutil.rmtree(target_repo)
+    shutil.move(str(exported_repo), str(target_repo))
+
+    notes = f"# Release {clean_version}\n\n- Source repo: {repo_root.name}\n- Clean export path: repo/\n- AI workflow files removed from release export\n"
+    notes_path = release_dir / "RELEASE_NOTES.md"
+    notes_path.write_text(notes, encoding="utf-8")
+
+    built_assets: list[str] = []
+    if build_packages:
+        _run(["python", "-m", "build"], cwd=repo_root)
+        dist_dir = repo_root / "dist"
+        assets_dir = release_dir / "assets"
+        assets_dir.mkdir(parents=True, exist_ok=True)
+        for artifact in dist_dir.glob("*"):
+            destination = assets_dir / artifact.name
+            shutil.copy2(artifact, destination)
+            built_assets.append(str(destination))
+
+    return {
+        "version": clean_version,
+        "release_dir": str(release_dir),
+        "exported_repo": str(target_repo),
+        "notes_path": str(notes_path),
+        "assets": built_assets,
+    }

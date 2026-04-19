@@ -1,7 +1,7 @@
 # AI Workflow CLI Usage Guide (English)
 
 ## 1. What this tool is for
-AI Workflow CLI (`awf`) adds a private local AI workflow layer to any Git repository while keeping public release artifacts clean.
+AI Workflow CLI (`awf`) adds a private local AI workflow layer to any Git repository while keeping formal release artifacts clean.
 
 It is designed for:
 - brand-new projects
@@ -9,45 +9,48 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core features
-- Creates a dedicated `.ai-workflow/` directory
-- Generates project context, tasks, decisions, session log, rules, and next action files
-- Uses `.git/info/exclude` by default to avoid polluting upstream repositories
-- Exports a clean formal release without the AI workflow layer
-- Supports git hooks for post-checkout / post-merge workflow refreshes
+## 2. Core upgrades in 0.3.0
+- adds `awf release` for clean formal release bundles with release notes
+- stronger detection for monorepos / pnpm workspaces / Turborepo / Next.js / Go / Rust
+- stronger `awf doctor` checks for workflow files, git exclude, hooks, VS Code, pre-commit, and package artifacts
+- adds `awf completion` for bash / zsh / fish
+- adds `awf hooks --with-pre-commit` for team-friendly repository setup
 
 ## 3. Installation
+### Development install
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
 ```
 
-Then run:
+### Recommended public install path later
 ```bash
-awf --help
+pipx install ai-workflow-cli
+```
+
+### Install from release artifact
+```bash
+pip install ai_workflow_cli-0.3.0-py3-none-any.whl
 ```
 
 ## 4. Main commands
 ### Initialize a new repository
 ```bash
 awf init
+awf init --with-vscode
 ```
 
 ### Adopt an existing repository
 ```bash
 awf adopt
+awf adopt --with-vscode
 ```
 
 ### Refresh workflow state
 ```bash
 awf sync
 awf sync --note "Finished auth fix, next check the order page"
-```
-
-### Show current workflow status
-```bash
-awf status
 ```
 
 ### Validate workflow health
@@ -60,9 +63,19 @@ awf doctor
 awf export
 ```
 
-### Install auto-sync hooks
+### Create a release bundle
 ```bash
-awf hooks
+awf release --version 0.3.0
+```
+
+### Install hooks and pre-commit support
+```bash
+awf hooks --with-pre-commit
+```
+
+### Print shell completion setup
+```bash
+awf completion zsh
 ```
 
 ## 5. Generated structure
@@ -84,28 +97,36 @@ awf hooks
     └── latest.json
 ```
 
-## 6. Recommended daily workflow
-1. Run `awf adopt` or `awf init`
-2. Make your coding agent read the shared workflow docs under `.ai-workflow/`
-3. Start from `NEXT_ACTION.md`
-4. After meaningful work, run `awf sync --note "what changed"`
-5. Before publishing, run `awf export`
+## 6. VS Code auto integration
+Run:
+```bash
+awf adopt --with-vscode
+```
+
+This generates:
+- `.vscode/tasks.json`
+- `.vscode/settings.json`
+- `.vscode/extensions.json`
+
+and allows VS Code to auto-run `awf sync` on folder open.
 
 ## 7. Clean release separation
 The tool isolates `.ai-workflow/` with `.git/info/exclude` by default.
 That means:
-- local development can keep a rich AI workflow layer
+- local development keeps a rich AI workflow layer
 - upstream/public repositories stay clean by default
-- `awf export` produces a formal release tree without `.ai-workflow/`
+- `awf export` and `awf release` outputs do not include `.ai-workflow/`
 
 ## 8. Validation status
 This version has been validated for:
 - generic empty repo initialization
-- Node / React / Vite style adoption
-- Python / FastAPI style adoption
-- working `sync`, `doctor`, `export`, and `hooks` commands
+- Node / React / Vite / Next.js / pnpm workspace / Turborepo detection
+- Python / FastAPI detection
+- Go detection
+- `sync`, `doctor`, `export`, `release`, `hooks`, and `completion`
 - local pytest coverage
-- GitHub Actions CI on Python 3.11 and 3.12
+- wheel installation validation
+- GitHub Actions on Python 3.11 and 3.12
 
 ## 9. Model compatibility
 The workflow is model-agnostic and intended for:
@@ -117,7 +138,8 @@ The workflow is model-agnostic and intended for:
 
 ## 10. Suggested next steps
 Good future upgrades:
-- VS Code extension
+- publish to PyPI
+- public `pipx` install flow
 - file watcher based auto-sync
-- `awf release` publishing command
-- deeper project structure detection
+- deeper monorepo awareness
+- more editor entrypoints beyond VS Code
