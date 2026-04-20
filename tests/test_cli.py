@@ -60,12 +60,35 @@ def test_status_reports_missing_before_init(git_repo: Path):
     assert "PROJECT_CONTEXT.md" in result.stdout
 
 
-def test_sync_appends_note(python_repo: Path):
+def test_sync_appends_summary_and_updates_next_action(python_repo: Path):
     _run_in(python_repo, ["adopt"])
+    initial_log = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+
     result = _run_in(python_repo, ["sync", "--note", "checked auth flow"])
     assert result.exit_code == 0
+
     log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+
+    assert log_text != initial_log
     assert "checked auth flow" in log_text
+    assert "sync" in log_text.lower()
+    expected_next_action = " ".join(result.stdout.split("Next action:", 1)[1].split())
+    actual_next_action = " ".join(next_action_text.split())
+    assert expected_next_action in actual_next_action
+
+
+def test_sync_without_note_appends_automatic_session_entry(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    initial_log = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+
+    result = _run_in(python_repo, ["sync"])
+    assert result.exit_code == 0
+
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert log_text != initial_log
+    assert "sync summary" in log_text.lower()
+    assert "Next action:" in log_text
 
 
 def test_watch_detects_file_changes_and_syncs(node_repo: Path):
