@@ -36,7 +36,7 @@ def is_git_repo(start: Path) -> bool:
     return detect_repo_root(start) is not None
 
 
-def ensure_local_exclude(repo_root: Path, pattern: str = ".ai-workflow/") -> Path:
+def ensure_local_exclude(repo_root: Path, pattern: str = ".autorunne/") -> Path:
     exclude_path = repo_root / ".git" / "info" / "exclude"
     exclude_path.parent.mkdir(parents=True, exist_ok=True)
     if exclude_path.exists():

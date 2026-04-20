@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from awf.core.gitops import detect_repo_root, ensure_local_exclude, is_tracked
-from awf.core.paths import workflow_dir
-from awf.core.scanner import recommend_next_action, scan_repo
-from awf.core.summarizer import summarize_status
+from autorunne.core.gitops import detect_repo_root, ensure_local_exclude, is_tracked
+from autorunne.core.paths import workflow_dir
+from autorunne.core.scanner import recommend_next_action, scan_repo
+from autorunne.core.summarizer import summarize_status
 
 
 def run(target: Path) -> dict:

@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from awf.core.exporter import export_clean_copy
+from autorunne.core.exporter import export_clean_copy
 
 
 def _run(command: list[str], cwd: Path) -> None:
@@ -33,7 +33,7 @@ def create_release_bundle(repo_root: Path, version: str, build_packages: bool = 
         shutil.rmtree(target_repo)
     shutil.move(str(exported_repo), str(target_repo))
 
-    notes = f"# Release {clean_version}\n\n- Source repo: {repo_root.name}\n- Clean export path: repo/\n- AI workflow files removed from release export\n"
+    notes = f"# Release {clean_version}\n\n- Source repo: {repo_root.name}\n- Clean export path: repo/\n- Autorunne files removed from release export\n"
     notes_path = release_dir / "RELEASE_NOTES.md"
     notes_path.write_text(notes, encoding="utf-8")
 

@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from awf.models.config import WorkflowConfig
+from autorunne.models.config import WorkflowConfig
 
 CONFIG_FILENAME = "config.json"
-WORKFLOW_DIR = ".ai-workflow"
+WORKFLOW_DIR = ".autorunne"
 
 
 def ensure_dir(path: Path) -> Path:

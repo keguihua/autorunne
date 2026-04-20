@@ -3,11 +3,11 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from awf.core.gitops import detect_repo_root
-from awf.commands import sync as sync_cmd
+from autorunne.core.gitops import detect_repo_root
+from autorunne.commands import sync as sync_cmd
 
 
-SKIP_DIRS = {".git", ".ai-workflow", ".dist-release", ".venv", "__pycache__", ".pytest_cache", "dist", "build"}
+SKIP_DIRS = {".git", ".autorunne", ".dist-release", ".venv", "__pycache__", ".pytest_cache", "dist", "build"}
 
 
 def _snapshot(repo_root: Path) -> dict[str, float]:
@@ -24,7 +24,7 @@ def _snapshot(repo_root: Path) -> dict[str, float]:
 def run(target: Path, duration: float = 30.0, interval: float = 1.0) -> dict:
     repo_root = detect_repo_root(target) or target
     if not (repo_root / ".git").exists():
-        raise RuntimeError("awf watch must run inside an existing git repository")
+        raise RuntimeError("autorunne watch must run inside an existing git repository")
 
     start = time.time()
     previous = _snapshot(repo_root)

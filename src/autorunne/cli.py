@@ -6,19 +6,19 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from awf.commands import adopt as adopt_cmd
-from awf.commands import completion as completion_cmd
-from awf.commands import doctor as doctor_cmd
-from awf.commands import export as export_cmd
-from awf.commands import hooks as hooks_cmd
-from awf.commands import init as init_cmd
-from awf.commands import release as release_cmd
-from awf.commands import status as status_cmd
-from awf.commands import sync as sync_cmd
-from awf.commands import vscode as vscode_cmd
-from awf.commands import watch as watch_cmd
+from autorunne.commands import adopt as adopt_cmd
+from autorunne.commands import completion as completion_cmd
+from autorunne.commands import doctor as doctor_cmd
+from autorunne.commands import export as export_cmd
+from autorunne.commands import hooks as hooks_cmd
+from autorunne.commands import init as init_cmd
+from autorunne.commands import release as release_cmd
+from autorunne.commands import status as status_cmd
+from autorunne.commands import sync as sync_cmd
+from autorunne.commands import vscode as vscode_cmd
+from autorunne.commands import watch as watch_cmd
 
-app = typer.Typer(help="Attach a local-only AI workflow layer to any git repository.")
+app = typer.Typer(help="Turn any git repository into an Autorunne workspace.")
 console = Console()
 
 
@@ -31,9 +31,9 @@ def init(
     path: str | None = typer.Option(None, help="Target repository path"),
     with_vscode: bool = typer.Option(False, "--with-vscode", help="Also create VS Code auto-sync integration."),
 ):
-    """Initialize workflow files in a git repository."""
+    """Initialize Autorunne files in a git repository."""
     result = init_cmd.run(_target(path), with_vscode=with_vscode)
-    console.print(f"Initialized AI workflow in [bold]{result['repo_root']}[/bold]")
+    console.print(f"Initialized Autorunne in [bold]{result['repo_root']}[/bold]")
     console.print(f"Local git exclude updated: {result['exclude_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
@@ -44,7 +44,7 @@ def adopt(
     path: str | None = typer.Option(None, help="Target repository path"),
     with_vscode: bool = typer.Option(False, "--with-vscode", help="Also create VS Code auto-sync integration."),
 ):
-    """Adopt an existing repository into the workflow."""
+    """Adopt an existing repository into Autorunne."""
     result = adopt_cmd.run(_target(path), with_vscode=with_vscode)
     console.print(f"Adopted repository: [bold]{result['repo_root']}[/bold]")
     console.print(f"Detected stack: {', '.join(result['scan']['stack'])}")
@@ -58,9 +58,9 @@ def sync(
     path: str | None = typer.Option(None, help="Target repository path"),
     note: str | None = typer.Option(None, help="Optional session note to append"),
 ):
-    """Refresh workflow state."""
+    """Refresh Autorunne state."""
     result = sync_cmd.run(_target(path), note=note)
-    console.print(f"Synced workflow in [bold]{result['repo_root']}[/bold]")
+    console.print(f"Synced Autorunne in [bold]{result['repo_root']}[/bold]")
     console.print(f"Next action: {result['scan']['next_action']}")
 
 
@@ -70,7 +70,7 @@ def watch(
     duration: float = typer.Option(30.0, help="How long to watch for changes in seconds."),
     interval: float = typer.Option(1.0, help="Polling interval in seconds."),
 ):
-    """Watch the repo for local file changes and auto-sync the workflow."""
+    """Watch the repo for local file changes and auto-sync Autorunne."""
     result = watch_cmd.run(_target(path), duration=duration, interval=interval)
     if result["changes_detected"]:
         console.print(f"Detected change(s): {result['changes_detected']}")
@@ -81,13 +81,13 @@ def watch(
 
 @app.command()
 def status(path: str | None = typer.Option(None, help="Target repository path")):
-    """Show workflow health and next action."""
+    """Show Autorunne health and next action."""
     result = status_cmd.run(_target(path))
-    table = Table(title="AI Workflow Status")
+    table = Table(title="Autorunne Status")
     table.add_column("Field")
     table.add_column("Value")
     table.add_row("Repo", result["repo"])
-    table.add_row("Workflow root", result["workflow_root"])
+    table.add_row("Autorunne root", result["workflow_root"])
     table.add_row("Stack", ", ".join(result["stack"]))
     table.add_row("Framework", ", ".join(result["framework"]))
     table.add_row("Missing files", ", ".join(result["missing"]) or "none")
@@ -98,9 +98,9 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
 
 @app.command()
 def doctor(path: str | None = typer.Option(None, help="Target repository path")):
-    """Validate workflow structure and git isolation."""
+    """Validate Autorunne structure and git isolation."""
     result = doctor_cmd.run(_target(path))
-    table = Table(title="AI Workflow Doctor")
+    table = Table(title="Autorunne Doctor")
     table.add_column("Check")
     table.add_column("Status")
     for name, status in result["checks"].items():
@@ -118,7 +118,7 @@ def export_command(
     path: str | None = typer.Option(None, help="Target repository path"),
     output_name: str | None = typer.Option(None, help="Optional export directory name"),
 ):
-    """Create a clean release copy without AI workflow files."""
+    """Create a clean release copy without Autorunne files."""
     result = export_cmd.run(_target(path), output_name=output_name)
     console.print(f"Exported clean copy to [bold]{result['exported_path']}[/bold]")
 

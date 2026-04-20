@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from awf.core.paths import ensure_dir, workflow_dir, write_json, write_text
+from autorunne.core.paths import ensure_dir, workflow_dir, write_json, write_text
 
 
 def write_workflow_files(repo_root: Path, rendered: dict[str, str], snapshot: dict) -> None:

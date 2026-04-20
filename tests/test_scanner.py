@@ -1,4 +1,4 @@
-from awf.core.scanner import recommend_next_action, scan_repo
+from autorunne.core.scanner import recommend_next_action, scan_repo
 
 
 def test_scan_repo_detects_node_stack(node_repo):

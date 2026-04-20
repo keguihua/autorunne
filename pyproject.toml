@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ai-workflow-cli"
+name = "autorunne"
 version = "0.4.0"
-description = "Attach a local-only AI workflow layer to any software project."
+description = "Local-first agent development workspace that turns any repo into an Autorunne project."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -36,12 +36,12 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/keguihua/ai-workflow-cli"
-Repository = "https://github.com/keguihua/ai-workflow-cli"
-Issues = "https://github.com/keguihua/ai-workflow-cli/issues"
+Homepage = "https://github.com/keguihua/autorunne"
+Repository = "https://github.com/keguihua/autorunne"
+Issues = "https://github.com/keguihua/autorunne/issues"
 
 [project.scripts]
-awf = "awf.cli:app"
+autorunne = "autorunne.cli:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

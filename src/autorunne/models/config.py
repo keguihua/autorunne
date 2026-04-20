@@ -4,11 +4,11 @@ from pydantic import BaseModel, Field
 
 class WorkflowConfig(BaseModel):
     version: str = "0.3.0"
-    workflow_dir: str = ".ai-workflow"
+    workflow_dir: str = ".autorunne"
     export_dir: str = ".dist-release"
     excluded_paths: list[str] = Field(
         default_factory=lambda: [
-            ".ai-workflow",
+            ".autorunne",
             ".dist-release",
             ".git",
             ".venv",

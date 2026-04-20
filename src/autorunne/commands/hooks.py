@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from awf.core.gitops import detect_repo_root
+from autorunne.core.gitops import detect_repo_root
 
 PRE_COMMIT_YAML = """repos:
   - repo: local
     hooks:
-      - id: awf-doctor
-        name: awf doctor
-        entry: awf doctor
+      - id: autorunne-doctor
+        name: autorunne doctor
+        entry: autorunne doctor
         language: system
         pass_filenames: false
 """
@@ -33,14 +33,14 @@ def _write_precommit_config(target: Path) -> Path:
 def run(target: Path, with_pre_commit: bool = False) -> dict:
     repo_root = detect_repo_root(target) or target
     if not (repo_root / ".git").exists():
-        raise RuntimeError("awf hooks must run inside an existing git repository")
-    sync_script = "#!/usr/bin/env sh\nawf sync >/dev/null 2>&1 || true\n"
+        raise RuntimeError("autorunne hooks must run inside an existing git repository")
+    sync_script = "#!/usr/bin/env sh\nautorunne sync >/dev/null 2>&1 || true\n"
     post_checkout = install_hook(repo_root, "post-checkout", sync_script)
     post_merge = install_hook(repo_root, "post-merge", sync_script)
     hooks = [str(post_checkout), str(post_merge)]
     precommit_config = None
     if with_pre_commit:
-        pre_script = "#!/usr/bin/env sh\nawf doctor >/dev/null 2>&1 || exit 1\n"
+        pre_script = "#!/usr/bin/env sh\nautorunne doctor >/dev/null 2>&1 || exit 1\n"
         pre_commit_hook = install_hook(repo_root, "pre-commit", pre_script)
         hooks.append(str(pre_commit_hook))
         precommit_config = str(_write_precommit_config(repo_root))

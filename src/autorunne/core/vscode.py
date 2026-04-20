@@ -27,7 +27,7 @@ def install_vscode_integration(repo_root: Path) -> dict[str, str]:
         existing_settings,
         {
             "task.allowAutomaticTasks": "on",
-            "files.exclude": {"**/.ai-workflow": True},
+            "files.exclude": {"**/.autorunne": True},
         },
     )
     settings_path.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -36,17 +36,17 @@ def install_vscode_integration(repo_root: Path) -> dict[str, str]:
         "version": "2.0.0",
         "tasks": [
             {
-                "label": "AWF: Sync on folder open",
+                "label": "Autorunne: Sync on folder open",
                 "type": "shell",
-                "command": "awf sync || python -m awf.cli sync",
+                "command": "autorunne sync || python -m autorunne.cli sync",
                 "presentation": {"reveal": "never", "panel": "dedicated"},
                 "problemMatcher": [],
                 "runOptions": {"runOn": "folderOpen"},
             },
             {
-                "label": "AWF: Status",
+                "label": "Autorunne: Status",
                 "type": "shell",
-                "command": "awf status || python -m awf.cli status",
+                "command": "autorunne status || python -m autorunne.cli status",
                 "presentation": {"reveal": "always", "panel": "shared"},
                 "problemMatcher": [],
             },
