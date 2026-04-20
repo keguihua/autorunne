@@ -1,7 +1,7 @@
-# AI Workflow CLI Usage Guide (English)
+# Autorunne Usage Guide (English)
 
 ## 1. What this tool is for
-AI Workflow CLI (`awf`) adds a private local AI workflow layer to any Git repository while keeping formal release artifacts clean.
+Autorunne (`autorunne`) adds a private local Autorunne layer to any Git repository while keeping formal release artifacts clean.
 
 It is designed for:
 - brand-new projects
@@ -10,10 +10,10 @@ It is designed for:
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
 ## 2. Core upgrades in 0.4.0
-- adds `awf watch` for polling-based local auto-sync
+- adds `autorunne watch` for polling-based local auto-sync
 - adds C and C++ detection, including CMake-style projects
 - strengthens Rust / Python / Node / monorepo / pnpm workspace / Turborepo detection
-- adds `MANIFEST.json` to `awf release` bundles
+- adds `MANIFEST.json` to `autorunne release` bundles
 - improves product-facing presentation for public launch readiness
 
 ## 3. Supported languages / project types
@@ -55,66 +55,66 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install ai_workflow_cli-0.4.0-py3-none-any.whl
+pip install autorunne-0.4.0-py3-none-any.whl
 ```
 
 ### Recommended public install path later
 ```bash
-pipx install ai-workflow-cli
+pipx install autorunne
 ```
 
 ## 5. Main commands
 ### Initialize a new repository
 ```bash
-awf init
-awf init --with-vscode
+autorunne init
+autorunne init --with-vscode
 ```
 
 ### Adopt an existing repository
 ```bash
-awf adopt
-awf adopt --with-vscode
+autorunne adopt
+autorunne adopt --with-vscode
 ```
 
 ### Refresh workflow state
 ```bash
-awf sync
-awf sync --note "Finished auth fix, next check the order page"
+autorunne sync
+autorunne sync --note "Finished auth fix, next check the order page"
 ```
 
 ### Watch local file changes
 ```bash
-awf watch --duration 60 --interval 1
+autorunne watch --duration 60 --interval 1
 ```
 
 ### Validate workflow health
 ```bash
-awf doctor
+autorunne doctor
 ```
 
 ### Export a clean formal release
 ```bash
-awf export
+autorunne export
 ```
 
 ### Create a release bundle
 ```bash
-awf release --version 0.4.0
+autorunne release --version 0.4.0
 ```
 
 ### Install hooks and pre-commit support
 ```bash
-awf hooks --with-pre-commit
+autorunne hooks --with-pre-commit
 ```
 
 ### Print shell completion setup
 ```bash
-awf completion zsh
+autorunne completion zsh
 ```
 
 ## 6. Generated structure
 ```text
-.ai-workflow/
+.autorunne/
 ├── PROJECT_CONTEXT.md
 ├── TASKS.md
 ├── DECISIONS.md
@@ -134,7 +134,7 @@ awf completion zsh
 ## 7. VS Code auto integration
 Run:
 ```bash
-awf adopt --with-vscode
+autorunne adopt --with-vscode
 ```
 
 This generates:
@@ -142,14 +142,14 @@ This generates:
 - `.vscode/settings.json`
 - `.vscode/extensions.json`
 
-and allows VS Code to auto-run `awf sync` on folder open.
+and allows VS Code to auto-run `autorunne sync` on folder open.
 
 ## 8. Clean release separation
-The tool isolates `.ai-workflow/` with `.git/info/exclude` by default.
+The tool isolates `.autorunne/` with `.git/info/exclude` by default.
 That means:
-- local development keeps a rich AI workflow layer
+- local development keeps a rich Autorunne layer
 - upstream/public repositories stay clean by default
-- `awf export` and `awf release` outputs do not include `.ai-workflow/`
+- `autorunne export` and `autorunne release` outputs do not include `.autorunne/`
 
 ## 9. Validation status
 This version has been validated for:

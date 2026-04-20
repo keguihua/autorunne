@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from awf.core.gitops import detect_repo_root, is_tracked
-from awf.core.paths import workflow_dir
+from autorunne.core.gitops import detect_repo_root, is_tracked
+from autorunne.core.paths import workflow_dir
 
 EXPECTED_FILES = [
     "PROJECT_CONTEXT.md",
@@ -46,13 +46,13 @@ def run(target: Path) -> dict:
         result["missing"] = [name for name in EXPECTED_FILES if not (root / name).exists()]
         result["checks"]["workflow_files"] = "ok" if not result["missing"] else "missing"
         if is_tracked(repo_root, root.name):
-            result["warnings"].append(".ai-workflow is tracked by git; keep it local-only")
+            result["warnings"].append(".autorunne is tracked by git; keep it local-only")
     else:
-        result["warnings"].append("Workflow directory does not exist yet")
+        result["warnings"].append("Autorunne workspace does not exist yet")
         result["checks"]["workflow_files"] = "missing"
 
-    if not exclude_path.exists() or ".ai-workflow/" not in exclude_path.read_text(encoding="utf-8"):
-        result["warnings"].append(".git/info/exclude does not contain .ai-workflow/")
+    if not exclude_path.exists() or ".autorunne/" not in exclude_path.read_text(encoding="utf-8"):
+        result["warnings"].append(".git/info/exclude does not contain .autorunne/")
         result["checks"]["git_exclude"] = "missing"
     else:
         result["checks"]["git_exclude"] = "ok"

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from awf.cli import app
+from autorunne.cli import app
 
 runner = CliRunner()
 
@@ -23,18 +23,18 @@ def _run_in(repo: Path, args: list[str]):
 def test_init_creates_workflow_files(git_repo: Path):
     result = _run_in(git_repo, ["init"])
     assert result.exit_code == 0
-    workflow_root = git_repo / ".ai-workflow"
+    workflow_root = git_repo / ".autorunne"
     assert workflow_root.exists()
     assert (workflow_root / "PROJECT_CONTEXT.md").exists()
     assert (workflow_root / "agents" / "codex.md").exists()
     exclude_text = (git_repo / ".git" / "info" / "exclude").read_text(encoding="utf-8")
-    assert ".ai-workflow/" in exclude_text
+    assert ".autorunne/" in exclude_text
 
 
 def test_adopt_scans_existing_repo(node_repo: Path):
     result = _run_in(node_repo, ["adopt"])
     assert result.exit_code == 0
-    content = (node_repo / ".ai-workflow" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+    content = (node_repo / ".autorunne" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
     assert "Stack: node" in content
     assert "Framework: react, vite" in content
 
@@ -48,7 +48,7 @@ def test_init_can_install_vscode_workspace_integration(git_repo: Path):
     assert settings_path.exists()
     tasks = json.loads(tasks_path.read_text(encoding="utf-8"))
     first_task = tasks["tasks"][0]
-    assert first_task["label"] == "AWF: Sync on folder open"
+    assert first_task["label"] == "Autorunne: Sync on folder open"
     assert first_task["runOptions"]["runOn"] == "folderOpen"
     settings = json.loads(settings_path.read_text(encoding="utf-8"))
     assert settings["task.allowAutomaticTasks"] == "on"
@@ -64,7 +64,7 @@ def test_sync_appends_note(python_repo: Path):
     _run_in(python_repo, ["adopt"])
     result = _run_in(python_repo, ["sync", "--note", "checked auth flow"])
     assert result.exit_code == 0
-    log_text = (python_repo / ".ai-workflow" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
     assert "checked auth flow" in log_text
 
 
@@ -86,7 +86,7 @@ def test_watch_detects_file_changes_and_syncs(node_repo: Path):
 def test_doctor_warns_when_workflow_missing(git_repo: Path):
     result = _run_in(git_repo, ["doctor"])
     assert result.exit_code == 1
-    assert "Workflow directory does not exist yet" in result.stdout
+    assert "Autorunne workspace does not exist yet" in result.stdout
 
 
 def test_doctor_checks_vscode_and_hooks(git_repo: Path):
@@ -101,13 +101,13 @@ def test_doctor_checks_vscode_and_hooks(git_repo: Path):
     assert "ok" in result_ok.stdout.lower()
 
 
-def test_export_creates_clean_copy_without_ai_workflow(node_repo: Path):
+def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
     _run_in(node_repo, ["adopt"])
     result = _run_in(node_repo, ["export"])
     assert result.exit_code == 0
     export_dir = node_repo / ".dist-release" / node_repo.name
     assert export_dir.exists()
-    assert not (export_dir / ".ai-workflow").exists()
+    assert not (export_dir / ".autorunne").exists()
     assert (export_dir / "package.json").exists()
 
 
@@ -119,13 +119,13 @@ def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()
-    assert not (release_dir / "repo" / ".ai-workflow").exists()
+    assert not (release_dir / "repo" / ".autorunne").exists()
 
 
 def test_completion_command_outputs_shell_snippet(git_repo: Path):
     result = _run_in(git_repo, ["completion", "zsh"])
     assert result.exit_code == 0
-    assert "_AWF_COMPLETE=zsh_source awf" in result.stdout
+    assert "_AUTORUNNE_COMPLETE=zsh_source autorunne" in result.stdout
 
 
 def test_hooks_install_writes_git_hooks_and_precommit(git_repo: Path):

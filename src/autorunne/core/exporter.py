@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from awf.core.paths import load_config
+from autorunne.core.paths import load_config
 
 
 def export_clean_copy(repo_root: Path, output_name: str | None = None) -> Path:

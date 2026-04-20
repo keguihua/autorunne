@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from awf.core.paths import workflow_dir
+from autorunne.core.paths import workflow_dir
 
 
 def summarize_status(repo_root: Path, scan: dict) -> dict:
