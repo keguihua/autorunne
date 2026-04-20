@@ -82,6 +82,11 @@ autorunne sync
 autorunne sync --note "今天修完登录问题，下一步做订单页"
 ```
 
+### 收尾一个开发切片
+```bash
+autorunne finish --summary "修完登录问题" --next "开始做订单页筛选"
+```
+
 ### 监听开发过程中的文件变化
 ```bash
 autorunne watch --duration 60 --interval 1

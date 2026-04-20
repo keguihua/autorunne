@@ -169,6 +169,11 @@ autorunne adopt --with-vscode
 autorunne sync --note "Finished auth fix, next handle dashboard filters"
 ```
 
+### Close one slice cleanly
+```bash
+autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
+```
+
 ### Watch local changes and auto-sync
 ```bash
 autorunne watch --duration 60 --interval 1
@@ -211,6 +216,13 @@ autorunne adopt --with-vscode
 
 ### `autorunne sync`
 Refresh workflow state and append a manual note.
+
+### `autorunne finish`
+Append a completion summary, mark the finished slice in `TASKS.md`, and set the next action.
+
+```bash
+autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
+```
 
 ### `autorunne watch`
 Watch the repository for file changes and auto-run sync.

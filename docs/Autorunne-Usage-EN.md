@@ -82,6 +82,11 @@ autorunne sync
 autorunne sync --note "Finished auth fix, next check the order page"
 ```
 
+### Close one development slice
+```bash
+autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
+```
+
 ### Watch local file changes
 ```bash
 autorunne watch --duration 60 --interval 1
