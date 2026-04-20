@@ -91,6 +91,24 @@ def test_sync_without_note_appends_automatic_session_entry(python_repo: Path):
     assert "Next action:" in log_text
 
 
+def test_finish_appends_summary_and_updates_next_action(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Implemented auth fix", "--next", "Review dashboard filters"],
+    )
+    assert result.exit_code == 0
+
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+
+    assert "finish summary" in log_text.lower()
+    assert "Implemented auth fix" in log_text
+    assert "Review dashboard filters" in log_text
+    assert "Review dashboard filters" in next_action_text
+    assert "Finished:" in result.stdout
+
+
 def test_watch_detects_file_changes_and_syncs(node_repo: Path):
     _run_in(node_repo, ["adopt"])
 

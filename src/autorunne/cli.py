@@ -10,6 +10,7 @@ from autorunne.commands import adopt as adopt_cmd
 from autorunne.commands import completion as completion_cmd
 from autorunne.commands import doctor as doctor_cmd
 from autorunne.commands import export as export_cmd
+from autorunne.commands import finish as finish_cmd
 from autorunne.commands import hooks as hooks_cmd
 from autorunne.commands import init as init_cmd
 from autorunne.commands import release as release_cmd
@@ -62,6 +63,18 @@ def sync(
     result = sync_cmd.run(_target(path), note=note)
     console.print(f"Synced Autorunne in [bold]{result['repo_root']}[/bold]")
     console.print(f"Next action: {result['scan']['next_action']}")
+
+
+@app.command()
+def finish(
+    summary: str = typer.Option(..., help="Concise summary of what was completed."),
+    next: str | None = typer.Option(None, "--next", help="Concrete next step to write into NEXT_ACTION.md."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Record a finished slice and set the next action."""
+    result = finish_cmd.run(_target(path), summary=summary, next_action=next)
+    console.print(f"Finished: {result['summary']}")
+    console.print(f"Next action: {result['next_action']}")
 
 
 @app.command()
