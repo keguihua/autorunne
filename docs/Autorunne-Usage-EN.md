@@ -46,6 +46,18 @@ It is designed for:
 - CMake-style C/C++ projects
 
 ## 4. Installation
+### Fastest install (ideal for a single command in a VS Code terminal)
+```bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | bash
+```
+
+After install, enter your repo and run:
+```bash
+autorunne adopt --with-vscode
+```
+
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini.
+
 ### Development install
 ```bash
 python -m venv .venv
@@ -76,6 +88,8 @@ autorunne adopt
 autorunne adopt --with-vscode
 ```
 
+After adoption, open `.autorunne/START_HERE.md` inside Claude Code, Codex, or Gemini.
+
 ### Refresh workflow state
 ```bash
 autorunne sync
@@ -84,7 +98,7 @@ autorunne sync --note "Finished auth fix, next check the order page"
 
 ### Close one development slice
 ```bash
-autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
+autorunne finish --summary "Implemented auth fix" --task "Review dashboard filters" --next "Ship release notes" --decision "Dashboard filters now reuse shared auth state"
 ```
 
 ### Watch local file changes
@@ -126,6 +140,8 @@ autorunne completion zsh
 ├── SESSION_LOG.md
 ├── RULES.md
 ├── NEXT_ACTION.md
+├── COMMANDS.md
+├── START_HERE.md
 ├── agents/
 │   ├── common.md
 │   ├── claude-code.md

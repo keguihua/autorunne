@@ -12,6 +12,8 @@ EXPECTED_FILES = [
     "SESSION_LOG.md",
     "RULES.md",
     "NEXT_ACTION.md",
+    "COMMANDS.md",
+    "START_HERE.md",
     "config.json",
 ]
 

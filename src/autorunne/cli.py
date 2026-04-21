@@ -36,6 +36,8 @@ def init(
     result = init_cmd.run(_target(path), with_vscode=with_vscode)
     console.print(f"Initialized Autorunne in [bold]{result['repo_root']}[/bold]")
     console.print(f"Local git exclude updated: {result['exclude_path']}")
+    console.print(f"Next action: {result['scan']['next_action']}")
+    console.print(f"Open in Claude Code / Codex / Gemini: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 
@@ -50,6 +52,8 @@ def adopt(
     console.print(f"Adopted repository: [bold]{result['repo_root']}[/bold]")
     console.print(f"Detected stack: {', '.join(result['scan']['stack'])}")
     console.print(f"Detected framework: {', '.join(result['scan']['framework'])}")
+    console.print(f"Next action: {result['scan']['next_action']}")
+    console.print(f"Open in Claude Code / Codex / Gemini: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 
@@ -69,12 +73,20 @@ def sync(
 def finish(
     summary: str = typer.Option(..., help="Concise summary of what was completed."),
     next: str | None = typer.Option(None, "--next", help="Concrete next step to write into NEXT_ACTION.md."),
+    task: str | None = typer.Option(None, "--task", help="Optional open task text to close inside TASKS.md."),
+    decision: str | None = typer.Option(None, "--decision", help="Optional durable decision to append to DECISIONS.md."),
     path: str | None = typer.Option(None, help="Target repository path"),
 ):
     """Record a finished slice and set the next action."""
-    result = finish_cmd.run(_target(path), summary=summary, next_action=next)
+    result = finish_cmd.run(_target(path), summary=summary, next_action=next, task_match=task, decision=decision)
     console.print(f"Finished: {result['summary']}")
     console.print(f"Next action: {result['next_action']}")
+    if result.get("matched_task"):
+        console.print(f"Matched task: {result['matched_task']}")
+    if result.get("decision"):
+        console.print(f"Decision captured: {result['decision']}")
+    if result.get("changed_files"):
+        console.print(f"Files changed: {', '.join(result['changed_files'])}")
 
 
 @app.command()

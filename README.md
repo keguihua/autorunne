@@ -111,6 +111,19 @@ This project is built around four product directions:
 
 ## Install
 
+### Fastest install for VS Code terminal users
+```bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | bash
+```
+
+This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
+
+```bash
+autorunne adopt --with-vscode
+```
+
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini and continue coding.
+
 ### Option A — local development install
 ```bash
 git clone https://github.com/keguihua/autorunne.git
@@ -125,7 +138,7 @@ pip install -e .[dev]
 pip install autorunne-0.4.0-py3-none-any.whl
 ```
 
-### Planned public install path
+### Option C — install directly with pipx once published
 ```bash
 pipx install autorunne
 ```
@@ -163,6 +176,8 @@ autorunne adopt
 ```bash
 autorunne adopt --with-vscode
 ```
+
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini.
 
 ### Refresh after meaningful work
 ```bash
@@ -215,13 +230,13 @@ autorunne adopt --with-vscode
 ```
 
 ### `autorunne sync`
-Refresh workflow state and append a manual note.
+Refresh workflow state, keep your manual memory docs intact, and append a manual note.
 
 ### `autorunne finish`
-Append a completion summary, mark the finished slice in `TASKS.md`, and set the next action.
+Close a real task, append a completion summary, optionally capture a durable decision, and set the next action.
 
 ```bash
-autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
+autorunne finish --summary "Implemented auth fix" --task "Review dashboard filters" --next "Ship release notes" --decision "Dashboard filters now reuse shared auth state"
 ```
 
 ### `autorunne watch`
@@ -282,6 +297,8 @@ autorunne completion fish
 ├── SESSION_LOG.md
 ├── RULES.md
 ├── NEXT_ACTION.md
+├── COMMANDS.md
+├── START_HERE.md
 ├── agents/
 │   ├── common.md
 │   ├── claude-code.md
