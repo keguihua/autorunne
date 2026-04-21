@@ -62,10 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.2：
+比如安装 0.6.3：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.2 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.3 bash
 ```
 
 适合：
@@ -101,7 +101,8 @@ autorunne open --with-vscode
 这个命令会做几件事：
 
 - 如果仓库还没有 `.autorunne/`，就自动创建
-- 如果仓库已经有 `.autorunne/`，就自动恢复
+- 如果仓库已经有 `.autorunne/state/*`，就自动恢复
+- 如果仓库里是旧的 markdown-only `.autorunne/*.md`，可以后续执行 `autorunne migrate` 升级进 state workspace
 - 自动生成 VS Code 工作区任务
 - 让 VS Code 以后打开这个仓库时自动执行 `autorunne open`
 
@@ -262,7 +263,7 @@ autorunne doctor
 
 ```bash
 autorunne export
-autorunne release --version 0.6.2
+autorunne release --version 0.6.3
 ```
 
 ---

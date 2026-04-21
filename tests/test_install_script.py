@@ -34,9 +34,9 @@ def test_install_script_dry_run_can_target_release_wheel():
     result = _run_install_script(
         extra_env={
             "AUTORUNNE_INSTALL_SOURCE": "release-wheel",
-            "AUTORUNNE_VERSION": "v0.6.2",
+            "AUTORUNNE_VERSION": "v0.6.3",
         }
     )
     assert result.returncode == 0
-    assert "releases/download/v0.6.2/autorunne-0.6.2-py3-none-any.whl" in result.stdout
+    assert "releases/download/v0.6.3/autorunne-0.6.3-py3-none-any.whl" in result.stdout
     assert "Resolved pipx runner: pipx" in result.stdout

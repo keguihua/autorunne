@@ -86,16 +86,16 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.2**
+**0.6.3**
 
-### New in 0.6.2
-- upgrades Autorunne from markdown-first workflow files to a real repo-local state layer
-- adds `.autorunne/state/*` as the single source of truth and `.autorunne/views/*` as render-only views
-- rewires `open / start / checkpoint / finish / sync / hermes-task` through the state engine
-- adds repo-level integrations: `AGENTS.md`, `.agents/skills/autorunne-workflow/SKILL.md`, `.claude/skills/autorunne-workflow/SKILL.md`
-- adds wrapper entrypoints: `ar-codex`, `ar-claude`, `ar-hermes`
-- adds observability commands: `render`, `record`, `show`, `history`, `trace`
-- strengthens `doctor` so it checks state files, rendered views, snapshot freshness, integrations, wrappers, and render rebuildability
+### New in 0.6.3
+- keeps `.autorunne/state/*` as the single source of truth and `.autorunne/views/*` as render-only views
+- adds `autorunne migrate` so older markdown-only workspaces can be upgraded cleanly into the state engine
+- makes `autorunne status` state-aware, showing the real active task, next action, task counts, integrations, and latest workflow action
+- adds explicit task operators: `autorunne task add`, `autorunne task done`, `autorunne task remove`
+- improves dirty-file prioritization so editor noise like `.vscode/` does not hijack resume hints
+- keeps repo-level integrations and wrappers (`AGENTS.md`, repo skills, `ar-codex`, `ar-claude`, `ar-hermes`) aligned with the state workflow
+- keeps `doctor` checking state files, rendered views, snapshot freshness, integrations, wrappers, legacy-workspace migration state, and render rebuildability
 
 ### Earlier releases laid the base
 - public install flow with `scripts/install.sh`
@@ -152,7 +152,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.2 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.3 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -176,7 +176,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.2-py3-none-any.whl
+pip install autorunne-0.6.3-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -245,11 +245,24 @@ autorunne record --summary "Captured API review note" --next "Add state trace do
 autorunne render
 ```
 
+### Migrate an older markdown-only workspace into state
+```bash
+autorunne migrate
+```
+
 ### Inspect current state, session history, and event trace
 ```bash
 autorunne show --section current
 autorunne history --limit 5
 autorunne trace --limit 10
+autorunne status
+```
+
+### Manage explicit task state
+```bash
+autorunne task add --text "Confirm rollout checklist" --section next-up
+autorunne task done --match "Confirm rollout checklist"
+autorunne task remove --match "stale note" --section known-unknowns
 ```
 
 ### Start a focused task
@@ -289,7 +302,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.2
+autorunne release --version 0.6.3
 ```
 
 ---
@@ -320,6 +333,14 @@ autorunne open
 autorunne open --with-vscode
 ```
 
+### `autorunne migrate`
+Convert a legacy markdown-only `.autorunne/` workspace into `.autorunne/state/*` + `.autorunne/views/*`.
+
+```bash
+autorunne migrate
+autorunne migrate --note "upgrade before next implementation slice"
+```
+
 ### `autorunne sync`
 Refresh workflow state from the repo scan while preserving explicit state truth such as the current next action.
 
@@ -340,6 +361,15 @@ Inspect one slice of state quickly.
 autorunne show --section current
 autorunne show --section tasks
 autorunne show --section events
+```
+
+### `autorunne task`
+Manipulate explicit task state without pretending you ran a checkpoint or finish.
+
+```bash
+autorunne task add --text "Confirm rollout checklist" --section next-up
+autorunne task done --match "Confirm rollout checklist"
+autorunne task remove --match "stale note" --section known-unknowns
 ```
 
 ### `autorunne history`
@@ -402,6 +432,9 @@ Watch the repository for file changes and auto-run sync.
 ```bash
 autorunne watch --duration 120 --interval 1
 ```
+
+### `autorunne status`
+Show the real workflow summary. If state exists, it prefers `.autorunne/state/*` over a fresh scan and surfaces the active task, latest action, task counts, integrations, and next action.
 
 ### `autorunne doctor`
 Validate:
@@ -584,10 +617,9 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.2
-- richer state diff summaries instead of basic git-derived snapshots
-- optional user-level integration installers and shell path helpers
-- stronger release automation (`autorunne release` + tag + changelog)
+## Roadmap after 0.6.3
+- JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
+- stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness
 - more editor entrypoints beyond VS Code
 - docx / onboarding material that mirrors the state-first workflow exactly

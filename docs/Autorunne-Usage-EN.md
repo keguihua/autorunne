@@ -9,14 +9,13 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.2
-- promotes `.autorunne/state/*` to the only source of truth
-- turns `.autorunne/views/*.md` into renderable views instead of mutable state
-- routes `open / start / checkpoint / finish / sync / hermes-task` through the state engine
-- adds repo-level integrations: `AGENTS.md`, `.agents/.../SKILL.md`, `.claude/.../SKILL.md`
-- adds wrapper entrypoints: `ar-codex`, `ar-claude`, `ar-hermes`
-- adds observability commands: `record`, `render`, `show`, `history`, `trace`
-- extends `doctor` to check state, views, snapshot, integrations, wrappers, and render rebuildability
+## 2. Core upgrades in 0.6.3
+- keeps `.autorunne/state/*` as the only source of truth
+- adds `autorunne migrate` so older markdown-only workspaces can be upgraded cleanly
+- makes `status` state-aware so it shows the real active task, next action, task counts, and integration state
+- adds explicit task operators: `autorunne task add`, `autorunne task done`, `autorunne task remove`
+- lowers the priority of editor noise such as `.vscode/` when computing resume hints
+- extends `doctor` so it reports whether a legacy workspace still needs migration
 
 ## 3. Supported languages / project types
 ### Web / app / service
@@ -74,7 +73,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.2-py3-none-any.whl
+pip install autorunne-0.6.3-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -141,13 +140,17 @@ autorunne finish --summary "Kept tests green" --validate "pytest -q" --next "Shi
 autorunne watch --duration 60 --interval 1
 ```
 
-### Additional state visibility commands
+### Extra state visibility / migration / task commands
 ```bash
+autorunne migrate
+autorunne status
 autorunne record --summary "Capture an API note" --next "Document trace flow"
 autorunne render
 autorunne show --section current
 autorunne history --limit 5
 autorunne trace --limit 10
+autorunne task add --text "Confirm rollout checklist" --section next-up
+autorunne task done --match "Confirm rollout checklist"
 ```
 
 ### Validate workflow health
@@ -162,7 +165,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.6.2
+autorunne release --version 0.6.3
 ```
 
 ### Install hooks and pre-commit support

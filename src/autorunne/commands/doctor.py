@@ -4,7 +4,7 @@ from pathlib import Path
 
 from autorunne.core.gitops import detect_repo_root, is_tracked
 from autorunne.core.paths import STATE_FILES, VIEW_FILES, snapshot_file, state_dir, view_file, views_dir, workflow_bin_dir, workflow_dir
-from autorunne.core.state_engine import render_from_state, workflow_exists
+from autorunne.core.state_engine import legacy_workspace_exists, render_from_state, workflow_exists, workflow_needs_migration
 
 
 def run(target: Path) -> dict:
@@ -46,6 +46,13 @@ def run(target: Path) -> dict:
         result["checks"]["state_files"] = "ok" if not missing_state else "missing"
         result["checks"]["views"] = "ok" if not missing_views else "missing"
         result["checks"]["snapshot"] = "ok" if snapshot_path.exists() else "missing"
+        if workflow_needs_migration(repo_root):
+            result["warnings"].append("Legacy markdown workspace detected; run `autorunne migrate` to create state files")
+            result["checks"]["legacy_workspace"] = "needs_migration"
+        elif legacy_workspace_exists(repo_root):
+            result["checks"]["legacy_workspace"] = "ok"
+        else:
+            result["checks"]["legacy_workspace"] = "missing"
         if is_tracked(repo_root, root.name):
             result["warnings"].append(".autorunne is tracked by git; keep it local-only")
         if workflow_exists(repo_root):

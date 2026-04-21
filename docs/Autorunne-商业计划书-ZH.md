@@ -37,18 +37,19 @@ Autorunne 提供：
 - 想把 AI 编程流程标准化的服务商
 
 ## 6. 产品形态
-### 免费开源层
-- 基础 CLI
-- `.autorunne/` 工作区
-- 基础命令：init/adopt/sync/status/doctor/export/release
+### 免费开源层（0.6.3 已覆盖）
+- state-first CLI
+- `.autorunne/state/*` + `.autorunne/views/*`
+- 基础命令：open/migrate/start/checkpoint/finish/record/status/show/history/trace/doctor/export/release
+- repo 级 skill / wrapper / VS Code 接入
 
 ### 未来商业层
-- 更强自动总结与任务推进
 - 团队协作版模板
 - 行业化工作流包
 - 可视化仪表盘
 - 私有部署 / 企业版
 - 配套培训与咨询服务
+- 面向交付团队的标准化流程资产包
 
 ## 7. 收入模式
 - 开源 + 高级版订阅
@@ -66,31 +67,32 @@ Autorunne 提供：
 
 ## 9. 当前阶段判断
 当前已经具备：
-- 产品命名统一基础
-- 可安装包构建能力
-- CLI 主路径
-- 基础测试
+- state-first CLI 主路径
+- 旧 `.autorunne/*.md` 到 state workspace 的迁移能力
+- 可安装包构建与 PyPI 发布链路
+- 显式 task 操作、状态观测与 doctor 检查
 - 初步对外说明文档
 
 当前更准确的阶段是：
-### **可在真实项目中试运行的 Alpha 版**
-而不是成熟商用版。
+### **可在真实项目里持续使用并演示的 Beta 前期产品**
+而不是最终成熟商用版。
 
 ## 10. 接下来的关键里程碑
-### M1：自己项目稳定使用
-- 连续在真实项目里用 Autorunne 推进开发
-- 验证恢复体验和多模型协作体验
+### M1：真实项目连续跑状态工作流
+- 用 `open → start → checkpoint → finish → show/history/trace` 连续跑多个真实项目
+- 验证恢复体验、多模型协作体验、legacy migration 体验
 
 ### M2：产品化补强
-- 自动 session append
-- 更强 adopt 扫描
-- 更强 doctor / release
-- PyPI / pipx 正式安装流
+- JSON 输出模式
+- 更深的 monorepo 图谱感知
+- 更强的 release / changelog / publish 自动化
+- 更顺的团队协作接入
 
 ### M3：商业化包装
 - 官网 / 演示视频 / 对外宣传页
 - 标准版产品说明书
 - 成交页 / 商业介绍 / 行业方案
+- 课程 / 咨询 / 交付流程服务包
 
 ## 11. 一句话商业结论
 Autorunne 最有机会成为：

@@ -20,9 +20,15 @@ Autorunne 是一个 **本地优先的 AI 开发工作流系统**，把任意 Git
 ### 1. CLI 命令
 - `autorunne init`
 - `autorunne adopt`
-- `autorunne sync`
-- `autorunne watch`
+- `autorunne open`
+- `autorunne migrate`
+- `autorunne start`
+- `autorunne checkpoint`
+- `autorunne finish`
+- `autorunne record`
+- `autorunne task add / done / remove`
 - `autorunne status`
+- `autorunne show / history / trace / render`
 - `autorunne doctor`
 - `autorunne export`
 - `autorunne release`
@@ -33,13 +39,22 @@ Autorunne 是一个 **本地优先的 AI 开发工作流系统**，把任意 Git
 ### 2. 项目本地目录
 ```text
 .autorunne/
-├── PROJECT_CONTEXT.md
-├── TASKS.md
-├── DECISIONS.md
-├── SESSION_LOG.md
-├── RULES.md
-├── NEXT_ACTION.md
-├── agents/
+├── state/
+│   ├── current.json
+│   ├── events.jsonl
+│   ├── tasks.json
+│   ├── decisions.json
+│   └── sessions.json
+├── views/
+│   ├── PROJECT_CONTEXT.md
+│   ├── TASKS.md
+│   ├── DECISIONS.md
+│   ├── SESSION_LOG.md
+│   ├── RULES.md
+│   ├── NEXT_ACTION.md
+│   ├── COMMANDS.md
+│   └── START_HERE.md
+├── bin/
 └── snapshots/
 ```
 
@@ -50,24 +65,26 @@ Autorunne 是一个 **本地优先的 AI 开发工作流系统**，把任意 Git
 - Cursor：编辑器入口
 
 ## 典型工作流
-1. 在项目里运行 `autorunne init` 或 `autorunne adopt`
-2. 生成 `.autorunne/` 共享工作区
-3. 让任意 coding agent 先读取 `.autorunne/`
-4. 开发过程中持续执行 `autorunne sync`
-5. 需要正式交付时执行 `autorunne export` 或 `autorunne release`
+1. 在项目里运行 `autorunne open --with-vscode`（新仓库也可以 `autorunne init`）
+2. 如果仓库里已有旧 `.autorunne/*.md`，先执行 `autorunne migrate`
+3. 让任意 coding agent 先读取 `.autorunne/views/START_HERE.md`
+4. 开发过程中持续执行 `autorunne start / checkpoint / finish / record`
+5. 需要显式维护 backlog 时使用 `autorunne task add / done / remove`
+6. 需要正式交付时执行 `autorunne export` 或 `autorunne release`
 
 ## 当前版本定位
-当前版本已经属于 **可在真实项目里开始使用的 Alpha 产品**：
-- 已有基本命令集
-- 已能构建可安装包
+当前版本已经属于 **可在真实项目里跑通完整状态工作流的 Beta 前期产品**：
+- 已有 state-first CLI 主路径
+- 已支持 legacy markdown workspace 迁移
+- 已支持显式 task 操作与状态观测命令
+- 已能构建并发布可安装包
 - 已有 pytest 验证
-- 已支持本地开发安装和 wheel 构建
 
 ## 当前边界
 还未完成：
-- PyPI 正式发布
-- 更强的自动会话总结
-- 更强的项目扫描 / adopt 推理
+- JSON 输出模式与更深的脚本化接入
+- 更强的 release / changelog / publish 自动化
+- 更深的 monorepo 图谱感知
 - 更细的商业版功能分层
 
 ## 推荐使用场景

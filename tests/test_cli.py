@@ -171,6 +171,17 @@ def test_status_reports_missing_before_init(git_repo: Path):
     assert "PROJECT_CONTEXT.md" in result.stdout
 
 
+def test_status_prefers_explicit_state_over_scan_output(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    _run_in(python_repo, ["start", "--task", "Keep auth stable", "--next", "Custom next step"])
+
+    result = _run_in(python_repo, ["status"])
+    assert result.exit_code == 0
+    assert "Custom next step" in result.stdout
+    assert "Keep auth stable" in result.stdout
+    assert "task_started" in result.stdout
+
+
 def test_sync_appends_summary_and_updates_next_action(python_repo: Path):
     _run_in(python_repo, ["adopt"])
     initial_log = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
@@ -372,9 +383,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.6.2", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.6.3", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.2"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.3"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()

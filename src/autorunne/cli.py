@@ -18,6 +18,7 @@ from autorunne.commands import history as history_cmd
 from autorunne.commands import hooks as hooks_cmd
 from autorunne.commands import init as init_cmd
 from autorunne.commands import integrate as integrate_cmd
+from autorunne.commands import migrate as migrate_cmd
 from autorunne.commands import open as open_cmd
 from autorunne.commands import record as record_cmd
 from autorunne.commands import render as render_cmd
@@ -26,11 +27,14 @@ from autorunne.commands import show as show_cmd
 from autorunne.commands import start as start_cmd
 from autorunne.commands import status as status_cmd
 from autorunne.commands import sync as sync_cmd
+from autorunne.commands import task as task_cmd
 from autorunne.commands import trace as trace_cmd
 from autorunne.commands import vscode as vscode_cmd
 from autorunne.commands import watch as watch_cmd
 
 app = typer.Typer(help="Turn any git repository into an Autorunne workspace.")
+task_app = typer.Typer(help="Manage explicit task state inside the Autorunne workspace.")
+app.add_typer(task_app, name="task")
 console = Console()
 
 
@@ -84,6 +88,21 @@ def open(
     console.print(f"Open now: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
+
+
+@app.command()
+def migrate(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    note: str | None = typer.Option(None, help="Optional migration note to append"),
+):
+    """Convert a legacy markdown-only workspace into a state-backed workspace."""
+    result = migrate_cmd.run(_target(path), note=note)
+    if result["migrated"]:
+        console.print(f"Migrated Autorunne workspace in [bold]{result['repo_root']}[/bold]")
+        console.print(f"Next action: {result['next_action']}")
+        console.print(f"Open now: {result['start_here_path']}")
+    else:
+        console.print(f"Autorunne state workspace already active in [bold]{result['repo_root']}[/bold]")
 
 
 @app.command()
@@ -152,6 +171,42 @@ def record(
     console.print(f"Next action: {result['next_action']}")
     if result.get("decision"):
         console.print(f"Decision captured: {result['decision']}")
+
+
+@task_app.command("add")
+def task_add(
+    text: str = typer.Option(..., "--text", help="Task text to add."),
+    section: str = typer.Option("next-up", "--section", help="next-up, known-unknowns, in-progress, or completed"),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Add an explicit task item to the state workspace."""
+    result = task_cmd.add(_target(path), text=text, section=section)
+    console.print(f"Added task: {result['text']}")
+    console.print(f"Section: {result['section']}")
+
+
+@task_app.command("done")
+def task_done(
+    match: str = typer.Option(..., "--match", help="Substring used to find the task to complete."),
+    section: str = typer.Option("next-up", "--section", help="Preferred section to search first."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Mark a task as completed and move it into completed state."""
+    result = task_cmd.done(_target(path), match=match, section=section)
+    console.print(f"Completed task: {result['matched']}")
+    console.print(f"From section: {result.get('from_section', section)}")
+
+
+@task_app.command("remove")
+def task_remove(
+    match: str = typer.Option(..., "--match", help="Substring used to find the task to remove."),
+    section: str = typer.Option("next-up", "--section", help="Section to search."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Remove a task from the chosen state section."""
+    result = task_cmd.remove(_target(path), match=match, section=section)
+    console.print(f"Removed task: {result['matched']}")
+    console.print(f"From section: {result.get('from_section', section)}")
 
 
 @app.command()
@@ -301,14 +356,31 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
     table.add_column("Value")
     table.add_row("Repo", result["repo"])
     table.add_row("Autorunne root", result["workflow_root"])
+    table.add_row("Workflow mode", result.get("workflow_mode", "scan"))
     table.add_row("Stack", ", ".join(result["stack"]))
     table.add_row("Framework", ", ".join(result["framework"]))
     table.add_row("Project phase", result["project_phase"])
     table.add_row("Resume hint", result["resume_hint"])
+    table.add_row("Active task", result.get("active_task") or "none")
+    table.add_row("Last action", result.get("last_action") or "none")
+    table.add_row("Updated at", result.get("updated_at") or "unknown")
+    task_counts = result.get("task_counts", {})
+    table.add_row(
+        "Task counts",
+        f"completed={task_counts.get('completed', 0)}, in_progress={task_counts.get('in_progress', 0)}, next_up={task_counts.get('next_up', 0)}, known_unknowns={task_counts.get('known_unknowns', 0)}",
+    )
+    table.add_row("Sessions / events", f"{result.get('session_count', 0)} / {result.get('event_count', 0)}")
+    repo_integrations = result.get("repo_integrations", {})
+    tools = ", ".join(repo_integrations.get("tools", [])) or "none"
+    wrappers = ", ".join(repo_integrations.get("wrappers", [])) or "none"
+    table.add_row("Repo integrations", tools)
+    table.add_row("Repo wrappers", wrappers)
     table.add_row("Missing files", ", ".join(result["missing"]) or "none")
     table.add_row("Next action", result["next_action"])
     table.add_row("Tracked by git", str(result["workflow_tracked"]))
     console.print(table)
+    if result.get("legacy_workspace"):
+        console.print("Legacy workspace detected. Run `autorunne migrate` to convert markdown memory into `.autorunne/state/*`.")
 
 
 @app.command()
@@ -340,7 +412,7 @@ def export_command(
 
 @app.command()
 def release(
-    version: str = typer.Option(..., help="Release version, e.g. 0.6.2 or v0.6.2"),
+    version: str = typer.Option(..., help="Release version, e.g. 0.6.3 or v0.6.3"),
     path: str | None = typer.Option(None, help="Target repository path"),
     skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
 ):

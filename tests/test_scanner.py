@@ -66,3 +66,18 @@ def test_scan_repo_detects_monorepo_workspace(monorepo_repo):
 def test_recommend_next_action_prefers_bootstrap_for_greenfield_repos(git_repo):
     scan = scan_repo(git_repo)
     assert recommend_next_action(scan).startswith("Bootstrap the smallest runnable slice")
+
+
+def test_scan_repo_deprioritizes_editor_noise_in_recent_files(node_repo):
+    (node_repo / ".vscode").mkdir()
+    (node_repo / ".vscode" / "settings.json").write_text("{}\n", encoding="utf-8")
+    subprocess = __import__("subprocess")
+    subprocess.run(["git", "add", "src/index.js"], cwd=node_repo, check=True)
+    subprocess.run(["git", "commit", "-m", "seed"], cwd=node_repo, check=True, capture_output=True, text=True)
+    (node_repo / "src" / "index.js").write_text("console.log('changed')\n", encoding="utf-8")
+
+    scan = scan_repo(node_repo)
+
+    assert "src/index.js" in scan["recent_files"]
+    assert ".vscode/settings.json" not in scan["recent_files"]
+    assert "src/index.js" in scan["resume_hint"]

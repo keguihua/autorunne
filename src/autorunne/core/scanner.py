@@ -35,6 +35,15 @@ SOURCE_DIR_CANDIDATES = {
     "include",
 }
 
+LOW_SIGNAL_PATH_PREFIXES = (
+    ".vscode/",
+    ".idea/",
+    "dist/",
+    ".dist-release/",
+    ".pytest_cache/",
+    ".mypy_cache/",
+)
+
 
 def _safe_read_json(path: Path) -> dict:
     try:
@@ -57,6 +66,27 @@ def _safe_run(repo_root: Path, args: list[str]) -> str:
     if result.returncode != 0:
         return ""
     return result.stdout.strip()
+
+
+def _normalize_recent_path(candidate: str) -> str:
+    trimmed = candidate.strip()
+    normalized = trimmed.rstrip("/") or trimmed
+    if normalized.startswith("?? ") or normalized.startswith(" M "):
+        normalized = normalized[3:].strip()
+    return normalized
+
+
+def _status_candidate(line: str) -> str:
+    if len(line) > 3 and line[2] == " ":
+        return line[3:].strip()
+    if len(line) > 2:
+        return line[2:].strip()
+    return line.strip()
+
+
+def _is_low_signal_path(path: str) -> bool:
+    normalized = path.strip().rstrip("/")
+    return normalized in {".vscode", ".idea", "dist", ".dist-release"} or normalized.startswith(LOW_SIGNAL_PATH_PREFIXES)
 
 
 def _detect_node(repo_root: Path, scan: dict) -> None:
@@ -219,13 +249,17 @@ def _detect_repo_state(repo_root: Path, scan: dict) -> None:
     scan["tracked_files_count"] = len(tracked_files)
 
     recent_files_raw = _safe_run(repo_root, ["git", "status", "--short"])
-    recent_files = []
+    preferred_recent_files = []
+    low_signal_recent_files = []
     for line in recent_files_raw.splitlines():
         if not line.strip():
             continue
-        candidate = line[3:].strip() if len(line) > 3 else line.strip()
-        normalized = candidate.rstrip("/") or candidate
-        recent_files.append(normalized)
+        candidate = _status_candidate(line)
+        normalized = _normalize_recent_path(candidate)
+        bucket = low_signal_recent_files if _is_low_signal_path(normalized) else preferred_recent_files
+        if normalized and normalized not in bucket:
+            bucket.append(normalized)
+    recent_files = preferred_recent_files or low_signal_recent_files
     scan["recent_files"] = recent_files[:8]
 
     recent_commits_raw = _safe_run(repo_root, ["git", "log", "--oneline", "-3"])

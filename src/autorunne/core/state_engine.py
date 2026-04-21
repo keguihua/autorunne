@@ -74,7 +74,7 @@ def collect_git_details(repo_root: Path) -> dict[str, Any]:
         if not line:
             continue
         status_lines.append(line)
-        path = line[3:].strip() if len(line) > 3 else line.strip()
+        path = raw_line[3:].strip() if len(raw_line) > 3 and raw_line[2] == " " else raw_line[2:].strip() if len(raw_line) > 2 else line.strip()
         if path and path not in changed_files:
             changed_files.append(path)
     return {
@@ -251,8 +251,31 @@ def _import_legacy_views(repo_root: Path, state: dict[str, Any]) -> dict[str, An
     return state
 
 
+LEGACY_WORKFLOW_FILES = [
+    "PROJECT_CONTEXT.md",
+    "TASKS.md",
+    "DECISIONS.md",
+    "SESSION_LOG.md",
+    "RULES.md",
+    "NEXT_ACTION.md",
+    "COMMANDS.md",
+    "START_HERE.md",
+]
+
+
 def workflow_exists(repo_root: Path) -> bool:
     return all(state_file(repo_root, name).exists() for name in STATE_FILES)
+
+
+def legacy_workspace_exists(repo_root: Path) -> bool:
+    root = workflow_dir(repo_root)
+    if not root.exists():
+        return False
+    return any(workflow_file(repo_root, name).exists() for name in LEGACY_WORKFLOW_FILES)
+
+
+def workflow_needs_migration(repo_root: Path) -> bool:
+    return legacy_workspace_exists(repo_root) and not workflow_exists(repo_root)
 
 
 def load_workspace_state(repo_root: Path) -> dict[str, Any]:
@@ -282,6 +305,15 @@ def save_workspace_state(repo_root: Path, state: dict[str, Any]) -> None:
             "view_files": list(render_view_bundle(state).keys()),
             "last_action": state["current"].get("last_action"),
             "next_action": state["current"].get("next_action"),
+            "active_task": state["current"].get("active_task"),
+            "task_counts": {
+                "completed": len(state["tasks"].get("completed", [])),
+                "in_progress": len(state["tasks"].get("in_progress", [])),
+                "next_up": len(state["tasks"].get("next_up", [])),
+                "known_unknowns": len(state["tasks"].get("known_unknowns", [])),
+            },
+            "session_count": len(state["sessions"].get("items", [])),
+            "event_count": len(state.get("events", [])),
             "integrations": state["current"].get("integrations", {}),
         },
     )
@@ -585,6 +617,110 @@ def manual_record(
     _append_session(state, title="manual record", lines=lines, timestamp=timestamp)
     save_workspace_state(repo_root, state)
     append_event(repo_root, event_type, payload)
+    render_views(repo_root)
+    return {"state": state, "payload": payload}
+
+
+def migrate_legacy_workspace(repo_root: Path, scan: dict, *, note: str | None = None) -> dict[str, Any]:
+    if workflow_exists(repo_root):
+        return sync_workspace(repo_root, scan, action="workspace_migrated", note=note or "state workspace already exists")
+    state = _seed_state(repo_root, scan, "workspace_migrated")
+    state = _import_legacy_views(repo_root, state)
+    timestamp = utc_now()
+    lines = [
+        "Imported legacy markdown workspace into state.",
+        f"Next action: {state['current'].get('next_action', scan['next_action'])}",
+    ]
+    if note:
+        lines.append(f"Note: {note.strip()}")
+    _append_session(state, title="legacy workspace migrated", lines=lines, timestamp=timestamp)
+    save_workspace_state(repo_root, state)
+    append_event(repo_root, "workspace_migrated", {"note": note, "scan": scan})
+    render_views(repo_root)
+    return state
+
+
+def workflow_summary(repo_root: Path) -> dict[str, Any]:
+    state = load_workspace_state(repo_root)
+    current = state["current"]
+    tasks = state["tasks"]
+    integrations = current.get("integrations", {})
+    repo_integrations = integrations.get("repo", {})
+    return {
+        "repo_root": str(repo_root),
+        "repo": current.get("repo_name", repo_root.name),
+        "workflow_root": str(workflow_dir(repo_root)),
+        "next_action": current.get("next_action"),
+        "active_task": current.get("active_task"),
+        "last_action": current.get("last_action"),
+        "updated_at": current.get("updated_at"),
+        "stack": current.get("stack", []),
+        "framework": current.get("framework", []),
+        "project_phase": current.get("project_phase", "unknown"),
+        "resume_hint": current.get("resume_hint", "Confirm the next safe step first."),
+        "task_counts": {
+            "completed": len(tasks.get("completed", [])),
+            "in_progress": len(tasks.get("in_progress", [])),
+            "next_up": len(tasks.get("next_up", [])),
+            "known_unknowns": len(tasks.get("known_unknowns", [])),
+        },
+        "repo_integrations": repo_integrations,
+        "session_count": len(state["sessions"].get("items", [])),
+        "event_count": len(state.get("events", [])),
+    }
+
+
+def mutate_task_list(
+    repo_root: Path,
+    *,
+    action: str,
+    text: str | None = None,
+    match: str | None = None,
+    section: str = "next_up",
+) -> dict[str, Any]:
+    valid_sections = {"next_up", "known_unknowns", "in_progress", "completed"}
+    if section not in valid_sections:
+        raise ValueError(f"Unsupported task section: {section}")
+    state = load_workspace_state(repo_root)
+    timestamp = utc_now()
+    payload: dict[str, Any] = {"action": action, "section": section}
+    lines = [f"Action: {action}", f"Section: {section}"]
+
+    if action == "add":
+        if not text or not text.strip():
+            raise ValueError("task add requires text")
+        clean_text = text.strip()
+        status = "completed" if section == "completed" else "pending"
+        state["tasks"][section] = _dedupe_tasks([_task_item(clean_text, status=status, timestamp=timestamp, source="task"), *state["tasks"].get(section, [])])
+        payload["text"] = clean_text
+        lines.append(f"Task: {clean_text}")
+    elif action in {"done", "remove"}:
+        if not match or not match.strip():
+            raise ValueError(f"task {action} requires match")
+        matched_text = None
+        search_sections = [section] if action == "remove" else ["in_progress", "next_up", "known_unknowns", section]
+        for candidate_section in search_sections:
+            updated, matched_text = _remove_task(state["tasks"].get(candidate_section, []), match)
+            if matched_text:
+                state["tasks"][candidate_section] = updated
+                payload["from_section"] = candidate_section
+                break
+        if not matched_text:
+            raise ValueError(f"No task matched: {match}")
+        payload["matched"] = matched_text
+        lines.append(f"Matched task: {matched_text}")
+        if action == "done":
+            state["tasks"]["completed"] = _dedupe_tasks([_task_item(matched_text, status="completed", timestamp=timestamp, source="task"), *state["tasks"].get("completed", [])])
+            if state["current"].get("active_task") == matched_text:
+                state["current"]["active_task"] = None
+    else:
+        raise ValueError(f"Unsupported task action: {action}")
+
+    state["current"]["last_action"] = f"task_{action}"
+    state["current"]["updated_at"] = timestamp
+    _append_session(state, title=f"task {action}", lines=lines, timestamp=timestamp)
+    save_workspace_state(repo_root, state)
+    append_event(repo_root, f"task_{action}", payload)
     render_views(repo_root)
     return {"state": state, "payload": payload}
 
