@@ -44,8 +44,8 @@
 - `main` 已包含最新稳定功能
 - 如需打版本，创建 tag：
 ```bash
-git tag v0.5.0
-git push origin v0.5.0
+git tag v0.6.0
+git push origin v0.6.0
 ```
 - GitHub Release workflow 会自动构建并上传 wheel / sdist
 
@@ -53,7 +53,7 @@ git push origin v0.5.0
 ### 小版本（建议）
 - `0.4.1`
 - `0.4.2`
-- `0.5.0`
+- `0.6.0`
 
 适合 Autorunne 这种快速产品化节奏：
 - 小步快跑

@@ -38,6 +38,7 @@ Autorunne is built for the harder problem:
 - a chat wrapper with no durable project state
 
 ## Documentation
+- [中文操作手册（新手安装与使用）](docs/Autorunne-操作手册-ZH.md)
 - [中文使用说明](docs/Autorunne-Usage-ZH.md)
 - [English usage guide](docs/Autorunne-Usage-EN.md)
 - [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
@@ -85,16 +86,15 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.5.0**
+**0.6.0**
 
-### New in 0.5.0
-- adds `autorunne open` to auto-bootstrap missing workflow memory or resume existing repos immediately
-- adds `autorunne daemon` for an open-first local background loop that keeps auto-syncing changed repos
-- adds `autorunne hermes-task` so Hermes chat tasks can be written directly into local workflow memory
-- upgrades VS Code folder-open automation to call `autorunne open` instead of a plain sync
-- adds project phase detection, recent git signal detection, and resume hints for half-finished repos
-- refreshes `START_HERE.md`, `PROJECT_CONTEXT.md`, and `COMMANDS.md` for low-prompt / near-zero-prompt handoff
-- keeps release bundles clean with a `MANIFEST.json`
+### New in 0.6.0
+- adds a clearer public install flow with `scripts/install.sh`
+- adds pinned public release-wheel install support
+- adds daemon `--max-syncs` so the loop can stop after the first meaningful auto-sync
+- adds changed-file reporting in daemon output
+- adds a GitHub-visible Chinese operator manual for installation and daily use
+- clarifies the real workflow: install Autorunne once, initialize each repo once, then launch Codex / Claude Code directly from the repo terminal
 
 ### Previously added in 0.3.0
 - `autorunne release`
@@ -143,6 +143,12 @@ This project is built around four product directions:
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | bash
 ```
 
+### Install a pinned public release wheel with pipx
+```bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.0 bash
+```
+
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
 
 ```bash
@@ -150,6 +156,8 @@ autorunne open --with-vscode
 ```
 
 Then just open the repo. Autorunne will auto-bootstrap or resume on open, and `.autorunne/START_HERE.md` becomes the agent entry point for Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
+
+**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you can open VS Code and launch Codex or Claude Code directly from that repo terminal. You do **not** need to keep a separate Autorunne window open unless you explicitly want `autorunne daemon` running.
 
 ### Option A — local development install
 ```bash
@@ -162,7 +170,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.5.0-py3-none-any.whl
+pip install autorunne-0.6.0-py3-none-any.whl
 ```
 
 ### Option C — install directly with pipx once published
@@ -207,6 +215,7 @@ autorunne open --with-vscode
 ### Keep a repo warm locally
 ```bash
 autorunne daemon --duration 300 --interval 2
+autorunne daemon --duration 300 --interval 2 --max-syncs 1
 ```
 
 ### Push a Hermes chat task straight into local workflow memory
@@ -256,7 +265,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.5.0
+autorunne release --version 0.6.0
 ```
 
 ---
@@ -295,7 +304,11 @@ Run an open-first loop that bootstraps or resumes once, then keeps auto-syncing 
 
 ```bash
 autorunne daemon --duration 300 --interval 2
+autorunne daemon --duration 300 --interval 2 --max-syncs 1
 ```
+
+- `--max-syncs 1` is useful when you want the daemon to stop after the first meaningful auto-sync.
+- Daemon output now shows the last changed files it synced.
 
 ### `autorunne hermes-task`
 Capture a task from a Hermes chat entry and write it straight into `.autorunne/`.
@@ -500,7 +513,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.5.0
+## Roadmap after 0.6.0
 - publish to PyPI
 - public `pipx` install flow
 - smarter file watcher / daemon mode

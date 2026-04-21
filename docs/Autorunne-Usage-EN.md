@@ -9,14 +9,13 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.5.0
-- adds `autorunne open` so entering a repo can auto-detect and adopt half-finished workspaces
-- auto-bootstraps `.autorunne/` when workflow memory is missing
-- auto-refreshes and resumes existing workflow memory on every open
-- adds `autorunne daemon` for a local open-first loop that keeps repos warm
-- adds `autorunne hermes-task` so Hermes chat tasks can be written directly into local workflow memory
-- upgrades VS Code folder-open automation to call `autorunne open`
-- adds project phase detection, recent git signals, and resume hints
+## 2. Core upgrades in 0.6.0
+- improves `scripts/install.sh` for cleaner public installation
+- supports pinned public release-wheel installs
+- adds `--max-syncs` to `autorunne daemon`
+- shows the last changed files in daemon output
+- adds a GitHub-visible Chinese operator manual for installation and daily use
+- clarifies the real day-to-day workflow: install Autorunne once, initialize each repo once, then launch Codex or Claude Code directly from the repo terminal
 
 ## 3. Supported languages / project types
 ### Web / app / service
@@ -69,7 +68,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.5.0-py3-none-any.whl
+pip install autorunne-0.6.0-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -148,7 +147,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.5.0
+autorunne release --version 0.6.0
 ```
 
 ### Install hooks and pre-commit support

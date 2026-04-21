@@ -173,12 +173,15 @@ def daemon(
     path: str | None = typer.Option(None, help="Target repository path"),
     duration: float = typer.Option(30.0, help="How long to keep the daemon loop alive in seconds."),
     interval: float = typer.Option(1.0, help="Polling interval in seconds."),
+    max_syncs: int = typer.Option(0, min=0, help="Stop after this many auto-syncs. Use 0 to keep the loop only time-bound."),
 ):
     """Run an open-first background loop that bootstraps/resumes then auto-syncs changes."""
-    result = daemon_cmd.run(_target(path), duration=duration, interval=interval)
+    result = daemon_cmd.run(_target(path), duration=duration, interval=interval, max_syncs=max_syncs or None)
     console.print(f"Autorunne daemon started from: {result['action']}")
     console.print(f"Ticks: {result['ticks']}")
     console.print(f"Auto-syncs: {result['syncs']}")
+    if result.get("last_changed_files"):
+        console.print(f"Last changed files: {', '.join(result['last_changed_files'])}")
     console.print(f"Next action: {result['next_action']}")
 
 
@@ -247,7 +250,7 @@ def export_command(
 
 @app.command()
 def release(
-    version: str = typer.Option(..., help="Release version, e.g. 0.5.0 or v0.5.0"),
+    version: str = typer.Option(..., help="Release version, e.g. 0.6.0 or v0.6.0"),
     path: str | None = typer.Option(None, help="Target repository path"),
     skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
 ):

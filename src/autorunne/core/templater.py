@@ -118,6 +118,7 @@ Autorunne is built to work with **Claude Code**, **Codex**, **Gemini**, **Hermes
 - Run `autorunne open` whenever you enter this repo.
 - In VS Code, install the generated workspace task once so folder open can trigger Autorunne automatically.
 - Autorunne will bootstrap `.autorunne/` for half-finished repos and refresh existing memory on every open.
+- You can launch Codex or Claude Code directly from this repo terminal after that; Autorunne does not need its own extra window unless you want daemon mode.
 
 ## Read these files first
 - `PROJECT_CONTEXT.md`

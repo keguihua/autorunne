@@ -96,6 +96,21 @@ def test_daemon_bootstraps_then_auto_syncs_on_change(node_repo: Path):
     assert "daemon auto-sync" in log_text
 
 
+def test_daemon_reports_changed_files_and_can_stop_after_max_syncs(node_repo: Path):
+    def mutate_file_once():
+        time.sleep(0.2)
+        (node_repo / "src" / "index.js").write_text("console.log('daemon changed once')\n", encoding="utf-8")
+
+    thread = threading.Thread(target=mutate_file_once)
+    thread.start()
+    result = _run_in(node_repo, ["daemon", "--duration", "2", "--interval", "0.1", "--max-syncs", "1"])
+    thread.join()
+    assert result.exit_code == 0
+    assert "Auto-syncs: 1" in result.stdout
+    assert "Last changed files:" in result.stdout
+    assert "src/index.js" in result.stdout
+
+
 def test_hermes_task_bootstraps_repo_and_writes_task_context(python_repo: Path):
     result = _run_in(
         python_repo,
@@ -347,9 +362,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.5.0", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.6.0", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.5.0"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.0"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()
