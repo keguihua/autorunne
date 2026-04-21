@@ -14,6 +14,8 @@ def summarize_status(repo_root: Path, scan: dict) -> dict:
         "SESSION_LOG.md",
         "RULES.md",
         "NEXT_ACTION.md",
+        "COMMANDS.md",
+        "START_HERE.md",
         "config.json",
     ]
     present = [name for name in expected if (root / name).exists()]

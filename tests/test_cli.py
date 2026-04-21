@@ -35,8 +35,13 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     result = _run_in(node_repo, ["adopt"])
     assert result.exit_code == 0
     content = (node_repo / ".autorunne" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+    commands_text = (node_repo / ".autorunne" / "COMMANDS.md").read_text(encoding="utf-8")
+    start_here_text = (node_repo / ".autorunne" / "START_HERE.md").read_text(encoding="utf-8")
     assert "Stack: node" in content
     assert "Framework: react, vite" in content
+    assert "npm test" in commands_text
+    assert "Claude Code" in start_here_text
+    assert "Gemini" in start_here_text
 
 
 def test_init_can_install_vscode_workspace_integration(git_repo: Path):
@@ -81,14 +86,138 @@ def test_sync_appends_summary_and_updates_next_action(python_repo: Path):
 def test_sync_without_note_appends_automatic_session_entry(python_repo: Path):
     _run_in(python_repo, ["adopt"])
     initial_log = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    decisions_path = python_repo / ".autorunne" / "DECISIONS.md"
+    tasks_path = python_repo / ".autorunne" / "TASKS.md"
+    decisions_path.write_text(
+        decisions_path.read_text(encoding="utf-8") + "\n## Team decisions\n- Keep auth middleware tiny.\n",
+        encoding="utf-8",
+    )
+    tasks_path.write_text(
+        tasks_path.read_text(encoding="utf-8") + "\n- [ ] Keep this manual task\n",
+        encoding="utf-8",
+    )
 
     result = _run_in(python_repo, ["sync"])
     assert result.exit_code == 0
 
     log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    decisions_text = decisions_path.read_text(encoding="utf-8")
+    tasks_text = tasks_path.read_text(encoding="utf-8")
     assert log_text != initial_log
     assert "sync summary" in log_text.lower()
     assert "Next action:" in log_text
+    assert "Keep auth middleware tiny." in decisions_text
+    assert "Keep this manual task" in tasks_text
+
+
+def test_start_creates_in_progress_task_and_checkpoint_updates_next_action(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+
+    start_result = _run_in(
+        python_repo,
+        ["start", "--task", "Implement billing webhook", "--next", "Write webhook contract tests"],
+    )
+    assert start_result.exit_code == 0
+
+    checkpoint_result = _run_in(
+        python_repo,
+        ["checkpoint", "--summary", "Mapped webhook payloads", "--next", "Implement handler wiring"],
+    )
+    assert checkpoint_result.exit_code == 0
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+
+    assert "- [ ] Implement billing webhook" in tasks_text
+    assert "- [ ] Implement handler wiring" in tasks_text
+    assert "Implement handler wiring" in next_action_text
+    assert "start task" in log_text.lower()
+    assert "checkpoint" in log_text.lower()
+    assert "Mapped webhook payloads" in log_text
+
+
+def test_finish_can_run_validation_command_and_record_result(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Kept tests green", "--validate", "pytest -q", "--next", "Ship changelog"],
+    )
+    assert result.exit_code == 0
+
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert "Validation command: pytest -q" in log_text
+    assert "Validation result: passed" in log_text
+    assert "Validation: passed" in result.stdout
+
+
+def test_finish_fails_when_validation_command_fails(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Tried to finish", "--validate", "python -c \"import sys; sys.exit(1)\""],
+    )
+    assert result.exit_code == 1
+    assert "Validation failed" in result.stdout
+
+
+def test_finish_appends_summary_and_updates_next_action(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    tasks_path = python_repo / ".autorunne" / "TASKS.md"
+    tasks_path.write_text(
+        "# Tasks\n\n## Completed / inferred\n- Detected stack: python\n\n## In progress\n- [ ] Review dashboard filters\n\n## Next up\n- [ ] Polish billing copy\n\n## Known unknowns\n- [ ] Confirm deployment flow\n",
+        encoding="utf-8",
+    )
+    (python_repo / "src" / "app.py").write_text("print('changed')\n", encoding="utf-8")
+    result = _run_in(
+        python_repo,
+        [
+            "finish",
+            "--summary",
+            "Implemented auth fix",
+            "--task",
+            "Review dashboard filters",
+            "--next",
+            "Ship release notes",
+            "--decision",
+            "Dashboard filters now reuse the shared auth state.",
+        ],
+    )
+    assert result.exit_code == 0
+
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+    tasks_text = tasks_path.read_text(encoding="utf-8")
+    decisions_text = (python_repo / ".autorunne" / "DECISIONS.md").read_text(encoding="utf-8")
+
+    assert "finish summary" in log_text.lower()
+    assert "Implemented auth fix" in log_text
+    assert "Ship release notes" in log_text
+    assert "Files changed:" in log_text
+    assert "src/app.py" in log_text
+    assert "Ship release notes" in next_action_text
+    assert "- [x] Review dashboard filters" in tasks_text
+    assert "- [ ] Ship release notes" in tasks_text
+    assert "- [ ] Polish billing copy" in tasks_text
+    assert "Dashboard filters now reuse the shared auth state." in decisions_text
+    assert "Matched task:" in result.stdout
+    assert "Decision captured:" in result.stdout
+
+
+def test_finish_without_next_reuses_existing_next_action_and_updates_tasks(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+    existing_next_action = next_action_text.strip().splitlines()[-1]
+
+    result = _run_in(python_repo, ["finish", "--summary", "Closed billing edge case"])
+    assert result.exit_code == 0
+
+    updated_tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    updated_next_action = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+
+    assert "- [x] Closed billing edge case" in updated_tasks_text
+    assert f"- [ ] {existing_next_action}" in updated_tasks_text
+    assert existing_next_action in updated_next_action
 
 
 def test_watch_detects_file_changes_and_syncs(node_repo: Path):

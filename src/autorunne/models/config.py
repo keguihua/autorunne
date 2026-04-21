@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class WorkflowConfig(BaseModel):
-    version: str = "0.3.0"
+    version: str = "0.4.0"
     workflow_dir: str = ".autorunne"
     export_dir: str = ".dist-release"
     excluded_paths: list[str] = Field(
@@ -19,6 +19,7 @@ class WorkflowConfig(BaseModel):
         ]
     )
     preferred_agent: str = "common"
+    auto_validate_on_finish: bool = True
 
     @property
     def workflow_path(self) -> Path:

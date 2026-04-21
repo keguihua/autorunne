@@ -3,21 +3,45 @@
 [![CI](https://github.com/keguihua/autorunne/actions/workflows/ci.yml/badge.svg)](https://github.com/keguihua/autorunne/actions/workflows/ci.yml)
 [![Release Packages](https://github.com/keguihua/autorunne/actions/workflows/release.yml/badge.svg)](https://github.com/keguihua/autorunne/actions/workflows/release.yml)
 
-**Make any repository AI-ready for local development, while keeping release output clean.**
+**Turn any Git repository into a durable AI coding workspace for Claude Code, Codex, and Gemini.**
 
-`autorunne` is a local-first workflow CLI for Claude Code, Codex, Hermes, Cursor, and similar coding agents. It gives every repo a shared workflow core:
+Autorunne is a **local-first workflow CLI** for people already building with coding agents but who are tired of losing project state between sessions.
+
+It gives every repo a shared workflow core:
 - project context
 - tasks
 - decisions
 - session history
 - next action
-- per-agent adapter instructions
+- agent-ready entry docs
 
 At the same time, it keeps `.autorunne/` out of the formal release version.
+
+## Why it is different
+Most AI coding tools help write code once.
+
+Autorunne is built for the harder problem:
+- resuming work tomorrow without re-explaining the repo
+- handing the same repo from Claude Code to Codex or Gemini
+- keeping project memory local instead of trapped in one chat window
+- finishing work cleanly with start → checkpoint → finish
+- separating internal AI workflow state from the shipped product
+
+## Best fit
+- solo builders shipping client work
+- developers using multiple coding-agent tools
+- teams that want a simple repo-local memory layer, not a heavy AI platform
+
+## Not trying to be
+- a replacement IDE
+- a giant autonomous-agent platform
+- a chat wrapper with no durable project state
 
 ## Documentation
 - [中文使用说明](docs/Autorunne-Usage-ZH.md)
 - [English usage guide](docs/Autorunne-Usage-EN.md)
+- [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
+- [Autorunne 发布与合并策略](docs/Autorunne-Release-Playbook-ZH.md)
 - [Autorunne 产品说明书](docs/Autorunne-产品说明书-ZH.md)
 - [Autorunne 商业计划书](docs/Autorunne-商业计划书-ZH.md)
 - [Autorunne 对外定位与销售话术](docs/Autorunne-对外定位与销售话术-ZH.md)
@@ -111,6 +135,19 @@ This project is built around four product directions:
 
 ## Install
 
+### Fastest install for VS Code terminal users
+```bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | bash
+```
+
+This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
+
+```bash
+autorunne adopt --with-vscode
+```
+
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini and continue coding.
+
 ### Option A — local development install
 ```bash
 git clone https://github.com/keguihua/autorunne.git
@@ -125,7 +162,7 @@ pip install -e .[dev]
 pip install autorunne-0.4.0-py3-none-any.whl
 ```
 
-### Planned public install path
+### Option C — install directly with pipx once published
 ```bash
 pipx install autorunne
 ```
@@ -164,9 +201,26 @@ autorunne adopt
 autorunne adopt --with-vscode
 ```
 
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini.
+
+### Start a focused task
+```bash
+autorunne start --task "Implement billing webhook" --next "Write webhook contract tests"
+```
+
+### Save a checkpoint during development
+```bash
+autorunne checkpoint --summary "Mapped webhook payloads" --next "Implement handler wiring"
+```
+
 ### Refresh after meaningful work
 ```bash
 autorunne sync --note "Finished auth fix, next handle dashboard filters"
+```
+
+### Close one slice cleanly
+```bash
+autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
 ```
 
 ### Watch local changes and auto-sync
@@ -210,7 +264,34 @@ autorunne adopt --with-vscode
 ```
 
 ### `autorunne sync`
-Refresh workflow state and append a manual note.
+Refresh workflow state, keep your manual memory docs intact, and append a manual note.
+
+### `autorunne start`
+Open a new task slice and put it into `TASKS.md`.
+
+```bash
+autorunne start --task "Implement billing webhook" --next "Write webhook contract tests"
+```
+
+### `autorunne checkpoint`
+Save progress mid-task without closing the task.
+
+```bash
+autorunne checkpoint --summary "Mapped webhook payloads" --next "Implement handler wiring"
+```
+
+### `autorunne finish`
+Close a real task, append a completion summary, optionally capture a durable decision, and run validation before setting the next action.
+
+```bash
+autorunne finish --summary "Implemented auth fix" --task "Review dashboard filters" --next "Ship release notes" --decision "Dashboard filters now reuse shared auth state"
+```
+
+To force a specific validation command:
+
+```bash
+autorunne finish --summary "Kept tests green" --validate "pytest -q" --next "Ship changelog"
+```
 
 ### `autorunne watch`
 Watch the repository for file changes and auto-run sync.
@@ -270,6 +351,8 @@ autorunne completion fish
 ├── SESSION_LOG.md
 ├── RULES.md
 ├── NEXT_ACTION.md
+├── COMMANDS.md
+├── START_HERE.md
 ├── agents/
 │   ├── common.md
 │   ├── claude-code.md
