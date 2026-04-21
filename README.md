@@ -178,6 +178,11 @@ pip install autorunne-0.6.0-py3-none-any.whl
 pipx install autorunne
 ```
 
+### PyPI publishing status
+- GitHub release publishing is already live
+- GitHub Actions is now prepared for PyPI trusted publishing on version tags
+- Once the PyPI project/trusted publisher is connected, `pipx install autorunne` becomes the clean public install path
+
 ---
 
 ## Build installable packages
@@ -211,6 +216,8 @@ autorunne open
 ```bash
 autorunne open --with-vscode
 ```
+
+Run this once for each new repo. After that, opening the same repo in VS Code automatically refreshes `.autorunne/` memory and task state, so you can launch Codex / Claude Code and continue immediately.
 
 ### Keep a repo warm locally
 ```bash

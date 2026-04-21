@@ -42,11 +42,21 @@
 
 ### 发布面
 - `main` 已包含最新稳定功能
-- 如需打版本，创建 tag：
+## 4. tag 发布动作
 ```bash
 git tag v0.6.0
 git push origin v0.6.0
 ```
+
+如果已经在 PyPI 侧配置好 trusted publisher，那么推送版本 tag 后会同时触发：
+- GitHub Release 资产上传
+- PyPI 发布
+
+也就是说未来的标准对外发布动作可以收敛成：
+1. 合并到 `main`
+2. 本地确认测试 / build 通过
+3. `git tag vX.Y.Z`
+4. `git push origin vX.Y.Z`
 - GitHub Release workflow 会自动构建并上传 wheel / sdist
 
 ## 4. 推荐发布节奏

@@ -97,6 +97,11 @@ autorunne open --with-vscode
 
 **这一步每个仓库通常只要做一次。**
 
+后面同一个仓库你再次打开时：
+- VS Code 会自动触发 `autorunne open`
+- `.autorunne/` 里的记忆、任务、下一步状态会自动 refresh
+- 你直接开 Codex / Claude Code 就能接着做
+
 ---
 
 ## 四、之后日常怎么用
@@ -266,11 +271,16 @@ autorunne open --with-vscode
 ```
 
 ### 第三步：以后直接开发
-
+### 第三步：以后正常开发
 - 打开 VS Code
 - 打开仓库
 - 直接开 Codex / Claude Code
-- 不需要额外再开 Autorunne 窗口
+- 不需要额外再开一个 Autorunne 窗口
+
+也就是说，你要的效果就是：
+- **每个新仓库第一次手动接入一次**
+- **后面再开同一个仓库基本自动恢复**
+- **你直接开始开发就行**
 
 ---
 
