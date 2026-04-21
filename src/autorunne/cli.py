@@ -14,13 +14,19 @@ from autorunne.commands import doctor as doctor_cmd
 from autorunne.commands import export as export_cmd
 from autorunne.commands import finish as finish_cmd
 from autorunne.commands import hermes_task as hermes_task_cmd
+from autorunne.commands import history as history_cmd
 from autorunne.commands import hooks as hooks_cmd
 from autorunne.commands import init as init_cmd
+from autorunne.commands import integrate as integrate_cmd
 from autorunne.commands import open as open_cmd
+from autorunne.commands import record as record_cmd
+from autorunne.commands import render as render_cmd
 from autorunne.commands import release as release_cmd
+from autorunne.commands import show as show_cmd
 from autorunne.commands import start as start_cmd
 from autorunne.commands import status as status_cmd
 from autorunne.commands import sync as sync_cmd
+from autorunne.commands import trace as trace_cmd
 from autorunne.commands import vscode as vscode_cmd
 from autorunne.commands import watch as watch_cmd
 
@@ -81,6 +87,74 @@ def open(
 
 
 @app.command()
+def render(path: str | None = typer.Option(None, help="Target repository path")):
+    """Rebuild rendered views from `.autorunne/state/*`."""
+    result = render_cmd.run(_target(path))
+    console.print(f"Rendered views for [bold]{result['repo_root']}[/bold]")
+
+
+@app.command()
+def integrate(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    tool: str = typer.Option("all", help="codex, claude, hermes, or all"),
+    scope: str = typer.Option("repo", help="repo or user"),
+):
+    """Install repo/user integration files and wrappers."""
+    result = integrate_cmd.run(_target(path), tool=tool, scope=scope)
+    console.print(f"Installed integrations ({result['scope']}): {', '.join(result['tools'])}")
+    if result.get("wrappers"):
+        console.print(f"Wrappers: {', '.join(result['wrappers'])}")
+
+
+@app.command()
+def show(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    section: str = typer.Option("all", help="current, tasks, decisions, sessions, events, or all"),
+):
+    """Show a structured slice of Autorunne state."""
+    result = show_cmd.run(_target(path), section=section)
+    console.print(result["data"])
+
+
+@app.command()
+def history(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    limit: int = typer.Option(20, min=1, help="How many session entries to show."),
+):
+    """Show recent session history from state."""
+    result = history_cmd.run(_target(path), limit=limit)
+    console.print(result["items"])
+
+
+@app.command()
+def trace(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    limit: int = typer.Option(20, min=1, help="How many events to show."),
+    event_type: str | None = typer.Option(None, "--event-type", help="Optional event type filter."),
+):
+    """Show recent state events."""
+    result = trace_cmd.run(_target(path), limit=limit, event_type=event_type)
+    console.print(result["items"])
+
+
+@app.command()
+def record(
+    summary: str = typer.Option(..., help="Short durable note to add to state history."),
+    next: str | None = typer.Option(None, "--next", help="Optional next action override."),
+    task: str | None = typer.Option(None, "--task", help="Optional task to insert into next-up."),
+    decision: str | None = typer.Option(None, "--decision", help="Optional durable decision to append."),
+    event_type: str = typer.Option("manual_recorded", help="Custom event type for the record entry."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Record a manual state note without running a sync or finish."""
+    result = record_cmd.run(_target(path), summary=summary, next_action=next, task=task, decision=decision, event_type=event_type)
+    console.print(f"Recorded: {result['summary']}")
+    console.print(f"Next action: {result['next_action']}")
+    if result.get("decision"):
+        console.print(f"Decision captured: {result['decision']}")
+
+
+@app.command()
 def sync(
     path: str | None = typer.Option(None, help="Target repository path"),
     note: str | None = typer.Option(None, help="Optional session note to append"),
@@ -107,12 +181,28 @@ def start(
 def checkpoint(
     summary: str = typer.Option(..., help="Short progress note for the current task."),
     next: str | None = typer.Option(None, "--next", help="Optional next action to update immediately."),
+    validate: str | None = typer.Option(None, "--validate", help="Optional validation command to run before checkpoint succeeds."),
+    no_validate: bool = typer.Option(False, "--no-validate", help="Skip automatic validation for this checkpoint call."),
     path: str | None = typer.Option(None, help="Target repository path"),
 ):
     """Save progress without closing the current task."""
-    result = checkpoint_cmd.run(_target(path), summary=summary, next_action=next)
+    try:
+        result = checkpoint_cmd.run(
+            _target(path),
+            summary=summary,
+            next_action=next,
+            validation_command=validate,
+            skip_validation=no_validate,
+        )
+    except checkpoint_cmd.FinishValidationError as exc:
+        console.print(f"Validation failed: {exc.command}")
+        if exc.output:
+            console.print(exc.output)
+        raise typer.Exit(1)
     console.print(f"Checkpoint: {result['summary']}")
     console.print(f"Next action: {result['next_action']}")
+    if result.get("validation"):
+        console.print(f"Validation: {result['validation']['status']} ({result['validation']['command']})")
 
 
 @app.command()
@@ -250,7 +340,7 @@ def export_command(
 
 @app.command()
 def release(
-    version: str = typer.Option(..., help="Release version, e.g. 0.6.1 or v0.6.1"),
+    version: str = typer.Option(..., help="Release version, e.g. 0.6.2 or v0.6.2"),
     path: str | None = typer.Option(None, help="Target repository path"),
     skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
 ):

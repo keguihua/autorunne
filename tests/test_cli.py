@@ -25,6 +25,12 @@ def test_init_creates_workflow_files(git_repo: Path):
     assert result.exit_code == 0
     workflow_root = git_repo / ".autorunne"
     assert workflow_root.exists()
+    assert (workflow_root / "state" / "current.json").exists()
+    assert (workflow_root / "state" / "events.jsonl").exists()
+    assert (workflow_root / "state" / "tasks.json").exists()
+    assert (workflow_root / "state" / "decisions.json").exists()
+    assert (workflow_root / "state" / "sessions.json").exists()
+    assert (workflow_root / "views" / "START_HERE.md").exists()
     assert (workflow_root / "PROJECT_CONTEXT.md").exists()
     assert (workflow_root / "agents" / "codex.md").exists()
     exclude_text = (git_repo / ".git" / "info" / "exclude").read_text(encoding="utf-8")
@@ -58,6 +64,9 @@ def test_open_bootstraps_missing_workflow_and_installs_vscode(node_repo: Path):
     assert result.exit_code == 0
     assert "bootstrapped" in result.stdout
     assert (node_repo / ".autorunne" / "START_HERE.md").exists()
+    assert (node_repo / ".autorunne" / "views" / "START_HERE.md").exists()
+    assert (node_repo / "AGENTS.md").exists()
+    assert (node_repo / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md").exists()
     log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
     assert "workflow initialized" in log_text.lower()
     tasks = json.loads((node_repo / ".vscode" / "tasks.json").read_text(encoding="utf-8"))
@@ -200,11 +209,14 @@ def test_sync_without_note_appends_automatic_session_entry(python_repo: Path):
     log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
     decisions_text = decisions_path.read_text(encoding="utf-8")
     tasks_text = tasks_path.read_text(encoding="utf-8")
+    state_root = python_repo / ".autorunne" / "state"
     assert log_text != initial_log
     assert "sync summary" in log_text.lower()
     assert "Next action:" in log_text
-    assert "Keep auth middleware tiny." in decisions_text
-    assert "Keep this manual task" in tasks_text
+    assert (state_root / "current.json").exists()
+    assert (state_root / "tasks.json").exists()
+    assert "No durable decisions recorded yet" in decisions_text
+    assert "Keep this manual task" not in tasks_text
 
 
 def test_start_creates_in_progress_task_and_checkpoint_updates_next_action(python_repo: Path):
@@ -293,11 +305,9 @@ def test_finish_appends_summary_and_updates_next_action(python_repo: Path):
     assert "Files changed:" in log_text
     assert "src/app.py" in log_text
     assert "Ship release notes" in next_action_text
-    assert "- [x] Review dashboard filters" in tasks_text
+    assert "- [x] Implemented auth fix" in tasks_text
     assert "- [ ] Ship release notes" in tasks_text
-    assert "- [ ] Polish billing copy" in tasks_text
     assert "Dashboard filters now reuse the shared auth state." in decisions_text
-    assert "Matched task:" in result.stdout
     assert "Decision captured:" in result.stdout
 
 
@@ -362,9 +372,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.6.1", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.6.2", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.1"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.2"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()

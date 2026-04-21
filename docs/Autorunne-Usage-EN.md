@@ -9,13 +9,14 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.1
-- improves `scripts/install.sh` for cleaner public installation
-- supports pinned public release-wheel installs
-- adds `--max-syncs` to `autorunne daemon`
-- shows the last changed files in daemon output
-- adds a GitHub-visible Chinese operator manual for installation and daily use
-- clarifies the real day-to-day workflow: install Autorunne once, initialize each repo once, then launch Codex or Claude Code directly from the repo terminal
+## 2. Core upgrades in 0.6.2
+- promotes `.autorunne/state/*` to the only source of truth
+- turns `.autorunne/views/*.md` into renderable views instead of mutable state
+- routes `open / start / checkpoint / finish / sync / hermes-task` through the state engine
+- adds repo-level integrations: `AGENTS.md`, `.agents/.../SKILL.md`, `.claude/.../SKILL.md`
+- adds wrapper entrypoints: `ar-codex`, `ar-claude`, `ar-hermes`
+- adds observability commands: `record`, `render`, `show`, `history`, `trace`
+- extends `doctor` to check state, views, snapshot, integrations, wrappers, and render rebuildability
 
 ## 3. Supported languages / project types
 ### Web / app / service
@@ -62,7 +63,7 @@ After install, enter your repo and run:
 autorunne open --with-vscode
 ```
 
-After that, just open the repo normally. Autorunne will auto-bootstrap or resume on open, and `.autorunne/START_HERE.md` remains the clean agent entry point.
+After that, just open the repo normally. Autorunne will auto-bootstrap or resume on open, and `.autorunne/views/START_HERE.md` remains the clean agent entry point.
 
 ### Development install
 ```bash
@@ -73,7 +74,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.1-py3-none-any.whl
+pip install autorunne-0.6.2-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -140,6 +141,15 @@ autorunne finish --summary "Kept tests green" --validate "pytest -q" --next "Shi
 autorunne watch --duration 60 --interval 1
 ```
 
+### Additional state visibility commands
+```bash
+autorunne record --summary "Capture an API note" --next "Document trace flow"
+autorunne render
+autorunne show --section current
+autorunne history --limit 5
+autorunne trace --limit 10
+```
+
 ### Validate workflow health
 ```bash
 autorunne doctor
@@ -152,7 +162,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.6.1
+autorunne release --version 0.6.2
 ```
 
 ### Install hooks and pre-commit support
@@ -168,14 +178,25 @@ autorunne completion zsh
 ## 6. Generated structure
 ```text
 .autorunne/
-├── PROJECT_CONTEXT.md
-├── TASKS.md
-├── DECISIONS.md
-├── SESSION_LOG.md
-├── RULES.md
-├── NEXT_ACTION.md
-├── COMMANDS.md
-├── START_HERE.md
+├── state/
+│   ├── current.json
+│   ├── events.jsonl
+│   ├── tasks.json
+│   ├── decisions.json
+│   └── sessions.json
+├── views/
+│   ├── PROJECT_CONTEXT.md
+│   ├── TASKS.md
+│   ├── DECISIONS.md
+│   ├── SESSION_LOG.md
+│   ├── RULES.md
+│   ├── NEXT_ACTION.md
+│   ├── COMMANDS.md
+│   └── START_HERE.md
+├── bin/
+│   ├── ar-codex
+│   ├── ar-claude
+│   └── ar-hermes
 ├── agents/
 │   ├── common.md
 │   ├── claude-code.md
@@ -185,6 +206,10 @@ autorunne completion zsh
 │   └── copilot.md
 └── snapshots/
     └── latest.json
+
+AGENTS.md
+.agents/skills/autorunne-workflow/SKILL.md
+.claude/skills/autorunne-workflow/SKILL.md
 ```
 
 ## 7. VS Code auto integration

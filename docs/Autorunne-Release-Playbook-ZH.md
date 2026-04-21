@@ -37,15 +37,15 @@
 ### 产品体验
 - README 顶部安装命令可直接复制
 - `autorunne open --with-vscode` 路径正常
-- `.autorunne/START_HERE.md` 能被 Claude Code / Codex / Gemini 正常使用
+- `.autorunne/views/START_HERE.md` 能被 Claude Code / Codex / Gemini 正常使用
 - `start / checkpoint / finish` 工作流能走通
 
 ### 发布面
 - `main` 已包含最新稳定功能
 ## 4. tag 发布动作
 ```bash
-git tag v0.6.1
-git push origin v0.6.1
+git tag v0.6.2
+git push origin v0.6.2
 ```
 
 如果已经在 PyPI 侧配置好 trusted publisher，那么推送版本 tag 后会同时触发：
@@ -63,7 +63,7 @@ git push origin v0.6.1
 ### 小版本（建议）
 - `0.4.1`
 - `0.4.2`
-- `0.6.1`
+- `0.6.2`
 
 适合 Autorunne 这种快速产品化节奏：
 - 小步快跑

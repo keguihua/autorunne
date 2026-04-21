@@ -9,7 +9,7 @@ Autorunne 不是新的大模型，也不是重型 AI IDE。
 - 把阶段性决策写成本地文件
 - 把每轮开发的开始、检查点、收尾写成本地文件
 
-这样 Claude Code、Codex、Gemini、Hermes、Cursor、GitHub Copilot 这些窗口不需要“凭聊天记忆硬记住项目”，而是直接读取 `.autorunne/`。
+这样 Claude Code、Codex、Gemini、Hermes、Cursor、GitHub Copilot 这些窗口不需要“凭聊天记忆硬记住项目”，而是直接读取 `.autorunne/state/*` 和 `.autorunne/views/*`。
 
 ## 2. 核心工作方式
 当你在 VS Code 里打开一个项目后：
@@ -19,14 +19,17 @@ Autorunne 不是新的大模型，也不是重型 AI IDE。
 autorunne open --with-vscode
 ```
 
-之后普通打开 VS Code 工作区时，Autorunne 就会自动进入工作状态，并自动准备这些文件：
-- `PROJECT_CONTEXT.md`
-- `TASKS.md`
-- `DECISIONS.md`
-- `SESSION_LOG.md`
-- `NEXT_ACTION.md`
-- `COMMANDS.md`
-- `START_HERE.md`
+之后普通打开 VS Code 工作区时，Autorunne 就会自动进入工作状态，并自动准备这些内容：
+- `.autorunne/state/*`
+- `.autorunne/views/PROJECT_CONTEXT.md`
+- `.autorunne/views/TASKS.md`
+- `.autorunne/views/DECISIONS.md`
+- `.autorunne/views/SESSION_LOG.md`
+- `.autorunne/views/NEXT_ACTION.md`
+- `.autorunne/views/COMMANDS.md`
+- `.autorunne/views/START_HERE.md`
+- `AGENTS.md`
+- repo-level skills / wrappers
 
 ### 第二步：把 `START_HERE.md` 给大模型窗口
 无论你用的是：
@@ -39,7 +42,13 @@ autorunne open --with-vscode
 
 都先让它读：
 ```text
-.autorunne/START_HERE.md
+.autorunne/views/START_HERE.md
+```
+
+如果你想强制走 Autorunne 入口，也可以直接用：
+```bash
+./.autorunne/bin/ar-codex
+./.autorunne/bin/ar-claude
 ```
 
 这个文件会告诉模型：

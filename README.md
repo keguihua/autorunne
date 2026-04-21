@@ -86,22 +86,23 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.1**
+**0.6.2**
 
-### New in 0.6.1
-- adds a clearer public install flow with `scripts/install.sh`
-- adds pinned public release-wheel install support
-- adds daemon `--max-syncs` so the loop can stop after the first meaningful auto-sync
-- adds changed-file reporting in daemon output
-- adds a GitHub-visible Chinese operator manual for installation and daily use
-- clarifies the real workflow: install Autorunne once, initialize each repo once, then launch Codex / Claude Code directly from the repo terminal
+### New in 0.6.2
+- upgrades Autorunne from markdown-first workflow files to a real repo-local state layer
+- adds `.autorunne/state/*` as the single source of truth and `.autorunne/views/*` as render-only views
+- rewires `open / start / checkpoint / finish / sync / hermes-task` through the state engine
+- adds repo-level integrations: `AGENTS.md`, `.agents/skills/autorunne-workflow/SKILL.md`, `.claude/skills/autorunne-workflow/SKILL.md`
+- adds wrapper entrypoints: `ar-codex`, `ar-claude`, `ar-hermes`
+- adds observability commands: `render`, `record`, `show`, `history`, `trace`
+- strengthens `doctor` so it checks state files, rendered views, snapshot freshness, integrations, wrappers, and render rebuildability
 
-### Previously added in 0.3.0
-- `autorunne release`
-- `autorunne completion`
-- `autorunne hooks --with-pre-commit`
-- stronger `autorunne doctor`
-- monorepo / workspace / Turborepo detection
+### Earlier releases laid the base
+- public install flow with `scripts/install.sh`
+- pinned public release-wheel installs
+- daemon `--max-syncs`
+- changed-file reporting in daemon output
+- GitHub-visible Chinese operator manual for installation and daily use
 
 ---
 
@@ -151,7 +152,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.1 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.2 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -160,9 +161,9 @@ This installs Autorunne with `pipx`, so you can open any repo in VS Code and imm
 autorunne open --with-vscode
 ```
 
-Then just open the repo. Autorunne will auto-bootstrap or resume on open, and `.autorunne/START_HERE.md` becomes the agent entry point for Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
+Then just open the repo. Autorunne will auto-bootstrap or resume on open, and `.autorunne/views/START_HERE.md` becomes the main entry point for Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
 
-**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you can open VS Code and launch Codex or Claude Code directly from that repo terminal. You do **not** need to keep a separate Autorunne window open unless you explicitly want `autorunne daemon` running.
+**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you can open VS Code and launch Codex or Claude Code directly from that repo terminal, or use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude` when you want a hard Autorunne-first wrapper. You do **not** need to keep a separate Autorunne window open unless you explicitly want `autorunne daemon` running.
 
 ### Option A — local development install
 ```bash
@@ -175,7 +176,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.1-py3-none-any.whl
+pip install autorunne-0.6.2-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -232,7 +233,24 @@ autorunne hermes-task \
   --context "User asked Hermes to keep moving without re-explaining the repo"
 ```
 
-Then point your coding agent at `.autorunne/START_HERE.md` or just continue from the repo after Autorunne opens it.
+Then point your coding agent at `.autorunne/views/START_HERE.md`, use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude`, or just continue from the repo after Autorunne opens it.
+
+### Record a durable note without closing the slice
+```bash
+autorunne record --summary "Captured API review note" --next "Add state trace docs" --decision "Keep the API surface state-first"
+```
+
+### Re-render views from state
+```bash
+autorunne render
+```
+
+### Inspect current state, session history, and event trace
+```bash
+autorunne show --section current
+autorunne history --limit 5
+autorunne trace --limit 10
+```
 
 ### Start a focused task
 ```bash
@@ -271,7 +289,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.1
+autorunne release --version 0.6.2
 ```
 
 ---
@@ -303,7 +321,32 @@ autorunne open --with-vscode
 ```
 
 ### `autorunne sync`
-Refresh workflow state, keep your manual memory docs intact, and append a manual note.
+Refresh workflow state from the repo scan while preserving explicit state truth such as the current next action.
+
+### `autorunne record`
+Append a durable note straight into the state engine without closing the slice.
+
+```bash
+autorunne record --summary "Captured API review note" --next "Add state trace docs"
+```
+
+### `autorunne render`
+Rebuild `.autorunne/views/*` from `.autorunne/state/*`.
+
+### `autorunne show`
+Inspect one slice of state quickly.
+
+```bash
+autorunne show --section current
+autorunne show --section tasks
+autorunne show --section events
+```
+
+### `autorunne history`
+Show recent session entries from state.
+
+### `autorunne trace`
+Show recent state events, optionally filtered by event type.
 
 ### `autorunne daemon`
 Run an open-first loop that bootstraps or resumes once, then keeps auto-syncing local file changes.
@@ -362,10 +405,14 @@ autorunne watch --duration 120 --interval 1
 
 ### `autorunne doctor`
 Validate:
-- workflow files
+- state files under `.autorunne/state/`
+- rendered views under `.autorunne/views/`
+- render rebuildability from state
+- snapshot generation
 - `.git/info/exclude`
 - git hooks
 - VS Code integration
+- repo-level integrations and wrappers
 - pre-commit setup
 - package artifacts
 
@@ -405,25 +452,42 @@ autorunne completion fish
 
 ```text
 .autorunne/
-├── PROJECT_CONTEXT.md
-├── TASKS.md
-├── DECISIONS.md
-├── SESSION_LOG.md
-├── RULES.md
-├── NEXT_ACTION.md
-├── COMMANDS.md
-├── START_HERE.md
+├── state/
+│   ├── current.json
+│   ├── events.jsonl
+│   ├── tasks.json
+│   ├── decisions.json
+│   └── sessions.json
+├── views/
+│   ├── PROJECT_CONTEXT.md
+│   ├── TASKS.md
+│   ├── DECISIONS.md
+│   ├── SESSION_LOG.md
+│   ├── RULES.md
+│   ├── NEXT_ACTION.md
+│   ├── COMMANDS.md
+│   └── START_HERE.md
+├── bin/
+│   ├── ar-codex
+│   ├── ar-claude
+│   └── ar-hermes
 ├── agents/
 │   ├── common.md
 │   ├── claude-code.md
 │   ├── codex.md
 │   ├── hermes.md
-│   └── cursor.md
+│   ├── cursor.md
+│   └── copilot.md
 └── snapshots/
     └── latest.json
 ```
 
-This is the shared workflow core. Editors and coding tools can come and go, but the project workflow stays stable.
+Outside `.autorunne/`, repo-level integrations are also generated:
+- `AGENTS.md`
+- `.agents/skills/autorunne-workflow/SKILL.md`
+- `.claude/skills/autorunne-workflow/SKILL.md`
+
+This is the shared workflow core. Editors and coding tools can come and go, but the project workflow stays stable because state and views are separated.
 
 ---
 
@@ -512,20 +576,21 @@ Automated validation:
 
 ### Existing repo / cloned open-source repo
 1. clone the repo normally
-2. run `autorunne adopt`
-3. optionally run `autorunne open --with-vscode`
-4. keep `.autorunne/` local-only
-5. export or release a clean formal version when needed
+2. run `autorunne open --with-vscode`
+3. let Autorunne install repo-level skill files and wrappers
+4. point the coding agent at `.autorunne/views/START_HERE.md` or use `./.autorunne/bin/ar-codex`
+5. use `autorunne record`, `autorunne show`, `autorunne history`, and `autorunne trace` when you need visibility into state
+6. export or release a clean formal version when needed
 
 ---
 
-## Roadmap after 0.6.1
-- publish to PyPI
-- public `pipx` install flow
-- smarter file watcher / daemon mode
+## Roadmap after 0.6.2
+- richer state diff summaries instead of basic git-derived snapshots
+- optional user-level integration installers and shell path helpers
+- stronger release automation (`autorunne release` + tag + changelog)
 - deeper monorepo graph awareness
 - more editor entrypoints beyond VS Code
-- stronger release automation (`autorunne release` + tag + changelog)
+- docx / onboarding material that mirrors the state-first workflow exactly
 
 ---
 

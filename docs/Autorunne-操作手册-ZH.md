@@ -62,10 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.1：
+比如安装 0.6.2：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.1 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.2 bash
 ```
 
 适合：
@@ -147,9 +147,10 @@ autorunne open --with-vscode
 
 3. 让 Codex 从这里开始：
 
-- `.autorunne/START_HERE.md`
-- `.autorunne/NEXT_ACTION.md`
-- `.autorunne/TASKS.md`
+- `.autorunne/views/START_HERE.md`
+- `.autorunne/views/NEXT_ACTION.md`
+- `.autorunne/views/TASKS.md`
+- 或者直接用 `./.autorunne/bin/ar-codex`
 
 如果 Codex 能读项目文件，它就能直接接着干。
 
@@ -162,7 +163,7 @@ autorunne open --with-vscode
 1. 仓库先接入一次 Autorunne
 2. 打开 VS Code 或普通终端进入仓库
 3. 启动 Claude Code
-4. 让它从 `.autorunne/START_HERE.md` 开始
+4. 让它从 `.autorunne/views/START_HERE.md` 开始，或者直接用 `./.autorunne/bin/ar-claude`
 
 ---
 
@@ -212,11 +213,16 @@ autorunne init
 autorunne init --with-vscode
 ```
 
-### 手动同步工作流状态
+### 手动同步 / 渲染 / 看状态
 
 ```bash
 autorunne sync
 autorunne sync --note "今天修完登录问题，下一步做订单页"
+autorunne record --summary "补一条项目说明" --next "继续梳理 trace"
+autorunne render
+autorunne show --section current
+autorunne history --limit 5
+autorunne trace --limit 10
 ```
 
 ### 开始一个任务
@@ -256,7 +262,7 @@ autorunne doctor
 
 ```bash
 autorunne export
-autorunne release --version 0.6.1
+autorunne release --version 0.6.2
 ```
 
 ---

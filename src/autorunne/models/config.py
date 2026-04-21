@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class WorkflowConfig(BaseModel):
-    version: str = "0.6.1"
+    version: str = "0.6.2"
     workflow_dir: str = ".autorunne"
     export_dir: str = ".dist-release"
     excluded_paths: list[str] = Field(
