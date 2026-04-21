@@ -14,7 +14,7 @@ TEMPLATES = {
     "RULES.md": """# Rules\n\n1. Read `PROJECT_CONTEXT.md`, `TASKS.md`, and the latest `SESSION_LOG.md` before coding.\n2. Only change files related to the current task.\n3. Prefer the smallest safe change over broad refactors.\n4. Run the relevant validation command after each meaningful change.\n5. Update workflow docs after finishing a task.\n6. Keep `{workflow_dir}` local-only.\n""",
     "NEXT_ACTION.md": """# Next Action\n\n{next_action}\n""",
     "COMMANDS.md": """# Commands\n\n## Detected local commands\n{commands_markdown}\n\n## Suggested daily loop\n1. Open `START_HERE.md` in your agent window.\n2. Do the smallest safe change.\n3. Run the most relevant local validation command above.\n4. Run `autorunne finish --summary \"what you finished\" --next \"next concrete step\"`.\n""",
-    "START_HERE.md": """# Start Here\n\nAutorunne is built to work with **Claude Code**, **Codex**, and **Gemini** in a normal repo folder or VS Code terminal.\n\n## Read these files first\n- `PROJECT_CONTEXT.md`\n- `TASKS.md`\n- `DECISIONS.md`\n- `NEXT_ACTION.md`\n- `COMMANDS.md`\n\n## Current focus\n- Next action: {next_action}\n- Stack: {stack}\n- Framework: {framework}\n\n## Suggested prompt for any coding agent window\n```text\nUse `.autorunne/` as the source of truth for this repo. Read PROJECT_CONTEXT.md, TASKS.md, DECISIONS.md, NEXT_ACTION.md, and COMMANDS.md before coding. Then continue with the current next action: {next_action}\n```\n\n## Recommended local commands\n{commands_markdown}\n""",
+    "START_HERE.md": """# Start Here\n\nAutorunne is built to work with **Claude Code**, **Codex**, **Gemini**, **Hermes**, **Cursor**, and **GitHub Copilot** in a normal repo folder or VS Code terminal.\n\n## Read these files first\n- `PROJECT_CONTEXT.md`\n- `TASKS.md`\n- `DECISIONS.md`\n- `NEXT_ACTION.md`\n- `COMMANDS.md`\n\n## Current focus\n- Next action: {next_action}\n- Stack: {stack}\n- Framework: {framework}\n\n## Suggested prompt for any coding agent window\n```text\nUse `.autorunne/` as the source of truth for this repo. Read PROJECT_CONTEXT.md, TASKS.md, DECISIONS.md, NEXT_ACTION.md, and COMMANDS.md before coding. Then continue with the current next action: {next_action}\n```\n\n## Recommended local commands\n{commands_markdown}\n""",
 }
 
 AGENT_TEMPLATES = {
@@ -23,6 +23,7 @@ AGENT_TEMPLATES = {
     "codex.md": """# Codex Adapter\n\n- Use the shared workflow files as the single source of truth.\n- Avoid opportunistic refactors unless explicitly requested.\n- After coding, summarize changed files and update workflow docs.\n""",
     "hermes.md": """# Hermes Adapter\n\n- Load project context from `.autorunne/` first.\n- Use the next action as the default starting point.\n- Keep project memory synced after each task.\n""",
     "cursor.md": """# Cursor Adapter\n\n- Read shared workflow docs before agent edits.\n- Keep changes narrow and validate locally.\n- Reflect completed work back into `.autorunne/`.\n""",
+    "copilot.md": """# GitHub Copilot Adapter\n\n- Use `.autorunne/START_HERE.md` as the fastest entry point.\n- Read the shared workflow docs before generating or editing code.\n- Prefer small, testable changes and update `checkpoint` or `finish` after each meaningful slice.\n""",
 }
 
 

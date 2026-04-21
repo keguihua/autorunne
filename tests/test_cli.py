@@ -37,11 +37,16 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     content = (node_repo / ".autorunne" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
     commands_text = (node_repo / ".autorunne" / "COMMANDS.md").read_text(encoding="utf-8")
     start_here_text = (node_repo / ".autorunne" / "START_HERE.md").read_text(encoding="utf-8")
+    copilot_text = (node_repo / ".autorunne" / "agents" / "copilot.md").read_text(encoding="utf-8")
     assert "Stack: node" in content
     assert "Framework: react, vite" in content
     assert "npm test" in commands_text
     assert "Claude Code" in start_here_text
     assert "Gemini" in start_here_text
+    assert "Hermes" in start_here_text
+    assert "Cursor" in start_here_text
+    assert "GitHub Copilot" in start_here_text
+    assert "START_HERE.md" in copilot_text
 
 
 def test_init_can_install_vscode_workspace_integration(git_repo: Path):

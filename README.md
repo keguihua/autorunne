@@ -3,7 +3,7 @@
 [![CI](https://github.com/keguihua/autorunne/actions/workflows/ci.yml/badge.svg)](https://github.com/keguihua/autorunne/actions/workflows/ci.yml)
 [![Release Packages](https://github.com/keguihua/autorunne/actions/workflows/release.yml/badge.svg)](https://github.com/keguihua/autorunne/actions/workflows/release.yml)
 
-**Turn any Git repository into a durable AI coding workspace for Claude Code, Codex, and Gemini.**
+**Turn any Git repository into a durable AI coding workspace for Claude Code, Codex, Gemini, Hermes, Cursor, and GitHub Copilot.**
 
 Autorunne is a **local-first workflow CLI** for people already building with coding agents but who are tired of losing project state between sessions.
 
@@ -22,7 +22,7 @@ Most AI coding tools help write code once.
 
 Autorunne is built for the harder problem:
 - resuming work tomorrow without re-explaining the repo
-- handing the same repo from Claude Code to Codex or Gemini
+- handing the same repo across Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot
 - keeping project memory local instead of trapped in one chat window
 - finishing work cleanly with start → checkpoint → finish
 - separating internal AI workflow state from the shipped product
@@ -146,7 +146,7 @@ This installs Autorunne with `pipx`, so you can open any repo in VS Code and imm
 autorunne adopt --with-vscode
 ```
 
-Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini and continue coding.
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot and continue coding.
 
 ### Option A — local development install
 ```bash
@@ -201,7 +201,7 @@ autorunne adopt
 autorunne adopt --with-vscode
 ```
 
-Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini.
+Then open `.autorunne/START_HERE.md` in Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
 
 ### Start a focused task
 ```bash

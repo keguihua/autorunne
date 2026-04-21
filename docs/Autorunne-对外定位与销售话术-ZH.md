@@ -7,7 +7,7 @@ Autorunne 是一个 **本地优先、轻量但可持续交接的 AI 开发工作
 
 它真正解决的是：
 
-> 当你已经在用 Claude Code、Codex、Gemini 这类 coding agent 开发时，怎样让项目状态、任务推进、决策记录和收尾动作持续接得上。
+> 当你已经在用 Claude Code、Codex、Gemini、Hermes、Cursor、GitHub Copilot 这类 coding agent 开发时，怎样让项目状态、任务推进、决策记录和收尾动作持续接得上。
 
 ## 核心卖点
 ### 1. 不怕断档

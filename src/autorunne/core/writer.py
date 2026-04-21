@@ -16,6 +16,7 @@ PRESERVE_EXISTING_FILES = {
     "agents/codex.md",
     "agents/hermes.md",
     "agents/cursor.md",
+    "agents/copilot.md",
 }
 
 
