@@ -63,6 +63,6 @@ def test_scan_repo_detects_monorepo_workspace(monorepo_repo):
     assert "packages" in scan["source_dirs"]
 
 
-def test_recommend_next_action_uses_readme_signal(git_repo):
+def test_recommend_next_action_prefers_bootstrap_for_greenfield_repos(git_repo):
     scan = scan_repo(git_repo)
-    assert recommend_next_action(scan).startswith("Create or improve the project README")
+    assert recommend_next_action(scan).startswith("Bootstrap the smallest runnable slice")

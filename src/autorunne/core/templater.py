@@ -7,23 +7,178 @@ from autorunne.core.paths import WORKFLOW_DIR
 
 
 TEMPLATES = {
-    "PROJECT_CONTEXT.md": """# Project Context\n\n## Project\n- Name: {repo_name}\n- Stack: {stack}\n- Framework: {framework}\n- Package manager: {package_manager}\n\n## Important files\n{important_files}\n\n## Important directories\n{source_dirs}\n\n## Current state\n- Workflow initialized by Autorunne\n- Repository type inferred from local scan\n- Confirm assumptions below before large changes\n\n## Constraints\n- Keep changes scoped to the current task\n- Do not commit `{workflow_dir}` to the public repo\n- Verify run/test commands before refactoring\n\n## Manual confirmation needed\n- Confirm the main runtime command\n- Confirm the test command\n- Confirm which modules are stable vs risky\n""",
-    "TASKS.md": """# Tasks\n\n## Completed / inferred\n{completed}\n\n## In progress\n- [ ] Validate local run and test commands\n\n## Next up\n- [ ] {next_action}\n\n## Known unknowns\n- [ ] Confirm deployment flow\n- [ ] Confirm protected or high-risk modules before large edits\n""",
-    "DECISIONS.md": """# Decisions\n\n## Baseline assumptions\n- Project detected as: {stack}\n- Main framework likely: {framework}\n- Package manager likely: {package_manager}\n\n## Pending confirmations\n- Confirm whether these detections are correct\n- Record important architectural decisions here before large changes\n\n## Recorded decisions\n- Add durable project decisions here as they are confirmed.\n""",
-    "SESSION_LOG.md": """# Session Log\n\n## {timestamp} | workflow initialized\n- Mode: {mode}\n- Repo: {repo_name}\n- Stack: {stack}\n- Framework: {framework}\n- Next action: {next_action}\n""",
-    "RULES.md": """# Rules\n\n1. Read `PROJECT_CONTEXT.md`, `TASKS.md`, and the latest `SESSION_LOG.md` before coding.\n2. Only change files related to the current task.\n3. Prefer the smallest safe change over broad refactors.\n4. Run the relevant validation command after each meaningful change.\n5. Update workflow docs after finishing a task.\n6. Keep `{workflow_dir}` local-only.\n""",
-    "NEXT_ACTION.md": """# Next Action\n\n{next_action}\n""",
-    "COMMANDS.md": """# Commands\n\n## Detected local commands\n{commands_markdown}\n\n## Suggested daily loop\n1. Open `START_HERE.md` in your agent window.\n2. Do the smallest safe change.\n3. Run the most relevant local validation command above.\n4. Run `autorunne finish --summary \"what you finished\" --next \"next concrete step\"`.\n""",
-    "START_HERE.md": """# Start Here\n\nAutorunne is built to work with **Claude Code**, **Codex**, **Gemini**, **Hermes**, **Cursor**, and **GitHub Copilot** in a normal repo folder or VS Code terminal.\n\n## Read these files first\n- `PROJECT_CONTEXT.md`\n- `TASKS.md`\n- `DECISIONS.md`\n- `NEXT_ACTION.md`\n- `COMMANDS.md`\n\n## Current focus\n- Next action: {next_action}\n- Stack: {stack}\n- Framework: {framework}\n\n## Suggested prompt for any coding agent window\n```text\nUse `.autorunne/` as the source of truth for this repo. Read PROJECT_CONTEXT.md, TASKS.md, DECISIONS.md, NEXT_ACTION.md, and COMMANDS.md before coding. Then continue with the current next action: {next_action}\n```\n\n## Recommended local commands\n{commands_markdown}\n""",
+    "PROJECT_CONTEXT.md": """# Project Context
+
+## Project
+- Name: {repo_name}
+- Stack: {stack}
+- Framework: {framework}
+- Package manager: {package_manager}
+- Project phase: {project_phase}
+- Tracked files: {tracked_files_count}
+
+## Important files
+{important_files}
+
+## Important directories
+{source_dirs}
+
+## Current state
+- Workflow initialized by Autorunne
+- Repository type inferred from local scan
+- Resume hint: {resume_hint}
+- Confirm assumptions below before large changes
+
+## Recent work signals
+### Dirty / recently changed files
+{recent_files}
+
+### Recent commits
+{recent_commits}
+
+## Constraints
+- Keep changes scoped to the current task
+- Do not commit `{workflow_dir}` to the public repo
+- Verify run/test commands before refactoring
+
+## Manual confirmation needed
+- Confirm the main runtime command
+- Confirm the test command
+- Confirm which modules are stable vs risky
+""",
+    "TASKS.md": """# Tasks
+
+## Completed / inferred
+{completed}
+
+## In progress
+- [ ] Validate local run and test commands
+
+## Next up
+- [ ] {next_action}
+
+## Known unknowns
+- [ ] Confirm deployment flow
+- [ ] Confirm protected or high-risk modules before large edits
+""",
+    "DECISIONS.md": """# Decisions
+
+## Baseline assumptions
+- Project detected as: {stack}
+- Main framework likely: {framework}
+- Package manager likely: {package_manager}
+- Project phase likely: {project_phase}
+
+## Pending confirmations
+- Confirm whether these detections are correct
+- Record important architectural decisions here before large changes
+
+## Recorded decisions
+- Add durable project decisions here as they are confirmed.
+""",
+    "SESSION_LOG.md": """# Session Log
+
+## {timestamp} | workflow initialized
+- Mode: {mode}
+- Repo: {repo_name}
+- Stack: {stack}
+- Framework: {framework}
+- Project phase: {project_phase}
+- Next action: {next_action}
+""",
+    "RULES.md": """# Rules
+
+1. Read `PROJECT_CONTEXT.md`, `TASKS.md`, and the latest `SESSION_LOG.md` before coding.
+2. Only change files related to the current task.
+3. Prefer the smallest safe change over broad refactors.
+4. Run the relevant validation command after each meaningful change.
+5. Update workflow docs after finishing a task.
+6. Keep `{workflow_dir}` local-only.
+""",
+    "NEXT_ACTION.md": """# Next Action
+
+{next_action}
+""",
+    "COMMANDS.md": """# Commands
+
+## Detected local commands
+{commands_markdown}
+
+## Auto-open loop
+1. Run `autorunne open` when you enter the repo.
+2. If `.autorunne/` does not exist yet, Autorunne bootstraps it automatically.
+3. If the repo already has workflow memory, Autorunne refreshes it and resumes from `NEXT_ACTION.md`.
+4. End each slice with `autorunne checkpoint` or `autorunne finish`.
+""",
+    "START_HERE.md": """# Start Here
+
+Autorunne is built to work with **Claude Code**, **Codex**, **Gemini**, **Hermes**, **Cursor**, and **GitHub Copilot** in a normal repo folder or VS Code terminal.
+
+## Open-first workflow
+- Run `autorunne open` whenever you enter this repo.
+- In VS Code, install the generated workspace task once so folder open can trigger Autorunne automatically.
+- Autorunne will bootstrap `.autorunne/` for half-finished repos and refresh existing memory on every open.
+
+## Read these files first
+- `PROJECT_CONTEXT.md`
+- `TASKS.md`
+- `DECISIONS.md`
+- `NEXT_ACTION.md`
+- `COMMANDS.md`
+
+## Current focus
+- Next action: {next_action}
+- Stack: {stack}
+- Framework: {framework}
+- Project phase: {project_phase}
+- Resume hint: {resume_hint}
+
+## Zero-prompt handoff
+If your coding agent can read repo files, just point it at this folder and ask it to continue from `.autorunne/START_HERE.md`.
+
+## Recommended local commands
+{commands_markdown}
+""",
 }
 
 AGENT_TEMPLATES = {
-    "common.md": """# Common Agent Rules\n\n- Read the shared workflow files before changing code.\n- Ask for clarification when a risky change is unclear.\n- Keep edits minimal and traceable.\n- Update task and session state after work is done.\n""",
-    "claude-code.md": """# Claude Code Adapter\n\n- Start with the shared workflow files under `.autorunne/`.\n- Explain planned scope before broad edits.\n- Prefer small patches over rewrites.\n""",
-    "codex.md": """# Codex Adapter\n\n- Use the shared workflow files as the single source of truth.\n- Avoid opportunistic refactors unless explicitly requested.\n- After coding, summarize changed files and update workflow docs.\n""",
-    "hermes.md": """# Hermes Adapter\n\n- Load project context from `.autorunne/` first.\n- Use the next action as the default starting point.\n- Keep project memory synced after each task.\n""",
-    "cursor.md": """# Cursor Adapter\n\n- Read shared workflow docs before agent edits.\n- Keep changes narrow and validate locally.\n- Reflect completed work back into `.autorunne/`.\n""",
-    "copilot.md": """# GitHub Copilot Adapter\n\n- Use `.autorunne/START_HERE.md` as the fastest entry point.\n- Read the shared workflow docs before generating or editing code.\n- Prefer small, testable changes and update `checkpoint` or `finish` after each meaningful slice.\n""",
+    "common.md": """# Common Agent Rules
+
+- Read the shared workflow files before changing code.
+- Ask for clarification when a risky change is unclear.
+- Keep edits minimal and traceable.
+- Update task and session state after work is done.
+""",
+    "claude-code.md": """# Claude Code Adapter
+
+- Start with the shared workflow files under `.autorunne/`.
+- Explain planned scope before broad edits.
+- Prefer small patches over rewrites.
+""",
+    "codex.md": """# Codex Adapter
+
+- Use the shared workflow files as the single source of truth.
+- Avoid opportunistic refactors unless explicitly requested.
+- After coding, summarize changed files and update workflow docs.
+""",
+    "hermes.md": """# Hermes Adapter
+
+- Load project context from `.autorunne/` first.
+- Use the next action as the default starting point.
+- Keep project memory synced after each task.
+""",
+    "cursor.md": """# Cursor Adapter
+
+- Read shared workflow docs before agent edits.
+- Keep changes narrow and validate locally.
+- Reflect completed work back into `.autorunne/`.
+""",
+    "copilot.md": """# GitHub Copilot Adapter
+
+- Use `.autorunne/START_HERE.md` as the fastest entry point.
+- Read the shared workflow docs before generating or editing code.
+- Prefer small, testable changes and update `checkpoint` or `finish` after each meaningful slice.
+""",
 }
 
 
@@ -64,12 +219,18 @@ def render_bundle(scan: dict, mode: str) -> dict[str, str]:
             f"Detected stack: {', '.join(scan['stack'])}",
             f"Detected framework: {', '.join(scan['framework'])}",
             f"Detected package manager: {', '.join(scan['package_manager'])}",
+            f"Detected project phase: {scan['project_phase']}",
         ], "Initial scan complete"),
         "next_action": scan["next_action"],
         "mode": mode,
         "timestamp": timestamp,
         "workflow_dir": WORKFLOW_DIR,
         "commands_markdown": _render_commands(scan),
+        "project_phase": scan["project_phase"],
+        "tracked_files_count": scan["tracked_files_count"],
+        "resume_hint": scan["resume_hint"],
+        "recent_files": _bulletize(scan["recent_files"], "No dirty files detected right now"),
+        "recent_commits": _bulletize(scan["recent_commits"], "No recent commits detected yet"),
     }
     rendered = {name: template.format(**context) for name, template in TEMPLATES.items()}
     rendered.update({f"agents/{name}": template for name, template in AGENT_TEMPLATES.items()})

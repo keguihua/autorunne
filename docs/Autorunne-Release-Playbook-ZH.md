@@ -36,7 +36,7 @@
 
 ### 产品体验
 - README 顶部安装命令可直接复制
-- `autorunne adopt --with-vscode` 路径正常
+- `autorunne open --with-vscode` 路径正常
 - `.autorunne/START_HERE.md` 能被 Claude Code / Codex / Gemini 正常使用
 - `start / checkpoint / finish` 工作流能走通
 
@@ -44,8 +44,8 @@
 - `main` 已包含最新稳定功能
 - 如需打版本，创建 tag：
 ```bash
-git tag v0.4.0
-git push origin v0.4.0
+git tag v0.5.0
+git push origin v0.5.0
 ```
 - GitHub Release workflow 会自动构建并上传 wheel / sdist
 

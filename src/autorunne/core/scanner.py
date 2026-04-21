@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
-
 
 IMPORTANT_FILES = [
     "README.md",
@@ -45,6 +45,18 @@ def _safe_read_json(path: Path) -> dict:
 
 def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore").lower() if path.exists() else ""
+
+
+def _safe_run(repo_root: Path, args: list[str]) -> str:
+    result = subprocess.run(
+        args,
+        cwd=repo_root,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
 
 
 def _detect_node(repo_root: Path, scan: dict) -> None:
@@ -201,6 +213,42 @@ def _unique(values: list[str]) -> list[str]:
     return ordered
 
 
+def _detect_repo_state(repo_root: Path, scan: dict) -> None:
+    tracked_files_raw = _safe_run(repo_root, ["git", "ls-files"])
+    tracked_files = [line for line in tracked_files_raw.splitlines() if line.strip()]
+    scan["tracked_files_count"] = len(tracked_files)
+
+    recent_files_raw = _safe_run(repo_root, ["git", "status", "--short"])
+    recent_files = []
+    for line in recent_files_raw.splitlines():
+        if not line.strip():
+            continue
+        candidate = line[3:].strip() if len(line) > 3 else line.strip()
+        normalized = candidate.rstrip("/") or candidate
+        recent_files.append(normalized)
+    scan["recent_files"] = recent_files[:8]
+
+    recent_commits_raw = _safe_run(repo_root, ["git", "log", "--oneline", "-3"])
+    scan["recent_commits"] = [line.strip() for line in recent_commits_raw.splitlines() if line.strip()]
+
+    if tracked_files:
+        if len(tracked_files) <= 8:
+            scan["project_phase"] = "greenfield"
+        elif recent_files:
+            scan["project_phase"] = "active"
+        else:
+            scan["project_phase"] = "established"
+    else:
+        scan["project_phase"] = "greenfield"
+
+    if recent_files:
+        scan["resume_hint"] = f"Resume from the latest dirty files first: {', '.join(recent_files[:3])}."
+    elif scan["source_dirs"]:
+        scan["resume_hint"] = f"Resume from the main source area: {', '.join(scan['source_dirs'][:2])}."
+    else:
+        scan["resume_hint"] = "Resume from the smallest runnable slice and confirm the test command."
+
+
 def scan_repo(repo_root: Path) -> dict:
     files = {path.name: path for path in repo_root.iterdir() if path.is_file()}
     dirs = sorted(path.name for path in repo_root.iterdir() if path.is_dir() and not path.name.startswith("."))
@@ -214,6 +262,11 @@ def scan_repo(repo_root: Path) -> dict:
         "source_dirs": [],
         "commands": {},
         "dirs": dirs,
+        "tracked_files_count": 0,
+        "recent_files": [],
+        "recent_commits": [],
+        "project_phase": "greenfield",
+        "resume_hint": "",
     }
 
     _detect_node(repo_root, scan)
@@ -228,10 +281,15 @@ def scan_repo(repo_root: Path) -> dict:
 
     scan["important_files"] = [name for name in IMPORTANT_FILES if name in files]
     scan["source_dirs"] = [name for name in dirs if name in SOURCE_DIR_CANDIDATES]
+    _detect_repo_state(repo_root, scan)
     return scan
 
 
 def recommend_next_action(scan: dict) -> str:
+    if scan.get("recent_files"):
+        return f"Review the latest changed files first ({', '.join(scan['recent_files'][:3])}), then continue the smallest unfinished slice."
+    if scan.get("project_phase") == "greenfield":
+        return "Bootstrap the smallest runnable slice first, then capture the first real task in TASKS.md."
     if "README.md" not in scan.get("important_files", []):
         return "Create or improve the project README so both humans and agents know how to run the project."
     if scan.get("commands", {}).get("test") == "pytest":

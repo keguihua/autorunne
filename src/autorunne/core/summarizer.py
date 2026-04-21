@@ -28,4 +28,6 @@ def summarize_status(repo_root: Path, scan: dict) -> dict:
         "stack": scan["stack"],
         "framework": scan["framework"],
         "next_action": scan["next_action"],
+        "project_phase": scan["project_phase"],
+        "resume_hint": scan["resume_hint"],
     }

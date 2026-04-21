@@ -14,6 +14,7 @@ from autorunne.commands import export as export_cmd
 from autorunne.commands import finish as finish_cmd
 from autorunne.commands import hooks as hooks_cmd
 from autorunne.commands import init as init_cmd
+from autorunne.commands import open as open_cmd
 from autorunne.commands import release as release_cmd
 from autorunne.commands import start as start_cmd
 from autorunne.commands import status as status_cmd
@@ -56,6 +57,23 @@ def adopt(
     console.print(f"Detected framework: {', '.join(result['scan']['framework'])}")
     console.print(f"Next action: {result['scan']['next_action']}")
     console.print(f"Open in Claude Code / Codex / Gemini: {result['start_here_path']}")
+    if result.get("vscode"):
+        console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
+
+
+@app.command()
+def open(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    with_vscode: bool = typer.Option(False, "--with-vscode", help="Also install VS Code folder-open automation."),
+):
+    """Auto-bootstrap or resume a repo so the agent enters a working state immediately."""
+    result = open_cmd.run(_target(path), with_vscode=with_vscode)
+    console.print(f"Autorunne {result['action']}: [bold]{result['repo_root']}[/bold]")
+    console.print(f"Detected stack: {', '.join(result['scan']['stack'])}")
+    console.print(f"Project phase: {result['scan']['project_phase']}")
+    console.print(f"Resume hint: {result['scan']['resume_hint']}")
+    console.print(f"Next action: {result['scan']['next_action']}")
+    console.print(f"Open now: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 
@@ -159,6 +177,8 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
     table.add_row("Autorunne root", result["workflow_root"])
     table.add_row("Stack", ", ".join(result["stack"]))
     table.add_row("Framework", ", ".join(result["framework"]))
+    table.add_row("Project phase", result["project_phase"])
+    table.add_row("Resume hint", result["resume_hint"])
     table.add_row("Missing files", ", ".join(result["missing"]) or "none")
     table.add_row("Next action", result["next_action"])
     table.add_row("Tracked by git", str(result["workflow_tracked"]))
@@ -194,7 +214,7 @@ def export_command(
 
 @app.command()
 def release(
-    version: str = typer.Option(..., help="Release version, e.g. 0.4.0 or v0.4.0"),
+    version: str = typer.Option(..., help="Release version, e.g. 0.5.0 or v0.5.0"),
     path: str | None = typer.Option(None, help="Target repository path"),
     skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
 ):

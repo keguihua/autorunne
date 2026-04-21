@@ -9,12 +9,12 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.4.0
-- adds `autorunne watch` for polling-based local auto-sync
-- adds C and C++ detection, including CMake-style projects
-- strengthens Rust / Python / Node / monorepo / pnpm workspace / Turborepo detection
-- adds `MANIFEST.json` to `autorunne release` bundles
-- improves product-facing presentation for public launch readiness
+## 2. Core upgrades in 0.5.0
+- adds `autorunne open` so entering a repo can auto-detect and adopt half-finished workspaces
+- auto-bootstraps `.autorunne/` when workflow memory is missing
+- auto-refreshes and resumes existing workflow memory on every open
+- upgrades VS Code folder-open automation to call `autorunne open`
+- adds project phase detection, recent git signals, and resume hints
 
 ## 3. Supported languages / project types
 ### Web / app / service
@@ -53,10 +53,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 After install, enter your repo and run:
 ```bash
-autorunne adopt --with-vscode
+autorunne open --with-vscode
 ```
 
-Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini.
+After that, just open the repo normally. Autorunne will auto-bootstrap or resume on open, and `.autorunne/START_HERE.md` remains the clean agent entry point.
 
 ### Development install
 ```bash
@@ -67,7 +67,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.4.0-py3-none-any.whl
+pip install autorunne-0.5.0-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -82,13 +82,13 @@ autorunne init
 autorunne init --with-vscode
 ```
 
-### Adopt an existing repository
+### Adopt or resume an existing repository
 ```bash
-autorunne adopt
-autorunne adopt --with-vscode
+autorunne open
+autorunne open --with-vscode
 ```
 
-After adoption, open `.autorunne/START_HERE.md` inside Claude Code, Codex, or Gemini.
+On the first open of an older repo, Autorunne will create `.autorunne/`. On later opens, it will refresh and resume the existing workflow state.
 
 ### Start a focused task
 ```bash
@@ -133,7 +133,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.4.0
+autorunne release --version 0.5.0
 ```
 
 ### Install hooks and pre-commit support
@@ -162,7 +162,8 @@ autorunne completion zsh
 │   ├── claude-code.md
 │   ├── codex.md
 │   ├── hermes.md
-│   └── cursor.md
+│   ├── cursor.md
+│   └── copilot.md
 └── snapshots/
     └── latest.json
 ```
@@ -170,7 +171,7 @@ autorunne completion zsh
 ## 7. VS Code auto integration
 Run:
 ```bash
-autorunne adopt --with-vscode
+autorunne open --with-vscode
 ```
 
 This generates:
@@ -178,7 +179,7 @@ This generates:
 - `.vscode/settings.json`
 - `.vscode/extensions.json`
 
-and allows VS Code to auto-run `autorunne sync` on folder open.
+and allows VS Code to auto-run `autorunne open` on folder open.
 
 ## 8. Clean release separation
 The tool isolates `.autorunne/` with `.git/info/exclude` by default.
@@ -203,8 +204,10 @@ This version has been validated for:
 The workflow is model-agnostic and intended for:
 - Claude Code
 - Codex
+- Gemini
 - Hermes
 - Cursor Agent
+- GitHub Copilot / Copilot Chat
 - other coding agents that can read project files
 
 ## 11. Suggested next steps

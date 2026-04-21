@@ -36,9 +36,9 @@ def install_vscode_integration(repo_root: Path) -> dict[str, str]:
         "version": "2.0.0",
         "tasks": [
             {
-                "label": "Autorunne: Sync on folder open",
+                "label": "Autorunne: Open workspace on folder open",
                 "type": "shell",
-                "command": "autorunne sync || python -m autorunne.cli sync",
+                "command": "autorunne open || python -m autorunne.cli open",
                 "presentation": {"reveal": "never", "panel": "dedicated"},
                 "problemMatcher": [],
                 "runOptions": {"runOn": "folderOpen"},

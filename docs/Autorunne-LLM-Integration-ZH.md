@@ -14,12 +14,12 @@ Autorunne 不是新的大模型，也不是重型 AI IDE。
 ## 2. 核心工作方式
 当你在 VS Code 里打开一个项目后：
 
-### 第一步：接管项目
+### 第一步：进入项目时自动接管
 ```bash
-autorunne adopt --with-vscode
+autorunne open --with-vscode
 ```
 
-它会生成：
+之后普通打开 VS Code 工作区时，Autorunne 就会自动进入工作状态，并自动准备这些文件：
 - `PROJECT_CONTEXT.md`
 - `TASKS.md`
 - `DECISIONS.md`

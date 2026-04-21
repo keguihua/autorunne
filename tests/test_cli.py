@@ -40,13 +40,44 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     copilot_text = (node_repo / ".autorunne" / "agents" / "copilot.md").read_text(encoding="utf-8")
     assert "Stack: node" in content
     assert "Framework: react, vite" in content
+    assert "Project phase:" in content
+    assert "Resume hint:" in content
     assert "npm test" in commands_text
+    assert "autorunne open" in commands_text
     assert "Claude Code" in start_here_text
     assert "Gemini" in start_here_text
     assert "Hermes" in start_here_text
     assert "Cursor" in start_here_text
     assert "GitHub Copilot" in start_here_text
+    assert "Zero-prompt handoff" in start_here_text
     assert "START_HERE.md" in copilot_text
+
+
+def test_open_bootstraps_missing_workflow_and_installs_vscode(node_repo: Path):
+    result = _run_in(node_repo, ["open", "--with-vscode"])
+    assert result.exit_code == 0
+    assert "bootstrapped" in result.stdout
+    assert (node_repo / ".autorunne" / "START_HERE.md").exists()
+    log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert "workflow initialized" in log_text.lower()
+    tasks = json.loads((node_repo / ".vscode" / "tasks.json").read_text(encoding="utf-8"))
+    assert tasks["tasks"][0]["command"] == "autorunne open || python -m autorunne.cli open"
+
+
+def test_open_resumes_existing_workflow_and_appends_auto_resume_log(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    initial_log = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+
+    result = _run_in(python_repo, ["open"])
+    assert result.exit_code == 0
+    assert "resumed" in result.stdout
+    assert "Resume hint:" in result.stdout
+
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    start_here_text = (python_repo / ".autorunne" / "START_HERE.md").read_text(encoding="utf-8")
+    assert log_text != initial_log
+    assert "workspace open auto-resume" in log_text
+    assert "Zero-prompt handoff" in start_here_text
 
 
 def test_init_can_install_vscode_workspace_integration(git_repo: Path):
@@ -58,7 +89,8 @@ def test_init_can_install_vscode_workspace_integration(git_repo: Path):
     assert settings_path.exists()
     tasks = json.loads(tasks_path.read_text(encoding="utf-8"))
     first_task = tasks["tasks"][0]
-    assert first_task["label"] == "Autorunne: Sync on folder open"
+    assert first_task["label"] == "Autorunne: Open workspace on folder open"
+    assert first_task["command"] == "autorunne open || python -m autorunne.cli open"
     assert first_task["runOptions"]["runOn"] == "folderOpen"
     settings = json.loads(settings_path.read_text(encoding="utf-8"))
     assert settings["task.allowAutomaticTasks"] == "on"
@@ -270,9 +302,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.4.0", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.5.0", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.4.0"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.5.0"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()

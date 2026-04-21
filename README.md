@@ -41,6 +41,7 @@ Autorunne is built for the harder problem:
 - [中文使用说明](docs/Autorunne-Usage-ZH.md)
 - [English usage guide](docs/Autorunne-Usage-EN.md)
 - [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
+- [Autorunne 自动识别 / 自动初始化 / 自动恢复](docs/Autorunne-Auto-Mode-ZH.md)
 - [Autorunne 发布与合并策略](docs/Autorunne-Release-Playbook-ZH.md)
 - [Autorunne 产品说明书](docs/Autorunne-产品说明书-ZH.md)
 - [Autorunne 商业计划书](docs/Autorunne-商业计划书-ZH.md)
@@ -77,21 +78,21 @@ This project is built around four product directions:
    - agents plug into that shared context instead of inventing their own memory format
 
 4. **Editors are entry points, not the core**
-   - VS Code can auto-sync on folder open
+   - VS Code can auto-open and auto-bootstrap on folder open
    - the CLI remains the source of truth
    - this makes future support for other editors easier
 
 ---
 
 ## Current version
-**0.4.0**
+**0.5.0**
 
-### New in 0.4.0
-- adds `autorunne watch` for polling-based local auto-sync during development
-- adds C and C++ detection (including CMake-based projects)
-- strengthens Rust, Python, Node, monorepo, pnpm workspace, and Turborepo support
-- improves release bundles with a `MANIFEST.json`
-- prepares the project for more polished external presentation
+### New in 0.5.0
+- adds `autorunne open` to auto-bootstrap missing workflow memory or resume existing repos immediately
+- upgrades VS Code folder-open automation to call `autorunne open` instead of a plain sync
+- adds project phase detection, recent git signal detection, and resume hints for half-finished repos
+- refreshes `START_HERE.md`, `PROJECT_CONTEXT.md`, and `COMMANDS.md` for low-prompt / near-zero-prompt handoff
+- keeps release bundles clean with a `MANIFEST.json`
 
 ### Previously added in 0.3.0
 - `autorunne release`
@@ -143,10 +144,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
 
 ```bash
-autorunne adopt --with-vscode
+autorunne open --with-vscode
 ```
 
-Then open `.autorunne/START_HERE.md` in Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot and continue coding.
+Then just open the repo. Autorunne will auto-bootstrap or resume on open, and `.autorunne/START_HERE.md` becomes the agent entry point for Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
 
 ### Option A — local development install
 ```bash
@@ -159,7 +160,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.4.0-py3-none-any.whl
+pip install autorunne-0.5.0-py3-none-any.whl
 ```
 
 ### Option C — install directly with pipx once published
@@ -193,15 +194,15 @@ autorunne init
 
 ### Existing repo or cloned GitHub repo
 ```bash
-autorunne adopt
+autorunne open
 ```
 
 ### Existing repo + VS Code auto integration
 ```bash
-autorunne adopt --with-vscode
+autorunne open --with-vscode
 ```
 
-Then open `.autorunne/START_HERE.md` in Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
+Then point your coding agent at `.autorunne/START_HERE.md` or just continue from the repo after Autorunne opens it.
 
 ### Start a focused task
 ```bash
@@ -240,7 +241,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.4.0
+autorunne release --version 0.5.0
 ```
 
 ---
@@ -256,11 +257,19 @@ autorunne init --with-vscode
 ```
 
 ### `autorunne adopt`
-Scan an existing repository and generate workflow docs.
+Scan an existing repository and generate workflow docs manually.
 
 ```bash
 autorunne adopt
 autorunne adopt --with-vscode
+```
+
+### `autorunne open`
+Auto-bootstrap a half-finished repo if `.autorunne/` is missing, or resume the existing workflow memory if it already exists.
+
+```bash
+autorunne open
+autorunne open --with-vscode
 ```
 
 ### `autorunne sync`
@@ -373,7 +382,7 @@ VS Code is treated as an entry point, not the system core.
 If you run:
 
 ```bash
-autorunne adopt --with-vscode
+autorunne open --with-vscode
 ```
 
 or
@@ -387,7 +396,7 @@ autorunne init --with-vscode
 - `.vscode/settings.json`
 - `.vscode/extensions.json`
 
-The generated task uses `runOn: folderOpen`, so VS Code can auto-trigger `autorunne sync` when the workspace opens.
+The generated task uses `runOn: folderOpen`, so VS Code can auto-trigger `autorunne open` when the workspace opens.
 
 ---
 
@@ -453,13 +462,13 @@ Automated validation:
 ### Existing repo / cloned open-source repo
 1. clone the repo normally
 2. run `autorunne adopt`
-3. optionally run `autorunne adopt --with-vscode`
+3. optionally run `autorunne open --with-vscode`
 4. keep `.autorunne/` local-only
 5. export or release a clean formal version when needed
 
 ---
 
-## Roadmap after 0.4.0
+## Roadmap after 0.5.0
 - publish to PyPI
 - public `pipx` install flow
 - smarter file watcher / daemon mode
