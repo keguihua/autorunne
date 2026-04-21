@@ -90,6 +90,16 @@ autorunne adopt --with-vscode
 
 接管后优先打开 `.autorunne/START_HERE.md`，直接给 Claude Code / Codex / Gemini 当作当前项目入口。
 
+### 开始一个任务
+```bash
+autorunne start --task "实现支付回调" --next "先补 webhook 合约测试"
+```
+
+### 中途打一个检查点
+```bash
+autorunne checkpoint --summary "已理清 webhook payload" --next "开始接 handler wiring"
+```
+
 ### 刷新工作流状态
 ```bash
 autorunne sync
@@ -99,6 +109,11 @@ autorunne sync --note "今天修完登录问题，下一步做订单页"
 ### 收尾一个开发切片
 ```bash
 autorunne finish --summary "修完登录问题" --task "检查登录逻辑" --next "开始做订单页筛选" --decision "登录态改成共用中间件"
+```
+
+### 强制指定验证命令
+```bash
+autorunne finish --summary "确认测试通过" --validate "pytest -q" --next "补发布说明"
 ```
 
 ### 监听开发过程中的文件变化

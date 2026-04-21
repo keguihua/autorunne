@@ -90,6 +90,16 @@ autorunne adopt --with-vscode
 
 After adoption, open `.autorunne/START_HERE.md` inside Claude Code, Codex, or Gemini.
 
+### Start a focused task
+```bash
+autorunne start --task "Implement billing webhook" --next "Write webhook contract tests"
+```
+
+### Save a checkpoint mid-task
+```bash
+autorunne checkpoint --summary "Mapped webhook payloads" --next "Implement handler wiring"
+```
+
 ### Refresh workflow state
 ```bash
 autorunne sync
@@ -99,6 +109,11 @@ autorunne sync --note "Finished auth fix, next check the order page"
 ### Close one development slice
 ```bash
 autorunne finish --summary "Implemented auth fix" --task "Review dashboard filters" --next "Ship release notes" --decision "Dashboard filters now reuse shared auth state"
+```
+
+### Force a specific validation command
+```bash
+autorunne finish --summary "Kept tests green" --validate "pytest -q" --next "Ship changelog"
 ```
 
 ### Watch local file changes

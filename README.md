@@ -18,6 +18,7 @@ At the same time, it keeps `.autorunne/` out of the formal release version.
 ## Documentation
 - [中文使用说明](docs/Autorunne-Usage-ZH.md)
 - [English usage guide](docs/Autorunne-Usage-EN.md)
+- [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
 - [Autorunne 产品说明书](docs/Autorunne-产品说明书-ZH.md)
 - [Autorunne 商业计划书](docs/Autorunne-商业计划书-ZH.md)
 - [Autorunne 对外定位与销售话术](docs/Autorunne-对外定位与销售话术-ZH.md)
@@ -179,6 +180,16 @@ autorunne adopt --with-vscode
 
 Then open `.autorunne/START_HERE.md` in Claude Code, Codex, or Gemini.
 
+### Start a focused task
+```bash
+autorunne start --task "Implement billing webhook" --next "Write webhook contract tests"
+```
+
+### Save a checkpoint during development
+```bash
+autorunne checkpoint --summary "Mapped webhook payloads" --next "Implement handler wiring"
+```
+
 ### Refresh after meaningful work
 ```bash
 autorunne sync --note "Finished auth fix, next handle dashboard filters"
@@ -232,11 +243,31 @@ autorunne adopt --with-vscode
 ### `autorunne sync`
 Refresh workflow state, keep your manual memory docs intact, and append a manual note.
 
+### `autorunne start`
+Open a new task slice and put it into `TASKS.md`.
+
+```bash
+autorunne start --task "Implement billing webhook" --next "Write webhook contract tests"
+```
+
+### `autorunne checkpoint`
+Save progress mid-task without closing the task.
+
+```bash
+autorunne checkpoint --summary "Mapped webhook payloads" --next "Implement handler wiring"
+```
+
 ### `autorunne finish`
-Close a real task, append a completion summary, optionally capture a durable decision, and set the next action.
+Close a real task, append a completion summary, optionally capture a durable decision, and run validation before setting the next action.
 
 ```bash
 autorunne finish --summary "Implemented auth fix" --task "Review dashboard filters" --next "Ship release notes" --decision "Dashboard filters now reuse shared auth state"
+```
+
+To force a specific validation command:
+
+```bash
+autorunne finish --summary "Kept tests green" --validate "pytest -q" --next "Ship changelog"
 ```
 
 ### `autorunne watch`

@@ -110,6 +110,57 @@ def test_sync_without_note_appends_automatic_session_entry(python_repo: Path):
     assert "Keep this manual task" in tasks_text
 
 
+def test_start_creates_in_progress_task_and_checkpoint_updates_next_action(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+
+    start_result = _run_in(
+        python_repo,
+        ["start", "--task", "Implement billing webhook", "--next", "Write webhook contract tests"],
+    )
+    assert start_result.exit_code == 0
+
+    checkpoint_result = _run_in(
+        python_repo,
+        ["checkpoint", "--summary", "Mapped webhook payloads", "--next", "Implement handler wiring"],
+    )
+    assert checkpoint_result.exit_code == 0
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+
+    assert "- [ ] Implement billing webhook" in tasks_text
+    assert "- [ ] Implement handler wiring" in tasks_text
+    assert "Implement handler wiring" in next_action_text
+    assert "start task" in log_text.lower()
+    assert "checkpoint" in log_text.lower()
+    assert "Mapped webhook payloads" in log_text
+
+
+def test_finish_can_run_validation_command_and_record_result(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Kept tests green", "--validate", "pytest -q", "--next", "Ship changelog"],
+    )
+    assert result.exit_code == 0
+
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert "Validation command: pytest -q" in log_text
+    assert "Validation result: passed" in log_text
+    assert "Validation: passed" in result.stdout
+
+
+def test_finish_fails_when_validation_command_fails(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Tried to finish", "--validate", "python -c \"import sys; sys.exit(1)\""],
+    )
+    assert result.exit_code == 1
+    assert "Validation failed" in result.stdout
+
+
 def test_finish_appends_summary_and_updates_next_action(python_repo: Path):
     _run_in(python_repo, ["adopt"])
     tasks_path = python_repo / ".autorunne" / "TASKS.md"

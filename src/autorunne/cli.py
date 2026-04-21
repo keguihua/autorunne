@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from autorunne.commands import adopt as adopt_cmd
+from autorunne.commands import checkpoint as checkpoint_cmd
 from autorunne.commands import completion as completion_cmd
 from autorunne.commands import doctor as doctor_cmd
 from autorunne.commands import export as export_cmd
@@ -14,6 +15,7 @@ from autorunne.commands import finish as finish_cmd
 from autorunne.commands import hooks as hooks_cmd
 from autorunne.commands import init as init_cmd
 from autorunne.commands import release as release_cmd
+from autorunne.commands import start as start_cmd
 from autorunne.commands import status as status_cmd
 from autorunne.commands import sync as sync_cmd
 from autorunne.commands import vscode as vscode_cmd
@@ -70,15 +72,55 @@ def sync(
 
 
 @app.command()
+def start(
+    task: str = typer.Option(..., help="Task to start and place into TASKS.md."),
+    next: str | None = typer.Option(None, "--next", help="Optional next action to write immediately."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Start a new focused task slice."""
+    result = start_cmd.run(_target(path), task=task, next_action=next)
+    console.print(f"Started: {result['task']}")
+    console.print(f"Next action: {result['next_action']}")
+
+
+@app.command()
+def checkpoint(
+    summary: str = typer.Option(..., help="Short progress note for the current task."),
+    next: str | None = typer.Option(None, "--next", help="Optional next action to update immediately."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Save progress without closing the current task."""
+    result = checkpoint_cmd.run(_target(path), summary=summary, next_action=next)
+    console.print(f"Checkpoint: {result['summary']}")
+    console.print(f"Next action: {result['next_action']}")
+
+
+@app.command()
 def finish(
     summary: str = typer.Option(..., help="Concise summary of what was completed."),
     next: str | None = typer.Option(None, "--next", help="Concrete next step to write into NEXT_ACTION.md."),
     task: str | None = typer.Option(None, "--task", help="Optional open task text to close inside TASKS.md."),
     decision: str | None = typer.Option(None, "--decision", help="Optional durable decision to append to DECISIONS.md."),
+    validate: str | None = typer.Option(None, "--validate", help="Optional validation command to run before finish succeeds."),
+    no_validate: bool = typer.Option(False, "--no-validate", help="Skip automatic validation for this finish call."),
     path: str | None = typer.Option(None, help="Target repository path"),
 ):
     """Record a finished slice and set the next action."""
-    result = finish_cmd.run(_target(path), summary=summary, next_action=next, task_match=task, decision=decision)
+    try:
+        result = finish_cmd.run(
+            _target(path),
+            summary=summary,
+            next_action=next,
+            task_match=task,
+            decision=decision,
+            validation_command=validate,
+            skip_validation=no_validate,
+        )
+    except finish_cmd.FinishValidationError as exc:
+        console.print(f"Validation failed: {exc.command}")
+        if exc.output:
+            console.print(exc.output)
+        raise typer.Exit(1)
     console.print(f"Finished: {result['summary']}")
     console.print(f"Next action: {result['next_action']}")
     if result.get("matched_task"):
@@ -87,6 +129,8 @@ def finish(
         console.print(f"Decision captured: {result['decision']}")
     if result.get("changed_files"):
         console.print(f"Files changed: {', '.join(result['changed_files'])}")
+    if result.get("validation"):
+        console.print(f"Validation: {result['validation']['status']} ({result['validation']['command']})")
 
 
 @app.command()

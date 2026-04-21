@@ -19,6 +19,7 @@ class WorkflowConfig(BaseModel):
         ]
     )
     preferred_agent: str = "common"
+    auto_validate_on_finish: bool = True
 
     @property
     def workflow_path(self) -> Path:
