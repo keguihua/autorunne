@@ -9,9 +9,11 @@ from rich.table import Table
 from autorunne.commands import adopt as adopt_cmd
 from autorunne.commands import checkpoint as checkpoint_cmd
 from autorunne.commands import completion as completion_cmd
+from autorunne.commands import daemon as daemon_cmd
 from autorunne.commands import doctor as doctor_cmd
 from autorunne.commands import export as export_cmd
 from autorunne.commands import finish as finish_cmd
+from autorunne.commands import hermes_task as hermes_task_cmd
 from autorunne.commands import hooks as hooks_cmd
 from autorunne.commands import init as init_cmd
 from autorunne.commands import open as open_cmd
@@ -164,6 +166,37 @@ def watch(
         console.print(f"Last sync repo: {result['last_sync']}")
     else:
         console.print("No file changes detected during watch window.")
+
+
+@app.command()
+def daemon(
+    path: str | None = typer.Option(None, help="Target repository path"),
+    duration: float = typer.Option(30.0, help="How long to keep the daemon loop alive in seconds."),
+    interval: float = typer.Option(1.0, help="Polling interval in seconds."),
+):
+    """Run an open-first background loop that bootstraps/resumes then auto-syncs changes."""
+    result = daemon_cmd.run(_target(path), duration=duration, interval=interval)
+    console.print(f"Autorunne daemon started from: {result['action']}")
+    console.print(f"Ticks: {result['ticks']}")
+    console.print(f"Auto-syncs: {result['syncs']}")
+    console.print(f"Next action: {result['next_action']}")
+
+
+@app.command("hermes-task")
+def hermes_task(
+    task: str = typer.Option(..., help="Task text coming from a Hermes chat entry."),
+    next: str | None = typer.Option(None, "--next", help="Concrete next action to write immediately."),
+    context: str | None = typer.Option(None, help="Optional user request or extra Hermes context."),
+    decision: str | None = typer.Option(None, help="Optional durable decision to append immediately."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Bridge a Hermes chat task into local Autorunne workflow files."""
+    result = hermes_task_cmd.run(_target(path), task=task, next_action=next, context=context, decision=decision)
+    console.print(f"Hermes task captured: {result['task']}")
+    console.print(f"Workspace action: {result['workspace_action']}")
+    console.print(f"Next action: {result['next_action']}")
+    if result.get("decision"):
+        console.print(f"Decision captured: {result['decision']}")
 
 
 @app.command()

@@ -80,6 +80,51 @@ def test_open_resumes_existing_workflow_and_appends_auto_resume_log(python_repo:
     assert "Zero-prompt handoff" in start_here_text
 
 
+def test_daemon_bootstraps_then_auto_syncs_on_change(node_repo: Path):
+    def mutate_file():
+        time.sleep(0.2)
+        (node_repo / "src" / "index.js").write_text("console.log('daemon changed')\n", encoding="utf-8")
+
+    thread = threading.Thread(target=mutate_file)
+    thread.start()
+    result = _run_in(node_repo, ["daemon", "--duration", "0.8", "--interval", "0.1"])
+    thread.join()
+    assert result.exit_code == 0
+    assert "Autorunne daemon started from: bootstrapped" in result.stdout
+    assert "Auto-syncs:" in result.stdout
+    log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert "daemon auto-sync" in log_text
+
+
+def test_hermes_task_bootstraps_repo_and_writes_task_context(python_repo: Path):
+    result = _run_in(
+        python_repo,
+        [
+            "hermes-task",
+            "--task",
+            "Continue billing integration",
+            "--next",
+            "Write Stripe webhook contract test",
+            "--context",
+            "User asked Hermes to keep moving on billing without re-explaining the repo.",
+            "--decision",
+            "Billing work should stay in the smallest safe slice.",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Hermes task captured: Continue billing integration" in result.stdout
+    assert "Workspace action:" in result.stdout
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    decisions_text = (python_repo / ".autorunne" / "DECISIONS.md").read_text(encoding="utf-8")
+    assert "- [ ] Continue billing integration" in tasks_text
+    assert "Write Stripe webhook contract test" in tasks_text
+    assert "hermes task ingress" in log_text.lower()
+    assert "User asked Hermes" in log_text
+    assert "Billing work should stay in the smallest safe slice." in decisions_text
+
+
 def test_init_can_install_vscode_workspace_integration(git_repo: Path):
     result = _run_in(git_repo, ["init", "--with-vscode"])
     assert result.exit_code == 0

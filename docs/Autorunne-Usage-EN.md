@@ -13,6 +13,8 @@ It is designed for:
 - adds `autorunne open` so entering a repo can auto-detect and adopt half-finished workspaces
 - auto-bootstraps `.autorunne/` when workflow memory is missing
 - auto-refreshes and resumes existing workflow memory on every open
+- adds `autorunne daemon` for a local open-first loop that keeps repos warm
+- adds `autorunne hermes-task` so Hermes chat tasks can be written directly into local workflow memory
 - upgrades VS Code folder-open automation to call `autorunne open`
 - adds project phase detection, recent git signals, and resume hints
 
@@ -89,6 +91,19 @@ autorunne open --with-vscode
 ```
 
 On the first open of an older repo, Autorunne will create `.autorunne/`. On later opens, it will refresh and resume the existing workflow state.
+
+### Keep a repo warm locally
+```bash
+autorunne daemon --duration 300 --interval 2
+```
+
+### Push a Hermes chat request into local workflow memory
+```bash
+autorunne hermes-task \
+  --task "Continue billing integration" \
+  --next "Write Stripe webhook contract test" \
+  --context "User asked Hermes to keep moving without re-explaining the repo"
+```
 
 ### Start a focused task
 ```bash

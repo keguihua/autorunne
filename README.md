@@ -89,6 +89,8 @@ This project is built around four product directions:
 
 ### New in 0.5.0
 - adds `autorunne open` to auto-bootstrap missing workflow memory or resume existing repos immediately
+- adds `autorunne daemon` for an open-first local background loop that keeps auto-syncing changed repos
+- adds `autorunne hermes-task` so Hermes chat tasks can be written directly into local workflow memory
 - upgrades VS Code folder-open automation to call `autorunne open` instead of a plain sync
 - adds project phase detection, recent git signal detection, and resume hints for half-finished repos
 - refreshes `START_HERE.md`, `PROJECT_CONTEXT.md`, and `COMMANDS.md` for low-prompt / near-zero-prompt handoff
@@ -202,6 +204,19 @@ autorunne open
 autorunne open --with-vscode
 ```
 
+### Keep a repo warm locally
+```bash
+autorunne daemon --duration 300 --interval 2
+```
+
+### Push a Hermes chat task straight into local workflow memory
+```bash
+autorunne hermes-task \
+  --task "Continue billing integration" \
+  --next "Write Stripe webhook contract test" \
+  --context "User asked Hermes to keep moving without re-explaining the repo"
+```
+
 Then point your coding agent at `.autorunne/START_HERE.md` or just continue from the repo after Autorunne opens it.
 
 ### Start a focused task
@@ -274,6 +289,23 @@ autorunne open --with-vscode
 
 ### `autorunne sync`
 Refresh workflow state, keep your manual memory docs intact, and append a manual note.
+
+### `autorunne daemon`
+Run an open-first loop that bootstraps or resumes once, then keeps auto-syncing local file changes.
+
+```bash
+autorunne daemon --duration 300 --interval 2
+```
+
+### `autorunne hermes-task`
+Capture a task from a Hermes chat entry and write it straight into `.autorunne/`.
+
+```bash
+autorunne hermes-task \
+  --task "Continue billing integration" \
+  --next "Write Stripe webhook contract test" \
+  --context "User asked Hermes to keep moving without re-explaining the repo"
+```
 
 ### `autorunne start`
 Open a new task slice and put it into `TASKS.md`.

@@ -1,11 +1,13 @@
-from . import adopt, checkpoint, completion, doctor, export, hooks, init, release, start, status, sync, open, vscode, watch
+from . import adopt, checkpoint, completion, daemon, doctor, export, hermes_task, hooks, init, release, start, status, sync, open, vscode, watch
 
 __all__ = [
     "adopt",
     "checkpoint",
     "completion",
+    "daemon",
     "doctor",
     "export",
+    "hermes_task",
     "hooks",
     "init",
     "open",

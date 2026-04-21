@@ -47,5 +47,5 @@ echo
 echo "Autorunne installed."
 echo "Next steps:"
 echo "  1) cd /path/to/your/repo"
-echo "  2) autorunne adopt --with-vscode"
-echo "  3) open .autorunne/START_HERE.md in Claude Code, Codex, or Gemini"
+echo "  2) autorunne open --with-vscode"
+echo "  3) after that, just open the repo and let Autorunne auto-resume it"
