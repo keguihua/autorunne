@@ -250,7 +250,7 @@ def export_command(
 
 @app.command()
 def release(
-    version: str = typer.Option(..., help="Release version, e.g. 0.6.0 or v0.6.0"),
+    version: str = typer.Option(..., help="Release version, e.g. 0.6.1 or v0.6.1"),
     path: str | None = typer.Option(None, help="Target repository path"),
     skip_build: bool = typer.Option(False, help="Skip building wheel/sdist assets."),
 ):

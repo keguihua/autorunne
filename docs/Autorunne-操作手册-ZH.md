@@ -35,7 +35,19 @@
 
 ## 二、安装方式
 
-### 方式 A：最推荐，直接一键安装
+### 方式 A：最推荐，直接从 PyPI 安装
+
+```bash
+pipx install autorunne
+```
+
+适合：
+- 你想用最标准的一键安装方式
+- 你希望以后更新也直接走 pipx
+
+---
+
+### 方式 B：一键安装脚本
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | bash
@@ -48,12 +60,12 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ---
 
-### 方式 B：固定安装某个公开版本
+### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.0：
+比如安装 0.6.1：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.0 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.1 bash
 ```
 
 适合：
@@ -62,7 +74,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ---
 
-### 方式 C：开发者本地安装
+### 方式 D：开发者本地安装
 
 ```bash
 git clone https://github.com/keguihua/autorunne.git
@@ -244,7 +256,7 @@ autorunne doctor
 
 ```bash
 autorunne export
-autorunne release --version 0.6.0
+autorunne release --version 0.6.1
 ```
 
 ---

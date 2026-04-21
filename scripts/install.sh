@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_URL="https://github.com/keguihua/autorunne.git"
 RELEASE_BASE_URL="https://github.com/keguihua/autorunne/releases/download"
 AUTORUNNE_REF="${AUTORUNNE_GIT_REF:-main}"
-AUTORUNNE_INSTALL_SOURCE="${AUTORUNNE_INSTALL_SOURCE:-git}"
+AUTORUNNE_INSTALL_SOURCE="${AUTORUNNE_INSTALL_SOURCE:-pypi}"
 AUTORUNNE_VERSION="${AUTORUNNE_VERSION:-}"
 AUTORUNNE_DRY_RUN="${AUTORUNNE_DRY_RUN:-0}"
 AUTORUNNE_PIPX_BIN_OVERRIDE="${AUTORUNNE_PIPX_BIN:-}"
@@ -52,7 +52,7 @@ resolve_install_target() {
         VERSION_TAG="$AUTORUNNE_REF"
       fi
       if [ -z "$VERSION_TAG" ] || [ "$VERSION_TAG" = "main" ]; then
-        echo "AUTORUNNE_VERSION (for example v0.5.0) is required when AUTORUNNE_INSTALL_SOURCE=release-wheel" >&2
+        echo "AUTORUNNE_VERSION (for example v0.6.1) is required when AUTORUNNE_INSTALL_SOURCE=release-wheel" >&2
         exit 1
       fi
       VERSION_BASE="${VERSION_TAG#v}"
@@ -88,3 +88,4 @@ echo "  1) cd /path/to/your/repo"
 echo "  2) first time in that repo, run: autorunne open --with-vscode"
 echo "  3) after that, just open the repo in VS Code and let Autorunne auto-resume it"
 echo "  4) then launch Codex or Claude Code directly from that repo terminal — you do not need a separate Autorunne window unless you explicitly want daemon mode"
+echo "  5) fallback install modes: AUTORUNNE_INSTALL_SOURCE=git or AUTORUNNE_INSTALL_SOURCE=release-wheel"

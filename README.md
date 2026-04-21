@@ -86,9 +86,9 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.0**
+**0.6.1**
 
-### New in 0.6.0
+### New in 0.6.1
 - adds a clearer public install flow with `scripts/install.sh`
 - adds pinned public release-wheel install support
 - adds daemon `--max-syncs` so the loop can stop after the first meaningful auto-sync
@@ -138,7 +138,12 @@ This project is built around four product directions:
 
 ## Install
 
-### Fastest install for VS Code terminal users
+### Recommended public install
+```bash
+pipx install autorunne
+```
+
+### One-line installer for VS Code terminal users
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | bash
 ```
@@ -146,7 +151,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.0 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.1 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -170,18 +175,12 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.0-py3-none-any.whl
+pip install autorunne-0.6.1-py3-none-any.whl
 ```
 
-### Option C — install directly with pipx once published
-```bash
-pipx install autorunne
-```
-
-### PyPI publishing status
-- GitHub release publishing is already live
-- GitHub Actions is now prepared for PyPI trusted publishing on version tags
-- Once the PyPI project/trusted publisher is connected, `pipx install autorunne` becomes the clean public install path
+### Fallback install modes
+- `AUTORUNNE_INSTALL_SOURCE=git` → install directly from the GitHub repo
+- `AUTORUNNE_INSTALL_SOURCE=release-wheel` → install a pinned GitHub Release wheel
 
 ---
 
@@ -272,7 +271,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.0
+autorunne release --version 0.6.1
 ```
 
 ---
@@ -520,7 +519,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.0
+## Roadmap after 0.6.1
 - publish to PyPI
 - public `pipx` install flow
 - smarter file watcher / daemon mode
