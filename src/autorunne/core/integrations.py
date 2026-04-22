@@ -4,7 +4,7 @@ from pathlib import Path
 
 from autorunne.core.paths import ensure_dir, workflow_bin_dir, write_text
 
-VALID_TOOLS = {"codex", "claude", "hermes", "all"}
+VALID_TOOLS = {"codex", "claude", "hermes", "cursor", "copilot", "all"}
 VALID_SCOPES = {"repo", "user"}
 
 
@@ -13,6 +13,8 @@ def _skill_text(tool: str) -> str:
         "codex": "./.autorunne/bin/ar-codex",
         "claude": "./.autorunne/bin/ar-claude",
         "hermes": "./.autorunne/bin/ar-hermes",
+        "cursor": "Cursor / Cursor Agent repo instructions",
+        "copilot": "GitHub Copilot repo instructions",
     }.get(tool, "./.autorunne/bin/ar-codex")
     return f"""# Autorunne Workflow Skill
 
@@ -35,14 +37,49 @@ This repository uses Autorunne as the state layer.
 """
 
 
+def _cursor_rules_text() -> str:
+    return """---
+description: Autorunne workflow contract for this repo
+globs:
+alwaysApply: true
+---
+
+# Autorunne Cursor Workflow
+
+1. Read `.autorunne/views/START_HERE.md` before multi-step work.
+2. Treat `.autorunne/state/*` as the only mutable project state source of truth.
+3. Do not edit `.autorunne/state/*` directly; use `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
+4. When code changes are verified, write the result back through Autorunne so the rendered views stay fresh.
+5. In your final report, include changed files, completion status, and the Autorunne commands executed.
+"""
+
+
+def _copilot_instructions_text() -> str:
+    return """# Autorunne Copilot Instructions
+
+This repository uses Autorunne as the workflow and project-memory layer.
+
+Required behavior:
+1. Read `.autorunne/views/START_HERE.md` first.
+2. Treat `.autorunne/state/*` as the only mutable project state source of truth.
+3. Do not edit `.autorunne/state/*` directly.
+4. Use `autorunne start` when the task has not been recorded yet.
+5. Use `autorunne checkpoint` for meaningful partial progress.
+6. Use `autorunne finish` after verification is complete.
+7. Include changed files, completion status, and Autorunne commands in the final report.
+"""
+
+
 def _agents_text() -> str:
     return """# AGENTS
 
 Short instruction layer for this repo:
 1. Read `.autorunne/views/START_HERE.md` first.
 2. Use repo skill files under `.agents/skills/autorunne-workflow/` or `.claude/skills/autorunne-workflow/`.
-3. Do not write `.autorunne/state/*` directly.
-4. Prefer `./.autorunne/bin/ar-codex`, `./.autorunne/bin/ar-claude`, or `./.autorunne/bin/ar-hermes` for a hard Autorunne entry.
+3. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
+4. GitHub Copilot should use `.github/copilot-instructions.md` when present.
+5. Do not write `.autorunne/state/*` directly.
+6. Prefer `./.autorunne/bin/ar-codex`, `./.autorunne/bin/ar-claude`, or `./.autorunne/bin/ar-hermes` for a hard Autorunne entry.
 """
 
 
@@ -67,7 +104,7 @@ exec {command_name} "$@"
 def _tool_selection(tool: str) -> list[str]:
     if tool not in VALID_TOOLS:
         raise ValueError(f"Unsupported tool: {tool}")
-    return ["codex", "claude", "hermes"] if tool == "all" else [tool]
+    return ["codex", "claude", "hermes", "cursor", "copilot"] if tool == "all" else [tool]
 
 
 def _target_roots(repo_root: Path, scope: str) -> dict[str, Path]:
@@ -77,6 +114,8 @@ def _target_roots(repo_root: Path, scope: str) -> dict[str, Path]:
         return {
             "agents_root": repo_root / ".agents" / "skills" / "autorunne-workflow",
             "claude_root": repo_root / ".claude" / "skills" / "autorunne-workflow",
+            "cursor_rules": repo_root / ".cursor" / "rules" / "autorunne-workflow.mdc",
+            "copilot_instructions": repo_root / ".github" / "copilot-instructions.md",
             "bin_root": workflow_bin_dir(repo_root),
             "agents_md": repo_root / "AGENTS.md",
         }
@@ -84,6 +123,8 @@ def _target_roots(repo_root: Path, scope: str) -> dict[str, Path]:
     return {
         "agents_root": home / ".agents" / "skills" / "autorunne-workflow",
         "claude_root": home / ".claude" / "skills" / "autorunne-workflow",
+        "cursor_rules": home / ".cursor" / "rules" / "autorunne-workflow.mdc",
+        "copilot_instructions": home / ".github" / "copilot-instructions.md",
         "bin_root": home / ".local" / "bin",
         "agents_md": home / ".config" / "autorunne" / "AGENTS.md",
     }
@@ -113,12 +154,24 @@ def install_integrations(repo_root: Path, *, tool: str = "all", scope: str = "re
         created_paths.append(str(skill_path))
         tools_installed.append("claude")
 
+    if "cursor" in selected:
+        write_text(targets["cursor_rules"], _cursor_rules_text())
+        created_paths.append(str(targets["cursor_rules"]))
+        tools_installed.append("cursor")
+
+    if "copilot" in selected:
+        write_text(targets["copilot_instructions"], _copilot_instructions_text())
+        created_paths.append(str(targets["copilot_instructions"]))
+        tools_installed.append("copilot")
+
     wrapper_map = {
         "codex": "codex",
         "claude": "claude",
         "hermes": "hermes",
     }
     for name in selected:
+        if name not in wrapper_map:
+            continue
         wrapper_name = f"ar-{name}"
         wrapper_path = targets["bin_root"] / wrapper_name
         content = _wrapper_script(wrapper_map[name]) if scope == "repo" else _user_wrapper_script(wrapper_map[name])

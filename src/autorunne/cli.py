@@ -52,7 +52,7 @@ def init(
     console.print(f"Initialized Autorunne in [bold]{result['repo_root']}[/bold]")
     console.print(f"Local git exclude updated: {result['exclude_path']}")
     console.print(f"Next action: {result['scan']['next_action']}")
-    console.print(f"Open in Claude Code / Codex / Gemini: {result['start_here_path']}")
+    console.print(f"Open in Claude Code / Codex / Cursor / Copilot / Gemini / Hermes: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 
@@ -68,7 +68,7 @@ def adopt(
     console.print(f"Detected stack: {', '.join(result['scan']['stack'])}")
     console.print(f"Detected framework: {', '.join(result['scan']['framework'])}")
     console.print(f"Next action: {result['scan']['next_action']}")
-    console.print(f"Open in Claude Code / Codex / Gemini: {result['start_here_path']}")
+    console.print(f"Open in Claude Code / Codex / Cursor / Copilot / Gemini / Hermes: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
 

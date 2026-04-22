@@ -58,6 +58,7 @@ def render_view_bundle(state: dict) -> dict[str, str]:
     wrapper_lines = _bulletize(repo_wrappers, "No wrappers installed yet")
     commands_markdown = _render_commands(current.get("commands", {}))
     views_root = ".autorunne/views"
+    agents_root = ".autorunne/agents"
 
     project_context = f"""# Project Context
 
@@ -145,9 +146,11 @@ def render_view_bundle(state: dict) -> dict[str, str]:
 
 ## Open-first workflow
 1. Run `autorunne open` when you enter the repo.
-2. Repo-level integrations point Claude Code and Codex to `{views_root}/START_HERE.md`.
+2. All supported agents should read `{views_root}/START_HERE.md` and `{agents_root}/autorunne-workflow.md` first.
 3. Use `./.autorunne/bin/ar-codex` or `./.autorunne/bin/ar-claude` when you want a hard Autorunne entrypoint.
-4. End each slice with `autorunne checkpoint` or `autorunne finish`.
+4. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
+5. GitHub Copilot should use `.github/copilot-instructions.md` when present.
+6. End each slice with `autorunne checkpoint` or `autorunne finish`.
 """
 
     start_here_md = f"""# Start Here
@@ -155,11 +158,12 @@ def render_view_bundle(state: dict) -> dict[str, str]:
 Autorunne is the state layer for this repository, designed to work with Claude Code, Codex, Gemini, Hermes, Cursor, and GitHub Copilot.
 
 ## Read order
-1. `{views_root}/PROJECT_CONTEXT.md`
-2. `{views_root}/TASKS.md`
-3. `{views_root}/DECISIONS.md`
-4. `{views_root}/NEXT_ACTION.md`
-5. `{views_root}/COMMANDS.md`
+1. `{agents_root}/autorunne-workflow.md`
+2. `{views_root}/PROJECT_CONTEXT.md`
+3. `{views_root}/TASKS.md`
+4. `{views_root}/DECISIONS.md`
+5. `{views_root}/NEXT_ACTION.md`
+6. `{views_root}/COMMANDS.md`
 
 ## Current focus
 - Next action: {current.get('next_action', 'Confirm the next concrete step.')}
@@ -171,11 +175,13 @@ Autorunne is the state layer for this repository, designed to work with Claude C
 ## Hard entrypoints
 - Repo skill for Codex: `.agents/skills/autorunne-workflow/SKILL.md`
 - Repo skill for Claude Code: `.claude/skills/autorunne-workflow/SKILL.md`
+- Native Cursor rule: `.cursor/rules/autorunne-workflow.mdc`
+- Native Copilot instructions: `.github/copilot-instructions.md`
 - Wrappers:
 {wrapper_lines}
 
 ## Zero-prompt handoff
-If your coding agent can read repo files, point it at `{views_root}/START_HERE.md` first, then continue from the latest next action.
+If your coding agent can read repo files, point it at `{views_root}/START_HERE.md` first, then continue from the latest next action and keep write-backs flowing through Autorunne commands.
 
 ## Recommended local commands
 {commands_markdown}
@@ -195,10 +201,11 @@ If your coding agent can read repo files, point it at `{views_root}/START_HERE.m
 
 def render_agent_compat_bundle() -> dict[str, str]:
     return {
-        "common.md": "# Common Agent Rules\n\n- Read `.autorunne/views/START_HERE.md` first.\n- Use Autorunne commands to update project state.\n- Keep edits minimal and traceable.\n",
-        "claude-code.md": "# Claude Code Adapter\n\n- Start with `.autorunne/views/START_HERE.md`.\n- Prefer `./.autorunne/bin/ar-claude` for repo-scoped entry.\n- Summarize changed files back through `autorunne checkpoint` or `autorunne finish`.\n",
-        "codex.md": "# Codex Adapter\n\n- Start with `.autorunne/views/START_HERE.md`.\n- Prefer `./.autorunne/bin/ar-codex` for repo-scoped entry.\n- Do not edit `.autorunne/state/*` directly.\n",
-        "hermes.md": "# Hermes Adapter\n\n- Load `.autorunne/views/START_HERE.md` first.\n- Use the next action as the default starting point.\n- Keep project memory synced after each task.\n",
-        "cursor.md": "# Cursor Adapter\n\n- Read `.autorunne/views/START_HERE.md` before agent edits.\n- Keep changes narrow and validate locally.\n",
-        "copilot.md": "# GitHub Copilot Adapter\n\n- Use `.autorunne/views/START_HERE.md` as the fastest entry point.\n- Prefer small, testable changes and update Autorunne after each slice.\n",
+        "autorunne-workflow.md": "# Shared Autorunne Workflow Contract\n\nThis file (`.autorunne/agents/autorunne-workflow.md`) is the shared workflow contract for all supported agents.\n\n- Read `.autorunne/views/START_HERE.md` first.\n- Treat `.autorunne/state/*` as the only mutable project state source of truth.\n- Do not edit `.autorunne/state/*` directly; use `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.\n- After verified code changes, write progress back through Autorunne so the rendered views stay fresh.\n- Always report changed files, completion status, and the Autorunne commands executed.\n",
+        "common.md": "# Common Agent Rules\n\n- Read `.autorunne/agents/autorunne-workflow.md` first.\n- Then read `.autorunne/views/START_HERE.md`.\n- Use Autorunne commands to update project state.\n- Keep edits minimal and traceable.\n",
+        "claude-code.md": "# Claude Code Adapter\n\n- Start with `.autorunne/agents/autorunne-workflow.md`, then `.autorunne/views/START_HERE.md`.\n- Prefer `./.autorunne/bin/ar-claude` for repo-scoped entry.\n- Summarize changed files back through `autorunne checkpoint` or `autorunne finish`.\n",
+        "codex.md": "# Codex Adapter\n\n- Start with `.autorunne/agents/autorunne-workflow.md`, then `.autorunne/views/START_HERE.md`.\n- Prefer `./.autorunne/bin/ar-codex` for repo-scoped entry.\n- Do not edit `.autorunne/state/*` directly.\n",
+        "hermes.md": "# Hermes Adapter\n\n- Load `.autorunne/agents/autorunne-workflow.md` first.\n- Then load `.autorunne/views/START_HERE.md`.\n- Use the next action as the default starting point.\n- Keep project memory synced after each task.\n",
+        "cursor.md": "# Cursor Adapter\n\n- Read `.autorunne/agents/autorunne-workflow.md` and `.autorunne/views/START_HERE.md` before agent edits.\n- Keep Cursor changes narrow, validated, and written back through Autorunne.\n- Native repo rule file: `.cursor/rules/autorunne-workflow.mdc`.\n",
+        "copilot.md": "# GitHub Copilot Adapter\n\n- Read `.autorunne/agents/autorunne-workflow.md` and `.autorunne/views/START_HERE.md` before edits.\n- Prefer small, testable changes and update Autorunne after each slice.\n- Native repo instructions file: `.github/copilot-instructions.md`.\n",
     }

@@ -86,23 +86,22 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.3**
+**0.6.4**
 
-### New in 0.6.3
-- keeps `.autorunne/state/*` as the single source of truth and `.autorunne/views/*` as render-only views
-- adds `autorunne migrate` so older markdown-only workspaces can be upgraded cleanly into the state engine
-- makes `autorunne status` state-aware, showing the real active task, next action, task counts, integrations, and latest workflow action
-- adds explicit task operators: `autorunne task add`, `autorunne task done`, `autorunne task remove`
-- improves dirty-file prioritization so editor noise like `.vscode/` does not hijack resume hints
-- keeps repo-level integrations and wrappers (`AGENTS.md`, repo skills, `ar-codex`, `ar-claude`, `ar-hermes`) aligned with the state workflow
-- keeps `doctor` checking state files, rendered views, snapshot freshness, integrations, wrappers, legacy-workspace migration state, and render rebuildability
+### New in 0.6.4
+- adds a stronger shared workflow contract at `.autorunne/agents/autorunne-workflow.md`
+- makes `START_HERE.md` point every supported agent at the same workflow contract before coding
+- extends repo integrations beyond Codex / Claude / Hermes to install native repo instructions for:
+  - Cursor via `.cursor/rules/autorunne-workflow.mdc`
+  - GitHub Copilot via `.github/copilot-instructions.md`
+- keeps repo-level wrappers (`ar-codex`, `ar-claude`, `ar-hermes`) aligned with the same workflow contract
+- tightens `doctor` so it verifies the full repo-level agent integration set instead of only the original Codex / Claude pair
 
 ### Earlier releases laid the base
-- public install flow with `scripts/install.sh`
-- pinned public release-wheel installs
-- daemon `--max-syncs`
-- changed-file reporting in daemon output
-- GitHub-visible Chinese operator manual for installation and daily use
+- state-first workflow core under `.autorunne/state/*` + `.autorunne/views/*`
+- `autorunne migrate` for upgrading markdown-only workspaces into the state engine
+- state-aware `status` plus explicit task operators
+- public install flow with `scripts/install.sh` and `pipx install autorunne`
 
 ---
 
@@ -152,7 +151,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.3 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.4 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -176,7 +175,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.3-py3-none-any.whl
+pip install autorunne-0.6.4-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -302,7 +301,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.3
+autorunne release --version 0.6.4
 ```
 
 ---
@@ -617,7 +616,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.3
+## Roadmap after 0.6.4
 - JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
 - stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness

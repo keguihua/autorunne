@@ -2,6 +2,49 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.4 - 2026-04-22
+
+### Highlights
+- Autorunne now installs a stronger **cross-agent workflow contract** so Hermes, Codex, Claude Code, Cursor, and GitHub Copilot can all enter the same repo-local workflow.
+- Repo integrations now include native agent instruction files for Cursor and GitHub Copilot, not only repo skills and wrappers for Codex / Claude / Hermes.
+- Rendered onboarding docs now point every supported agent back to the shared workflow contract before coding.
+
+### Added
+- `.autorunne/agents/autorunne-workflow.md`
+  - shared repo-local workflow contract for all supported agents
+  - requires `autorunne start` / `autorunne checkpoint` / `autorunne finish` instead of direct state edits
+- Cursor native integration
+  - installs `.cursor/rules/autorunne-workflow.mdc`
+- GitHub Copilot native integration
+  - installs `.github/copilot-instructions.md`
+
+### Improved
+- `autorunne integrate --tool all`
+  - now installs Cursor and Copilot repo integrations in addition to Codex / Claude / Hermes support
+- rendered `START_HERE.md`
+  - now points agents at `.autorunne/agents/autorunne-workflow.md` first
+  - explicitly lists native Cursor and Copilot integration files alongside repo skills and wrappers
+- rendered agent adapter docs
+  - common, Codex, Claude Code, Hermes, Cursor, and Copilot adapters now all point at the same shared workflow contract
+- `autorunne doctor`
+  - now checks the complete repo-level agent integration set, including Cursor and Copilot files
+- CLI onboarding output
+  - now advertises Cursor / Copilot / Hermes alongside Claude Code / Codex / Gemini
+
+### Docs and positioning
+- Updated README and install/version references to `0.6.4`
+- Added 0.6.4 release notes and refreshed release examples to match the new version
+- Kept the product positioning aligned with Autorunne as a workflow + agent-adapter layer rather than a single-agent wrapper
+
+### Verification
+- `python -m pytest tests/test_integrations.py tests/test_cli.py tests/test_phase4_commands.py -q`
+- `python -m build`
+- real install/release references updated to `0.6.4`
+
+### Release assets
+- `autorunne-0.6.4-py3-none-any.whl`
+- `autorunne-0.6.4.tar.gz`
+
 ## 0.6.3 - 2026-04-21
 
 ### Highlights

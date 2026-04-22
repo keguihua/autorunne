@@ -32,6 +32,7 @@ def test_init_creates_workflow_files(git_repo: Path):
     assert (workflow_root / "state" / "sessions.json").exists()
     assert (workflow_root / "views" / "START_HERE.md").exists()
     assert (workflow_root / "PROJECT_CONTEXT.md").exists()
+    assert (workflow_root / "agents" / "autorunne-workflow.md").exists()
     assert (workflow_root / "agents" / "codex.md").exists()
     exclude_text = (git_repo / ".git" / "info" / "exclude").read_text(encoding="utf-8")
     assert ".autorunne/" in exclude_text
@@ -44,6 +45,7 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     commands_text = (node_repo / ".autorunne" / "COMMANDS.md").read_text(encoding="utf-8")
     start_here_text = (node_repo / ".autorunne" / "START_HERE.md").read_text(encoding="utf-8")
     copilot_text = (node_repo / ".autorunne" / "agents" / "copilot.md").read_text(encoding="utf-8")
+    workflow_text = (node_repo / ".autorunne" / "agents" / "autorunne-workflow.md").read_text(encoding="utf-8")
     assert "Stack: node" in content
     assert "Framework: react, vite" in content
     assert "Project phase:" in content
@@ -57,6 +59,8 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     assert "GitHub Copilot" in start_here_text
     assert "Zero-prompt handoff" in start_here_text
     assert "START_HERE.md" in copilot_text
+    assert "autorunne-workflow.md" in workflow_text
+    assert "completion status" in workflow_text
 
 
 def test_open_bootstraps_missing_workflow_and_installs_vscode(node_repo: Path):
@@ -383,9 +387,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.6.3", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.6.4", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.3"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.4"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()

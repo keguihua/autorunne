@@ -44,8 +44,8 @@
 - `main` 已包含最新稳定功能
 ## 4. tag 发布动作
 ```bash
-git tag v0.6.3
-git push origin v0.6.3
+git tag v0.6.4
+git push origin v0.6.4
 ```
 
 如果已经在 PyPI 侧配置好 trusted publisher，那么推送版本 tag 后会同时触发：
@@ -63,7 +63,7 @@ git push origin v0.6.3
 ### 小版本（建议）
 - `0.4.1`
 - `0.4.2`
-- `0.6.3`
+- `0.6.4`
 
 适合 Autorunne 这种快速产品化节奏：
 - 小步快跑

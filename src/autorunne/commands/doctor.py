@@ -22,6 +22,8 @@ def run(target: Path) -> dict:
     snapshot_path = snapshot_file(repo_root)
     repo_skill = repo_root / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md"
     claude_skill = repo_root / ".claude" / "skills" / "autorunne-workflow" / "SKILL.md"
+    cursor_rule = repo_root / ".cursor" / "rules" / "autorunne-workflow.mdc"
+    copilot_instructions = repo_root / ".github" / "copilot-instructions.md"
     wrappers = [workflow_bin_dir(repo_root) / name for name in ["ar-codex", "ar-claude", "ar-hermes"]]
 
     result = {
@@ -102,9 +104,14 @@ def run(target: Path) -> dict:
     else:
         result["checks"]["pre_commit"] = "ok"
 
-    integrations_ok = repo_skill.exists() and claude_skill.exists()
+    integrations_ok = (
+        repo_skill.exists()
+        and claude_skill.exists()
+        and cursor_rule.exists()
+        and copilot_instructions.exists()
+    )
     if not integrations_ok:
-        result["warnings"].append("Repo-level skills are not installed")
+        result["warnings"].append("Repo-level agent integrations are not fully installed")
         result["checks"]["integrations"] = "missing"
     else:
         result["checks"]["integrations"] = "ok"
