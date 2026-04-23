@@ -2,6 +2,43 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.8 - 2026-04-23
+
+### Highlights
+- Autorunne now filters wrapper / integration noise out of automatic change recording, so `.codex`, `.agents`, `.claude`, `.cursor`, `AGENTS.md`, and Copilot scaffolding no longer pollute task history by default.
+- Repo wrappers now run an automatic finish pass after a successful agent session, which closes small natural-language tasks without making the user manually run `autorunne finish`.
+- Real dogfood on a temp repo confirmed the upgraded flow: Hermes task ingress → `ar-codex` single-file edit → daemon checkpoint → auto-finish with the task moved to completed.
+
+### Added
+- `src/autorunne/commands/auto_finish.py`
+  - wrapper-friendly command for automatically closing the active task when a successful agent run leaves meaningful repo changes behind
+- `WorkflowConfig.auto_record_ignored_paths`
+  - dedicated config list for ignoring wrapper / integration noise during automatic recording
+
+### Improved
+- `src/autorunne/core/auto_record.py`
+  - now filters non-user-facing integration noise before creating automatic tasks / checkpoints
+  - now supports wrapper-driven auto-finish with doc-only validation shortcuts and a cleaner generic next action after completion
+- `src/autorunne/commands/daemon.py`
+  - now skips auto-sync / auto-record work when only ignored noise files changed
+- `src/autorunne/core/integrations.py`
+  - generated wrappers now invoke `autorunne auto-finish --source <agent>` after successful agent execution
+- repo dogfood behavior
+  - finish summaries now focus on meaningful changed files instead of listing wrapper bootstrap artifacts
+
+### Verification
+- `python -m pytest -q`
+- `python -m build`
+- real temp-repo dogfood with:
+  - `autorunne open`
+  - `autorunne hermes-task`
+  - `./.autorunne/bin/ar-codex exec --full-auto ...`
+  - verified `TASKS.md`, `NEXT_ACTION.md`, and `SESSION_LOG.md` auto-updated with a completed task and filtered file list
+
+### Release assets
+- `autorunne-0.6.8-py3-none-any.whl`
+- `autorunne-0.6.8.tar.gz`
+
 ## 0.6.7 - 2026-04-23
 
 ### Highlights

@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from autorunne.commands import adopt as adopt_cmd
+from autorunne.commands import auto_finish as auto_finish_cmd
 from autorunne.commands import checkpoint as checkpoint_cmd
 from autorunne.commands import completion as completion_cmd
 from autorunne.commands import daemon as daemon_cmd
@@ -294,6 +295,23 @@ def finish(
         console.print(f"Decision captured: {result['decision']}")
     if result.get("changed_files"):
         console.print(f"Files changed: {', '.join(result['changed_files'])}")
+    if result.get("validation"):
+        console.print(f"Validation: {result['validation']['status']} ({result['validation']['command']})")
+
+
+@app.command("auto-finish")
+def auto_finish(
+    source: str = typer.Option("agent", help="Agent/source label to mention in the auto-finish summary."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Auto-close the active task if a wrapper session ended with meaningful changes."""
+    result = auto_finish_cmd.run(_target(path), source=source)
+    if not result.get("finished"):
+        console.print(f"Auto-finish skipped: {result['reason']}")
+        raise typer.Exit(0)
+    console.print(f"Auto-finished task: {result['task']}")
+    console.print(f"Summary: {result['summary']}")
+    console.print(f"Next action: {result['next_action']}")
     if result.get("validation"):
         console.print(f"Validation: {result['validation']['status']} ({result['validation']['command']})")
 

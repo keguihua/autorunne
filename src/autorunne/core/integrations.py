@@ -19,7 +19,7 @@ def _skill_text(tool: str) -> str:
     return f"""---
 name: autorunne-workflow
 description: Repo-local Autorunne workflow instructions for this repository
-version: 0.6.7
+version: 0.6.8
 ---
 
 # Autorunne Workflow Skill
@@ -115,6 +115,11 @@ set +e
 {command_name} "$@"
 status=$?
 set -e
+if [ "$status" -eq 0 ]; then
+  autorunne auto-finish --source {command_name} >/dev/null 2>&1 \
+    || python -m autorunne.cli auto-finish --source {command_name} >/dev/null 2>&1 \
+    || true
+fi
 cleanup
 exit $status
 """
@@ -145,6 +150,11 @@ set +e
 {command_name} "$@"
 status=$?
 set -e
+if [ "$status" -eq 0 ]; then
+  autorunne auto-finish --source {command_name} >/dev/null 2>&1 \
+    || python -m autorunne.cli auto-finish --source {command_name} >/dev/null 2>&1 \
+    || true
+fi
 cleanup
 exit $status
 """

@@ -75,6 +75,7 @@ def test_open_bootstraps_missing_workflow_and_installs_vscode(node_repo: Path):
     log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
     assert "workflow initialized" in log_text.lower()
     assert "autorunne daemon" in wrapper_text
+    assert "autorunne auto-finish --source codex" in wrapper_text
     tasks = json.loads((node_repo / ".vscode" / "tasks.json").read_text(encoding="utf-8"))
     assert tasks["tasks"][0]["command"] == "autorunne open || python -m autorunne.cli open"
 
@@ -97,7 +98,7 @@ def test_open_resumes_existing_workflow_and_appends_auto_resume_log(python_repo:
 
 def test_daemon_bootstraps_then_auto_syncs_on_change(node_repo: Path):
     def mutate_file():
-        time.sleep(0.2)
+        time.sleep(0.5)
         (node_repo / "src" / "index.js").write_text("console.log('daemon changed')\n", encoding="utf-8")
 
     thread = threading.Thread(target=mutate_file)
@@ -117,7 +118,7 @@ def test_daemon_bootstraps_then_auto_syncs_on_change(node_repo: Path):
 
 def test_daemon_reports_changed_files_and_can_stop_after_max_syncs(node_repo: Path):
     def mutate_file_once():
-        time.sleep(0.2)
+        time.sleep(0.5)
         (node_repo / "src" / "index.js").write_text("console.log('daemon changed once')\n", encoding="utf-8")
 
     thread = threading.Thread(target=mutate_file_once)
@@ -128,6 +129,26 @@ def test_daemon_reports_changed_files_and_can_stop_after_max_syncs(node_repo: Pa
     assert "Auto-syncs: 1" in result.stdout
     assert "Last changed files:" in result.stdout
     assert "src/index.js" in result.stdout
+
+
+def test_daemon_ignores_integration_noise_when_auto_recording(node_repo: Path):
+    _run_in(node_repo, ["open"])
+
+    def mutate_noise_only():
+        time.sleep(0.2)
+        (node_repo / ".codex").write_text("transient codex state\n", encoding="utf-8")
+
+    thread = threading.Thread(target=mutate_noise_only)
+    thread.start()
+    result = _run_in(node_repo, ["daemon", "--duration", "0.8", "--interval", "0.1", "--max-syncs", "1"])
+    thread.join()
+    assert result.exit_code == 0
+    assert "Auto-syncs: 0" in result.stdout
+    assert "Auto-records: 0" in result.stdout
+    tasks_text = (node_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert "Review and continue the latest local changes in .codex" not in tasks_text
+    assert "Auto-recorded local changes via daemon: .codex" not in log_text
 
 
 def test_hermes_task_bootstraps_repo_and_writes_task_context(python_repo: Path):
@@ -157,6 +178,32 @@ def test_hermes_task_bootstraps_repo_and_writes_task_context(python_repo: Path):
     assert "hermes task ingress" in log_text.lower()
     assert "User asked Hermes" in log_text
     assert "Billing work should stay in the smallest safe slice." in decisions_text
+
+
+def test_auto_finish_closes_active_task_after_minimal_docs_change(python_repo: Path):
+    _run_in(
+        python_repo,
+        [
+            "hermes-task",
+            "--task",
+            "Write dogfood note",
+            "--next",
+            "Use Codex to add the note file",
+        ],
+    )
+    (python_repo / "docs").mkdir()
+    (python_repo / "docs" / "dogfood-note.md").write_text("# note\n", encoding="utf-8")
+
+    result = _run_in(python_repo, ["auto-finish", "--source", "codex"])
+    assert result.exit_code == 0
+    assert "Auto-finished task: Write dogfood note" in result.stdout
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    assert "[x] Write dogfood note" in tasks_text
+    assert "No task in progress right now" in tasks_text
+    assert "finish summary" in log_text
+    assert "Auto-finished task after codex: Write dogfood note" in log_text
 
 
 def test_init_can_install_vscode_workspace_integration(git_repo: Path):

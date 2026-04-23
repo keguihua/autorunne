@@ -5,7 +5,7 @@ from pathlib import Path
 
 from autorunne.commands import open as open_cmd
 from autorunne.commands import sync as sync_cmd
-from autorunne.core.auto_record import auto_record_local_change
+from autorunne.core.auto_record import auto_record_local_change, filter_recordable_files
 from autorunne.core.filewatch import diff_snapshots, snapshot_tree
 from autorunne.core.gitops import detect_repo_root
 
@@ -31,7 +31,12 @@ def run(target: Path, duration: float = 30.0, interval: float = 1.0, max_syncs: 
         ticks += 1
         current = snapshot_tree(repo_root)
         if current != previous:
-            last_changed_files = diff_snapshots(previous, current)
+            raw_changed_files = diff_snapshots(previous, current)
+            meaningful_changed_files = filter_recordable_files(repo_root, raw_changed_files)
+            previous = current
+            if not meaningful_changed_files:
+                continue
+            last_changed_files = meaningful_changed_files
             changed_summary = ", ".join(last_changed_files[:5])
             note = f"daemon auto-sync: {changed_summary}" if changed_summary else "daemon auto-sync"
             sync_result = sync_cmd.run(repo_root, note=note)
@@ -42,7 +47,6 @@ def run(target: Path, duration: float = 30.0, interval: float = 1.0, max_syncs: 
             if auto_record_result["auto_recorded"]:
                 auto_records += 1
                 last_auto_summary = auto_record_result["summary"]
-            previous = current
             if max_syncs is not None and syncs >= max_syncs:
                 break
         else:

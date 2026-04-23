@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class WorkflowConfig(BaseModel):
-    version: str = "0.6.7"
+    version: str = "0.6.8"
     workflow_dir: str = ".autorunne"
     export_dir: str = ".dist-release"
     excluded_paths: list[str] = Field(
@@ -16,6 +16,16 @@ class WorkflowConfig(BaseModel):
             ".pytest_cache",
             "dist",
             "build",
+        ]
+    )
+    auto_record_ignored_paths: list[str] = Field(
+        default_factory=lambda: [
+            ".codex",
+            ".agents",
+            ".claude",
+            ".cursor",
+            ".github/copilot-instructions.md",
+            "AGENTS.md",
         ]
     )
     preferred_agent: str = "common"

@@ -86,18 +86,15 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.7**
+**0.6.8**
 
-### New in 0.6.7
-- generated Codex / Claude repo skill files now include valid YAML frontmatter, so `ar-codex` and similar entries load the Autorunne skill cleanly instead of warning about invalid `SKILL.md`
-- generated Cursor rule frontmatter is now cleaner and avoids malformed empty `globs:` metadata
-- keeps auto-recording local repo changes into Autorunne as soon as the workspace watcher sees file edits, instead of leaving progress stuck in the agent transcript
-- repo wrappers (`ar-codex` / `ar-claude` / `ar-hermes`) now start a background Autorunne daemon automatically, so normal coding sessions keep state fresh without extra user steps
-- auto-starts a focused task lane the first time change tracking sees fresh edits, then writes follow-up checkpoints on later edits in the same slice
-- keeps `In progress` as a true single-focus lane instead of letting stale tasks pile up there
-- automatically demotes older unfinished work back into `Next up` when a newer active task takes over
-- archives stale release backlog tied to older shipped versions into `Archived / historical`
-- surfaces archived backlog counts in `autorunne status` so long-lived repos stay readable
+### New in 0.6.8
+- auto-record now ignores wrapper / integration noise like `.codex`, `.agents`, `.claude`, `.cursor`, `AGENTS.md`, and Copilot instruction scaffolding, so session history focuses on real project edits
+- repo wrappers now attempt an automatic `auto-finish` step after a successful agent run, which closes small natural-language tasks without asking the user to manually run `autorunne finish`
+- doc-only dogfood tasks now auto-finish without forcing a full test run, while code changes still keep validation behavior available through the normal finish path
+- generated Codex / Claude repo skill files still include valid YAML frontmatter, so `ar-codex` and similar entries load the Autorunne skill cleanly instead of warning about invalid `SKILL.md`
+- generated Cursor rule frontmatter stays clean and avoids malformed empty `globs:` metadata
+- repo wrappers (`ar-codex` / `ar-claude` / `ar-hermes`) still start a background Autorunne daemon automatically, so local file edits get recorded without extra user steps
 
 ### Earlier releases laid the base
 - state-first workflow core under `.autorunne/state/*` + `.autorunne/views/*`
@@ -153,7 +150,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.7 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.8 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -177,7 +174,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.7-py3-none-any.whl
+pip install autorunne-0.6.8-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -303,7 +300,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.7
+autorunne release --version 0.6.8
 ```
 
 ---
@@ -618,7 +615,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.7
+## Roadmap after 0.6.8
 - JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
 - stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness

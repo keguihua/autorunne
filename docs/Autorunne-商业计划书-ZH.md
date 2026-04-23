@@ -37,7 +37,7 @@ Autorunne 提供：
 - 想把 AI 编程流程标准化的服务商
 
 ## 6. 产品形态
-### 免费开源层（0.6.7 已覆盖）
+### 免费开源层（0.6.8 已覆盖）
 - state-first CLI
 - `.autorunne/state/*` + `.autorunne/views/*`
 - 基础命令：open/migrate/start/checkpoint/finish/record/status/show/history/trace/doctor/export/release
