@@ -2,6 +2,43 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.6 - 2026-04-23
+
+### Highlights
+- Autorunne now auto-records local file changes into workflow state as soon as the watcher / daemon sees real repo edits.
+- Repo wrappers (`ar-codex`, `ar-claude`, `ar-hermes`) now start a background daemon automatically so users can just enter the repo and keep coding.
+- The first detected local change auto-opens a focused task lane, and later changes in the same slice append checkpoint-style progress without asking the user to manage `start` / `checkpoint` manually.
+
+### Added
+- `src/autorunne/core/auto_record.py`
+  - shared change-tracking helper that turns detected file edits into automatic task + checkpoint write-backs
+- default config flag `auto_record_on_change = true`
+  - keeps automatic change recording enabled for existing and newly initialized workspaces
+
+### Improved
+- `autorunne watch`
+  - now records change-driven progress, not only sync output
+  - reports how many automatic records were written plus the latest summary
+- `autorunne daemon`
+  - now auto-records detected changes into `.autorunne/state/*`
+  - returns the latest changed files and latest auto-record summary in CLI output
+- repo wrapper scripts
+  - now spawn a bounded background daemon automatically unless explicitly disabled
+  - preserve the child command exit code while cleaning up the daemon on exit
+
+### Docs and positioning
+- Updated README, usage docs, operator manual, auto-mode explainer, release playbook, and install examples to `0.6.6`
+- Added 0.6.6 release notes focused on automatic change-driven workflow recording
+
+### Verification
+- `python -m pytest tests/test_cli.py -q`
+- `python -m pytest tests/test_install_script.py -q`
+- `python -m build`
+
+### Release assets
+- `autorunne-0.6.6-py3-none-any.whl`
+- `autorunne-0.6.6.tar.gz`
+
 ## 0.6.5 - 2026-04-23
 
 ### Highlights

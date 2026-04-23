@@ -86,14 +86,15 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.5**
+**0.6.6**
 
-### New in 0.6.5
+### New in 0.6.6
+- auto-records local repo changes into Autorunne as soon as the workspace watcher sees file edits, instead of leaving progress stuck in the agent transcript
+- repo wrappers (`ar-codex` / `ar-claude` / `ar-hermes`) now start a background Autorunne daemon automatically, so normal coding sessions keep state fresh without extra user steps
+- auto-starts a focused task lane the first time change tracking sees fresh edits, then writes follow-up checkpoints on later edits in the same slice
 - keeps `In progress` as a true single-focus lane instead of letting stale tasks pile up there
 - automatically demotes older unfinished work back into `Next up` when a newer active task takes over
 - archives stale release backlog tied to older shipped versions into `Archived / historical`
-- keeps `Next up` focused on the current product route instead of cluttering it with old `v0.6.3`-style release chores
-- teaches explicit task operations (`task add/done/remove`) to realign `active_task`, `In progress`, and `Next up` consistently
 - surfaces archived backlog counts in `autorunne status` so long-lived repos stay readable
 
 ### Earlier releases laid the base
@@ -150,7 +151,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.5 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.6 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -161,7 +162,7 @@ autorunne open --with-vscode
 
 Then just open the repo. Autorunne will auto-bootstrap or resume on open, and `.autorunne/views/START_HERE.md` becomes the main entry point for Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
 
-**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you can open VS Code and launch Codex or Claude Code directly from that repo terminal, or use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude` when you want a hard Autorunne-first wrapper. You do **not** need to keep a separate Autorunne window open unless you explicitly want `autorunne daemon` running.
+**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you can open VS Code and launch Codex or Claude Code directly from that repo terminal, or use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude` when you want a hard Autorunne-first wrapper. Those wrappers now start a background Autorunne daemon automatically, so local file edits get recorded without asking the user to run `start` / `checkpoint` by hand.
 
 ### Option A — local development install
 ```bash
@@ -174,7 +175,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.5-py3-none-any.whl
+pip install autorunne-0.6.6-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -283,7 +284,7 @@ autorunne sync --note "Finished auth fix, next handle dashboard filters"
 autorunne finish --summary "Implemented auth fix" --next "Review dashboard filters"
 ```
 
-### Watch local changes and auto-sync
+### Watch local changes and auto-record progress
 ```bash
 autorunne watch --duration 60 --interval 1
 ```
@@ -300,7 +301,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.5
+autorunne release --version 0.6.6
 ```
 
 ---
@@ -377,15 +378,15 @@ Show recent session entries from state.
 Show recent state events, optionally filtered by event type.
 
 ### `autorunne daemon`
-Run an open-first loop that bootstraps or resumes once, then keeps auto-syncing local file changes.
+Run an open-first loop that bootstraps or resumes once, then keeps auto-recording local file changes into Autorunne.
 
 ```bash
 autorunne daemon --duration 300 --interval 2
 autorunne daemon --duration 300 --interval 2 --max-syncs 1
 ```
 
-- `--max-syncs 1` is useful when you want the daemon to stop after the first meaningful auto-sync.
-- Daemon output now shows the last changed files it synced.
+- `--max-syncs 1` is useful when you want the daemon to stop after the first meaningful detected change.
+- Daemon output now shows the last changed files and the last automatic record it wrote.
 
 ### `autorunne hermes-task`
 Capture a task from a Hermes chat entry and write it straight into `.autorunne/`.
@@ -587,7 +588,7 @@ Validated locally for:
 - release bundle generation
 - shell completion output
 - pre-commit and hook installation
-- watcher-based auto-sync flow
+- watcher-based auto-record flow
 
 Automated validation:
 - `pytest`
@@ -615,7 +616,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.5
+## Roadmap after 0.6.6
 - JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
 - stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness

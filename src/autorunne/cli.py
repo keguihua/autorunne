@@ -304,11 +304,14 @@ def watch(
     duration: float = typer.Option(30.0, help="How long to watch for changes in seconds."),
     interval: float = typer.Option(1.0, help="Polling interval in seconds."),
 ):
-    """Watch the repo for local file changes and auto-sync Autorunne."""
+    """Watch the repo for local file changes and auto-record Autorunne progress."""
     result = watch_cmd.run(_target(path), duration=duration, interval=interval)
     if result["changes_detected"]:
         console.print(f"Detected change(s): {result['changes_detected']}")
         console.print(f"Last sync repo: {result['last_sync']}")
+        console.print(f"Auto-records: {result.get('auto_records', 0)}")
+        if result.get("last_auto_summary"):
+            console.print(f"Last auto-record: {result['last_auto_summary']}")
     else:
         console.print("No file changes detected during watch window.")
 
@@ -320,13 +323,16 @@ def daemon(
     interval: float = typer.Option(1.0, help="Polling interval in seconds."),
     max_syncs: int = typer.Option(0, min=0, help="Stop after this many auto-syncs. Use 0 to keep the loop only time-bound."),
 ):
-    """Run an open-first background loop that bootstraps/resumes then auto-syncs changes."""
+    """Run an open-first background loop that bootstraps/resumes then auto-records changes."""
     result = daemon_cmd.run(_target(path), duration=duration, interval=interval, max_syncs=max_syncs or None)
     console.print(f"Autorunne daemon started from: {result['action']}")
     console.print(f"Ticks: {result['ticks']}")
     console.print(f"Auto-syncs: {result['syncs']}")
+    console.print(f"Auto-records: {result.get('auto_records', 0)}")
     if result.get("last_changed_files"):
         console.print(f"Last changed files: {', '.join(result['last_changed_files'])}")
+    if result.get("last_auto_summary"):
+        console.print(f"Last auto-record: {result['last_auto_summary']}")
     console.print(f"Next action: {result['next_action']}")
 
 

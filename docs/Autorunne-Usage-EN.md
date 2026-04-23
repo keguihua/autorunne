@@ -9,7 +9,7 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.5
+## 2. Core upgrades in 0.6.6
 - keeps `.autorunne/state/*` as the only source of truth
 - adds `autorunne migrate` so older markdown-only workspaces can be upgraded cleanly
 - makes `status` state-aware so it shows the real active task, next action, task counts, and integration state
@@ -73,7 +73,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.5-py3-none-any.whl
+pip install autorunne-0.6.6-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -94,7 +94,7 @@ autorunne open
 autorunne open --with-vscode
 ```
 
-On the first open of an older repo, Autorunne will create `.autorunne/`. On later opens, it will refresh and resume the existing workflow state.
+On the first open of an older repo, Autorunne will create `.autorunne/`. On later opens, it will refresh and resume the existing workflow state. If you enter through `ar-codex`, `ar-claude`, or `ar-hermes`, the wrapper now starts a background daemon automatically so file edits keep writing back into Autorunne.
 
 ### Keep a repo warm locally
 ```bash
@@ -135,7 +135,7 @@ autorunne finish --summary "Implemented auth fix" --task "Review dashboard filte
 autorunne finish --summary "Kept tests green" --validate "pytest -q" --next "Ship changelog"
 ```
 
-### Watch local file changes
+### Watch local file changes and auto-record progress
 ```bash
 autorunne watch --duration 60 --interval 1
 ```
@@ -165,7 +165,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.6.5
+autorunne release --version 0.6.6
 ```
 
 ### Install hooks and pre-commit support

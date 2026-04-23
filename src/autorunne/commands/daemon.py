@@ -5,6 +5,7 @@ from pathlib import Path
 
 from autorunne.commands import open as open_cmd
 from autorunne.commands import sync as sync_cmd
+from autorunne.core.auto_record import auto_record_local_change
 from autorunne.core.filewatch import diff_snapshots, snapshot_tree
 from autorunne.core.gitops import detect_repo_root
 
@@ -19,8 +20,10 @@ def run(target: Path, duration: float = 30.0, interval: float = 1.0, max_syncs: 
     start = time.time()
     ticks = 0
     syncs = 0
+    auto_records = 0
     last_sync = None
     last_changed_files: list[str] = []
+    last_auto_summary = None
     next_action = open_result["scan"]["next_action"]
 
     while time.time() - start < duration:
@@ -35,6 +38,10 @@ def run(target: Path, duration: float = 30.0, interval: float = 1.0, max_syncs: 
             syncs += 1
             last_sync = sync_result["repo_root"]
             next_action = sync_result["scan"]["next_action"]
+            auto_record_result = auto_record_local_change(repo_root, changed_files=last_changed_files, source="daemon")
+            if auto_record_result["auto_recorded"]:
+                auto_records += 1
+                last_auto_summary = auto_record_result["summary"]
             previous = current
             if max_syncs is not None and syncs >= max_syncs:
                 break
@@ -46,7 +53,9 @@ def run(target: Path, duration: float = 30.0, interval: float = 1.0, max_syncs: 
         "action": open_result["action"],
         "ticks": ticks,
         "syncs": syncs,
+        "auto_records": auto_records,
         "last_sync": last_sync,
         "last_changed_files": last_changed_files,
+        "last_auto_summary": last_auto_summary,
         "next_action": next_action,
     }

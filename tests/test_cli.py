@@ -71,8 +71,10 @@ def test_open_bootstraps_missing_workflow_and_installs_vscode(node_repo: Path):
     assert (node_repo / ".autorunne" / "views" / "START_HERE.md").exists()
     assert (node_repo / "AGENTS.md").exists()
     assert (node_repo / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md").exists()
+    wrapper_text = (node_repo / ".autorunne" / "bin" / "ar-codex").read_text(encoding="utf-8")
     log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
     assert "workflow initialized" in log_text.lower()
+    assert "autorunne daemon" in wrapper_text
     tasks = json.loads((node_repo / ".vscode" / "tasks.json").read_text(encoding="utf-8"))
     assert tasks["tasks"][0]["command"] == "autorunne open || python -m autorunne.cli open"
 
@@ -105,8 +107,12 @@ def test_daemon_bootstraps_then_auto_syncs_on_change(node_repo: Path):
     assert result.exit_code == 0
     assert "Autorunne daemon started from: bootstrapped" in result.stdout
     assert "Auto-syncs:" in result.stdout
+    assert "Auto-records:" in result.stdout
     log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    tasks_text = (node_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
     assert "daemon auto-sync" in log_text
+    assert "Auto-recorded local changes via daemon" in log_text
+    assert "Review and continue the latest local changes in src/index.js" in tasks_text
 
 
 def test_daemon_reports_changed_files_and_can_stop_after_max_syncs(node_repo: Path):
@@ -393,7 +399,7 @@ def test_sync_archives_outdated_release_backlog_into_history_section(python_repo
     assert "## Archived / historical" in tasks_text
     assert "- [x] Tag v0.6.3, push GitHub, and verify PyPI release" in tasks_text
     assert "- [x] Run release verification and publish 0.6.3" in tasks_text
-    assert "- [ ] Ship 0.6.5 launch notes" in tasks_text
+    assert "- [x] Ship 0.6.5 launch notes" in tasks_text
     assert "archived=" in status_result.stdout
 
 
@@ -491,6 +497,11 @@ def test_watch_detects_file_changes_and_syncs(node_repo: Path):
     thread.join()
     assert result.exit_code == 0
     assert "Detected change" in result.stdout
+    assert "Auto-records: 1" in result.stdout
+    log_text = (node_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    tasks_text = (node_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    assert "Auto-recorded local changes via watch" in log_text
+    assert "Review and continue the latest local changes in src/index.js" in tasks_text
 
 
 def test_doctor_warns_when_workflow_missing(git_repo: Path):
@@ -523,9 +534,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.6.5", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.6.6", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.5"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.6"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()

@@ -89,7 +89,29 @@ set -euo pipefail
 REPO_ROOT=\"$(cd \"$(dirname \"${{BASH_SOURCE[0]}}\")/../..\" && pwd)\"
 cd \"$REPO_ROOT\"
 autorunne open >/dev/null 2>&1 || python -m autorunne.cli open >/dev/null 2>&1
-exec {command_name} "$@"
+AUTORUNNE_DAEMON_PID=\"\"
+if [ "${{AUTORUNNE_DISABLE_DAEMON:-0}}" != "1" ] && [ "${{AUTORUNNE_DAEMON_ACTIVE:-0}}" != "1" ]; then
+  export AUTORUNNE_DAEMON_ACTIVE=1
+  DAEMON_DURATION="${{AUTORUNNE_DAEMON_DURATION:-43200}}"
+  DAEMON_INTERVAL="${{AUTORUNNE_DAEMON_INTERVAL:-1}}"
+  (
+    autorunne daemon --duration "$DAEMON_DURATION" --interval "$DAEMON_INTERVAL" >/dev/null 2>&1 \
+      || python -m autorunne.cli daemon --duration "$DAEMON_DURATION" --interval "$DAEMON_INTERVAL" >/dev/null 2>&1
+  ) &
+  AUTORUNNE_DAEMON_PID=$!
+fi
+cleanup() {{
+  if [ -n "${{AUTORUNNE_DAEMON_PID}}" ]; then
+    kill "${{AUTORUNNE_DAEMON_PID}}" >/dev/null 2>&1 || true
+  fi
+}}
+trap cleanup EXIT INT TERM
+set +e
+{command_name} "$@"
+status=$?
+set -e
+cleanup
+exit $status
 """
 
 
@@ -97,7 +119,29 @@ def _user_wrapper_script(command_name: str) -> str:
     return f"""#!/usr/bin/env bash
 set -euo pipefail
 autorunne open >/dev/null 2>&1 || python -m autorunne.cli open >/dev/null 2>&1
-exec {command_name} "$@"
+AUTORUNNE_DAEMON_PID=\"\"
+if [ "${{AUTORUNNE_DISABLE_DAEMON:-0}}" != "1" ] && [ "${{AUTORUNNE_DAEMON_ACTIVE:-0}}" != "1" ]; then
+  export AUTORUNNE_DAEMON_ACTIVE=1
+  DAEMON_DURATION="${{AUTORUNNE_DAEMON_DURATION:-43200}}"
+  DAEMON_INTERVAL="${{AUTORUNNE_DAEMON_INTERVAL:-1}}"
+  (
+    autorunne daemon --duration "$DAEMON_DURATION" --interval "$DAEMON_INTERVAL" >/dev/null 2>&1 \
+      || python -m autorunne.cli daemon --duration "$DAEMON_DURATION" --interval "$DAEMON_INTERVAL" >/dev/null 2>&1
+  ) &
+  AUTORUNNE_DAEMON_PID=$!
+fi
+cleanup() {{
+  if [ -n "${{AUTORUNNE_DAEMON_PID}}" ]; then
+    kill "${{AUTORUNNE_DAEMON_PID}}" >/dev/null 2>&1 || true
+  fi
+}}
+trap cleanup EXIT INT TERM
+set +e
+{command_name} "$@"
+status=$?
+set -e
+cleanup
+exit $status
 """
 
 

@@ -29,7 +29,7 @@
 3. 后面你就正常打开 VS Code
 4. 然后直接在仓库终端里启动 Codex / Claude Code
 
-只有你想要后台持续盯文件变化时，才需要额外运行 `autorunne daemon`。
+如果你只是正常通过 `ar-codex / ar-claude / ar-hermes` 进入仓库，这些 wrapper 现在会自动拉起后台 daemon；只有你想单独保温一个仓库时，才需要手动运行 `autorunne daemon`。
 
 ---
 
@@ -62,10 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.5：
+比如安装 0.6.6：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.5 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.6 bash
 ```
 
 适合：
@@ -178,7 +178,7 @@ autorunne open --with-vscode
 autorunne open
 ```
 
-### 情况 2：你想让仓库在一个工作时段里持续自动同步
+### 情况 2：你想让仓库在一个工作时段里持续自动记录
 
 这时运行：
 
@@ -186,15 +186,15 @@ autorunne open
 autorunne daemon --duration 300 --interval 2
 ```
 
-如果你只想自动同步一次就退出：
+如果你只想检测到第一次有效改动并自动记录后就退出：
 
 ```bash
 autorunne daemon --duration 300 --interval 2 --max-syncs 1
 ```
 
 现在 daemon 会显示：
-- 同步了几次
-- 最后同步涉及哪些文件
+- 自动记录了几次
+- 最后一次涉及哪些文件
 
 ---
 
@@ -263,7 +263,7 @@ autorunne doctor
 
 ```bash
 autorunne export
-autorunne release --version 0.6.5
+autorunne release --version 0.6.6
 ```
 
 ---
