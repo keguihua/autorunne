@@ -33,7 +33,7 @@ def _render_task_lines(items: list[dict], default: str | None = None) -> str:
     lines = []
     for item in items:
         status = item.get("status", "pending")
-        checked = "x" if status == "completed" else " "
+        checked = "x" if status in {"completed", "archived"} else " "
         lines.append(f"- [{checked}] {item.get('text', '').strip()}")
     return "\n".join(lines)
 
@@ -107,6 +107,9 @@ def render_view_bundle(state: dict) -> dict[str, str]:
 
 ## Next up
 {_render_task_lines(tasks.get('next_up', []), default=current.get('next_action', 'Confirm the next concrete step.'))}
+
+## Archived / historical
+{_render_task_lines(tasks.get('archived', []), default='No archived backlog recorded yet')}
 
 ## Known unknowns
 {_render_task_lines(tasks.get('known_unknowns', []), default='No known unknowns recorded yet')}

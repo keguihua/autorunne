@@ -367,7 +367,7 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
     task_counts = result.get("task_counts", {})
     table.add_row(
         "Task counts",
-        f"completed={task_counts.get('completed', 0)}, in_progress={task_counts.get('in_progress', 0)}, next_up={task_counts.get('next_up', 0)}, known_unknowns={task_counts.get('known_unknowns', 0)}",
+        f"completed={task_counts.get('completed', 0)}, in_progress={task_counts.get('in_progress', 0)}, next_up={task_counts.get('next_up', 0)}, archived={task_counts.get('archived', 0)}, known_unknowns={task_counts.get('known_unknowns', 0)}",
     )
     table.add_row("Sessions / events", f"{result.get('session_count', 0)} / {result.get('event_count', 0)}")
     repo_integrations = result.get("repo_integrations", {})

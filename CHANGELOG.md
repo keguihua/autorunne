@@ -2,6 +2,41 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.5 - 2026-04-23
+
+### Highlights
+- Autorunne now keeps `in-progress` as a single-focus lane and automatically demotes stale unfinished work back into `Next up`.
+- Outdated release backlog items for older shipped versions now move into an explicit `Archived / historical` section instead of polluting the live queue.
+- Real dogfooding on the `autorunne` repo confirmed the tighter task board behavior with `start`, `checkpoint`, `finish`, and explicit `task` commands.
+
+### Added
+- `TASKS.md -> Archived / historical` rendered section for older backlog that should stay visible without distracting from the current roadmap
+- automatic release-backlog archiving for stale items like old tag / publish / PyPI tasks tied to versions behind the current shipped version
+
+### Improved
+- `start`, `checkpoint`, `finish`, and `sync` now realign focus so only the current active task stays in `In progress`
+- stale `in-progress` items are demoted into `Next up` instead of lingering as fake active work
+- `autorunne task add --section in-progress` now sets the active task, and `task done` / `task remove` realign focus afterwards
+- `autorunne status` now reports archived backlog counts as part of task counts
+
+### Docs and positioning
+- Updated README, usage docs, operator manual, release playbook, and versioned install examples to `0.6.5`
+- Added 0.6.5 release notes covering release-backlog archiving and focus-lane cleanup
+
+### Verification
+- `python -m pytest tests/test_cli.py -q`
+- `python -m pytest -q`
+- real-project workflow verified on the `autorunne` repo itself with:
+  - `task add --section in-progress`
+  - `start`
+  - `checkpoint --validate "python -m pytest -q"`
+  - `finish --validate "python -m pytest -q"`
+  - `task remove --section next-up`
+
+### Release assets
+- `autorunne-0.6.5-py3-none-any.whl`
+- `autorunne-0.6.5.tar.gz`
+
 ## 0.6.4 - 2026-04-22
 
 ### Highlights

@@ -9,7 +9,7 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.4
+## 2. Core upgrades in 0.6.5
 - keeps `.autorunne/state/*` as the only source of truth
 - adds `autorunne migrate` so older markdown-only workspaces can be upgraded cleanly
 - makes `status` state-aware so it shows the real active task, next action, task counts, and integration state
@@ -73,7 +73,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.4-py3-none-any.whl
+pip install autorunne-0.6.5-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -165,7 +165,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.6.4
+autorunne release --version 0.6.5
 ```
 
 ### Install hooks and pre-commit support

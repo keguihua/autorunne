@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from autorunne import __version__ as AUTORUNNE_VERSION
 from autorunne.core.paths import (
     STATE_FILES,
     read_json,
@@ -55,6 +56,91 @@ def _remove_task(items: list[dict[str, str]], matcher: str) -> tuple[list[dict[s
             continue
         kept.append(item)
     return kept, matched
+
+
+def _refresh_next_up(
+    items: list[dict[str, str]],
+    *,
+    next_action: str,
+    timestamp: str,
+    source: str,
+    remove_texts: list[str] | None = None,
+) -> list[dict[str, str]]:
+    cleaned = list(items)
+    for text in remove_texts or []:
+        if text and text.strip():
+            cleaned, _ = _remove_task(cleaned, text)
+    return _dedupe_tasks([_task_item(next_action, timestamp=timestamp, source=source), *cleaned])
+
+
+def _realign_focus_sections(state: dict[str, Any], *, timestamp: str, source: str) -> None:
+    active_task = (state.get("current", {}).get("active_task") or "").strip()
+    in_progress = list(state.get("tasks", {}).get("in_progress", []))
+    next_up = list(state.get("tasks", {}).get("next_up", []))
+
+    keep_in_progress: list[dict[str, str]] = []
+    demoted: list[dict[str, str]] = []
+
+    if active_task:
+        for item in in_progress:
+            text = item.get("text", "").strip()
+            if text.lower() == active_task.lower() and not keep_in_progress:
+                keep_in_progress.append(item)
+            else:
+                demoted.append(item)
+        if not keep_in_progress:
+            keep_in_progress.append(_task_item(active_task, timestamp=timestamp, source=source))
+        next_up, _ = _remove_task(next_up, active_task)
+    else:
+        demoted = in_progress
+
+    state["tasks"]["in_progress"] = _dedupe_tasks(keep_in_progress)
+    state["tasks"]["next_up"] = _dedupe_tasks([*demoted, *next_up])
+
+
+def _parse_version_token(value: str | None) -> tuple[int, int, int] | None:
+    if not value:
+        return None
+    match = re.search(r"v?(\d+)\.(\d+)\.(\d+)", value)
+    if not match:
+        return None
+    return tuple(int(part) for part in match.groups())
+
+
+def _is_release_backlog_text(text: str) -> bool:
+    lowered = text.lower()
+    release_terms = ("release", "publish", "pypi", "github", "tag ", "tag v", "ship ")
+    return any(term in lowered for term in release_terms)
+
+
+def _archive_stale_release_backlog(state: dict[str, Any], *, timestamp: str, source: str) -> list[str]:
+    current_version = _parse_version_token(AUTORUNNE_VERSION)
+    if not current_version:
+        return []
+
+    archived = list(state.get("tasks", {}).get("archived", []))
+    kept_next_up: list[dict[str, str]] = []
+    archived_texts: list[str] = []
+
+    for item in state.get("tasks", {}).get("next_up", []):
+        text = item.get("text", "").strip()
+        item_version = _parse_version_token(text)
+        if text and item_version and item_version < current_version and _is_release_backlog_text(text):
+            archived.append(
+                {
+                    **item,
+                    "status": "archived",
+                    "timestamp": timestamp,
+                    "source": source,
+                }
+            )
+            archived_texts.append(text)
+        else:
+            kept_next_up.append(item)
+
+    state["tasks"]["next_up"] = _dedupe_tasks(kept_next_up)
+    state["tasks"]["archived"] = _dedupe_tasks(archived)
+    return archived_texts
 
 
 def _git_output(repo_root: Path, *args: str) -> str:
@@ -166,6 +252,7 @@ def _seed_state(repo_root: Path, scan: dict[str, Any], action: str) -> dict[str,
             _task_item("Confirm deployment flow", timestamp=timestamp, source="bootstrap"),
             _task_item("Confirm protected or high-risk modules before large edits", timestamp=timestamp, source="bootstrap"),
         ],
+        "archived": [],
     }
     decisions = {
         "baseline": [
@@ -194,6 +281,7 @@ def _extract_legacy_section(content: str, heading: str) -> list[str]:
 
 
 def _import_legacy_views(repo_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    state.setdefault("tasks", {}).setdefault("archived", [])
     next_action_text = _read_legacy_text(repo_root, "NEXT_ACTION.md")
     next_lines = [line.strip() for line in next_action_text.splitlines() if line.strip() and not line.strip().startswith("#")]
     if next_lines:
@@ -279,9 +367,15 @@ def workflow_needs_migration(repo_root: Path) -> bool:
 
 
 def load_workspace_state(repo_root: Path) -> dict[str, Any]:
+    tasks = read_json(state_file(repo_root, "tasks.json"), default={})
+    tasks.setdefault("completed", [])
+    tasks.setdefault("in_progress", [])
+    tasks.setdefault("next_up", [])
+    tasks.setdefault("known_unknowns", [])
+    tasks.setdefault("archived", [])
     return {
         "current": read_json(state_file(repo_root, "current.json"), default={}),
-        "tasks": read_json(state_file(repo_root, "tasks.json"), default={}),
+        "tasks": tasks,
         "decisions": read_json(state_file(repo_root, "decisions.json"), default={}),
         "sessions": read_json(state_file(repo_root, "sessions.json"), default={}),
         "events": load_events(repo_root),
@@ -310,6 +404,7 @@ def save_workspace_state(repo_root: Path, state: dict[str, Any]) -> None:
                 "completed": len(state["tasks"].get("completed", [])),
                 "in_progress": len(state["tasks"].get("in_progress", [])),
                 "next_up": len(state["tasks"].get("next_up", [])),
+                "archived": len(state["tasks"].get("archived", [])),
                 "known_unknowns": len(state["tasks"].get("known_unknowns", [])),
             },
             "session_count": len(state["sessions"].get("items", [])),
@@ -393,16 +488,26 @@ def sync_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: 
         return bootstrap_workspace(repo_root, scan, action=action, note=note)
     state = load_workspace_state(repo_root)
     current = state["current"]
+    previous_next_action = current.get("next_action")
     current["repo_root"] = str(repo_root)
     _touch_current_from_scan(current, scan, action=action)
+    _realign_focus_sections(state, timestamp=current["updated_at"], source=action)
     resolved_next_action = current.get("next_action") or scan["next_action"]
-    next_item = _task_item(resolved_next_action, timestamp=current["updated_at"], source=action)
-    state["tasks"]["next_up"] = _dedupe_tasks([next_item, *state["tasks"].get("next_up", [])])
+    state["tasks"]["next_up"] = _refresh_next_up(
+        state["tasks"].get("next_up", []),
+        next_action=resolved_next_action,
+        timestamp=current["updated_at"],
+        source=action,
+        remove_texts=[previous_next_action],
+    )
+    archived_release_items = _archive_stale_release_backlog(state, timestamp=current["updated_at"], source=action)
     lines = [
         f"Stack: {', '.join(scan['stack'])}",
         f"Framework: {', '.join(scan['framework'])}",
         f"Next action: {resolved_next_action}",
     ]
+    if archived_release_items:
+        lines.append(f"Archived release backlog: {', '.join(archived_release_items)}")
     if note:
         lines.append(f"Note: {note.strip()}")
     title = "workspace open auto-resume" if action == "workspace_resumed" else "sync summary"
@@ -416,12 +521,20 @@ def sync_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: 
 def start_task(repo_root: Path, task: str, next_action: str) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
+    previous_next_action = state["current"].get("next_action")
     state["current"]["active_task"] = task.strip()
     state["current"]["next_action"] = next_action.strip()
     state["current"]["last_action"] = "task_started"
     state["current"]["updated_at"] = timestamp
     state["tasks"]["in_progress"] = _dedupe_tasks([_task_item(task, timestamp=timestamp, source="start"), *state["tasks"].get("in_progress", [])])
-    state["tasks"]["next_up"] = _dedupe_tasks([_task_item(next_action, timestamp=timestamp, source="start"), *state["tasks"].get("next_up", [])])
+    _realign_focus_sections(state, timestamp=timestamp, source="start")
+    state["tasks"]["next_up"] = _refresh_next_up(
+        state["tasks"].get("next_up", []),
+        next_action=next_action.strip(),
+        timestamp=timestamp,
+        source="start",
+        remove_texts=[previous_next_action],
+    )
     _append_session(state, title="start task", lines=[f"Task: {task.strip()}", f"Next action: {next_action.strip()}"], timestamp=timestamp)
     save_workspace_state(repo_root, state)
     append_event(repo_root, "task_started", {"task": task.strip(), "next_action": next_action.strip()})
@@ -438,10 +551,18 @@ def record_checkpoint(
 ) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
+    previous_next_action = state["current"].get("next_action")
     state["current"]["next_action"] = next_action.strip()
     state["current"]["last_action"] = "checkpoint_recorded"
     state["current"]["updated_at"] = timestamp
-    state["tasks"]["next_up"] = _dedupe_tasks([_task_item(next_action, timestamp=timestamp, source="checkpoint"), *state["tasks"].get("next_up", [])])
+    _realign_focus_sections(state, timestamp=timestamp, source="checkpoint")
+    state["tasks"]["next_up"] = _refresh_next_up(
+        state["tasks"].get("next_up", []),
+        next_action=next_action.strip(),
+        timestamp=timestamp,
+        source="checkpoint",
+        remove_texts=[previous_next_action],
+    )
     lines = [
         f"Summary: {summary.strip()}",
         f"Next action: {next_action.strip()}",
@@ -474,6 +595,7 @@ def finish_task(
 ) -> tuple[dict[str, Any], str | None]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
+    previous_next_action = state["current"].get("next_action")
     matched = None
     in_progress = state["tasks"].get("in_progress", [])
     if task_match:
@@ -488,9 +610,15 @@ def finish_task(
             *state["tasks"].get("completed", []),
         ]
     )
-    next_up, _ = _remove_task(state["tasks"].get("next_up", []), completed_text)
-    state["tasks"]["next_up"] = _dedupe_tasks([_task_item(next_action, timestamp=timestamp, source="finish"), *next_up])
     state["current"]["active_task"] = None if matched else state["current"].get("active_task")
+    _realign_focus_sections(state, timestamp=timestamp, source="finish")
+    state["tasks"]["next_up"] = _refresh_next_up(
+        state["tasks"].get("next_up", []),
+        next_action=next_action.strip(),
+        timestamp=timestamp,
+        source="finish",
+        remove_texts=[completed_text, previous_next_action],
+    )
     state["current"]["next_action"] = next_action.strip()
     state["current"]["last_action"] = "task_finished"
     state["current"]["updated_at"] = timestamp
@@ -662,6 +790,7 @@ def workflow_summary(repo_root: Path) -> dict[str, Any]:
             "completed": len(tasks.get("completed", [])),
             "in_progress": len(tasks.get("in_progress", [])),
             "next_up": len(tasks.get("next_up", [])),
+            "archived": len(tasks.get("archived", [])),
             "known_unknowns": len(tasks.get("known_unknowns", [])),
         },
         "repo_integrations": repo_integrations,
@@ -692,6 +821,9 @@ def mutate_task_list(
         clean_text = text.strip()
         status = "completed" if section == "completed" else "pending"
         state["tasks"][section] = _dedupe_tasks([_task_item(clean_text, status=status, timestamp=timestamp, source="task"), *state["tasks"].get(section, [])])
+        if section == "in_progress":
+            state["current"]["active_task"] = clean_text
+            _realign_focus_sections(state, timestamp=timestamp, source="task_add")
         payload["text"] = clean_text
         lines.append(f"Task: {clean_text}")
     elif action in {"done", "remove"}:
@@ -711,8 +843,9 @@ def mutate_task_list(
         lines.append(f"Matched task: {matched_text}")
         if action == "done":
             state["tasks"]["completed"] = _dedupe_tasks([_task_item(matched_text, status="completed", timestamp=timestamp, source="task"), *state["tasks"].get("completed", [])])
-            if state["current"].get("active_task") == matched_text:
-                state["current"]["active_task"] = None
+        if state["current"].get("active_task") == matched_text:
+            state["current"]["active_task"] = None
+        _realign_focus_sections(state, timestamp=timestamp, source=f"task_{action}")
     else:
         raise ValueError(f"Unsupported task action: {action}")
 

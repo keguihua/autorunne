@@ -236,6 +236,7 @@ def test_sync_without_note_appends_automatic_session_entry(python_repo: Path):
 
 def test_start_creates_in_progress_task_and_checkpoint_updates_next_action(python_repo: Path):
     _run_in(python_repo, ["adopt"])
+    bootstrap_next_action = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8").strip().splitlines()[-1]
 
     start_result = _run_in(
         python_repo,
@@ -256,9 +257,144 @@ def test_start_creates_in_progress_task_and_checkpoint_updates_next_action(pytho
     assert "- [ ] Implement billing webhook" in tasks_text
     assert "- [ ] Implement handler wiring" in tasks_text
     assert "Implement handler wiring" in next_action_text
+    assert bootstrap_next_action not in tasks_text
+    assert "Write webhook contract tests" not in tasks_text
     assert "start task" in log_text.lower()
     assert "checkpoint" in log_text.lower()
     assert "Mapped webhook payloads" in log_text
+
+
+def test_finish_replaces_transitional_next_actions_instead_of_accumulating_them(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+
+    start_result = _run_in(
+        python_repo,
+        ["start", "--task", "Implement billing webhook", "--next", "Write webhook contract tests"],
+    )
+    assert start_result.exit_code == 0
+
+    checkpoint_result = _run_in(
+        python_repo,
+        ["checkpoint", "--summary", "Mapped webhook payloads", "--next", "Implement handler wiring"],
+    )
+    assert checkpoint_result.exit_code == 0
+
+    finish_result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Implemented billing webhook", "--next", "Ship changelog"],
+    )
+    assert finish_result.exit_code == 0
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    next_action_text = (python_repo / ".autorunne" / "NEXT_ACTION.md").read_text(encoding="utf-8")
+
+    assert "- [x] Implement billing webhook" in tasks_text
+    assert "- [ ] Ship changelog" in tasks_text
+    assert "Write webhook contract tests" not in tasks_text
+    assert "Implement handler wiring" not in tasks_text
+    assert "Ship changelog" in next_action_text
+
+
+def test_start_demotes_stale_in_progress_focus_into_next_up(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    state_root = python_repo / ".autorunne" / "state"
+    tasks_state = json.loads((state_root / "tasks.json").read_text(encoding="utf-8"))
+    current_state = json.loads((state_root / "current.json").read_text(encoding="utf-8"))
+    tasks_state["in_progress"] = [{"text": "Old stale task", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"}]
+    tasks_state["next_up"] = [{"text": "Existing queued item", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"}]
+    current_state["active_task"] = None
+    (state_root / "tasks.json").write_text(json.dumps(tasks_state), encoding="utf-8")
+    (state_root / "current.json").write_text(json.dumps(current_state), encoding="utf-8")
+    _run_in(python_repo, ["render"])
+
+    start_result = _run_in(
+        python_repo,
+        ["start", "--task", "Implement billing webhook", "--next", "Write webhook contract tests"],
+    )
+    assert start_result.exit_code == 0
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    status_result = _run_in(python_repo, ["status"])
+
+    assert "## In progress\n- [ ] Implement billing webhook" in tasks_text
+    assert "- [ ] Old stale task" in tasks_text
+    assert "- [ ] Existing queued item" in tasks_text
+    assert "Active task" in status_result.stdout
+    assert "Implement billing webhook" in status_result.stdout
+
+
+def test_finish_clears_stale_in_progress_when_no_active_task_remains(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    state_root = python_repo / ".autorunne" / "state"
+    tasks_state = json.loads((state_root / "tasks.json").read_text(encoding="utf-8"))
+    current_state = json.loads((state_root / "current.json").read_text(encoding="utf-8"))
+    tasks_state["in_progress"] = [{"text": "Old stale task", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"}]
+    tasks_state["next_up"] = [{"text": "Existing queued item", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"}]
+    current_state["active_task"] = None
+    (state_root / "tasks.json").write_text(json.dumps(tasks_state), encoding="utf-8")
+    (state_root / "current.json").write_text(json.dumps(current_state), encoding="utf-8")
+    _run_in(python_repo, ["render"])
+
+    finish_result = _run_in(
+        python_repo,
+        ["finish", "--summary", "Close current slice", "--next", "Ship changelog"],
+    )
+    assert finish_result.exit_code == 0
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    status_result = _run_in(python_repo, ["status"])
+
+    assert "## In progress\n- [ ] No task in progress right now" in tasks_text
+    assert "- [ ] Old stale task" in tasks_text
+    assert "- [ ] Ship changelog" in tasks_text
+    assert "none" in status_result.stdout.lower()
+
+
+def test_task_add_in_progress_sets_active_task_and_done_clears_it(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+
+    add_result = _run_in(python_repo, ["task", "add", "--text", "Investigate upgrade path", "--section", "in-progress"])
+    assert add_result.exit_code == 0
+
+    status_after_add = _run_in(python_repo, ["status"])
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    assert "## In progress\n- [ ] Investigate upgrade path" in tasks_text
+    assert "Investigate upgrade path" in status_after_add.stdout
+
+    done_result = _run_in(python_repo, ["task", "done", "--match", "Investigate upgrade path", "--section", "in-progress"])
+    assert done_result.exit_code == 0
+
+    status_after_done = _run_in(python_repo, ["status"])
+    updated_tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    assert "- [x] Investigate upgrade path" in updated_tasks_text
+    assert "## In progress\n- [ ] No task in progress right now" in updated_tasks_text
+    assert "Active task" in status_after_done.stdout
+    assert "none" in status_after_done.stdout.lower()
+
+
+def test_sync_archives_outdated_release_backlog_into_history_section(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    state_root = python_repo / ".autorunne" / "state"
+    tasks_state = json.loads((state_root / "tasks.json").read_text(encoding="utf-8"))
+    tasks_state["next_up"] = [
+        {"text": "Tag v0.6.3, push GitHub, and verify PyPI release", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"},
+        {"text": "Run release verification and publish 0.6.3", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"},
+        {"text": "Ship 0.6.5 launch notes", "status": "pending", "timestamp": "2026-01-01 00:00 UTC", "source": "test"},
+    ]
+    (state_root / "tasks.json").write_text(json.dumps(tasks_state), encoding="utf-8")
+    _run_in(python_repo, ["render"])
+
+    sync_result = _run_in(python_repo, ["sync", "--note", "refresh archive candidates"])
+    assert sync_result.exit_code == 0
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    status_result = _run_in(python_repo, ["status"])
+
+    assert "## Archived / historical" in tasks_text
+    assert "- [x] Tag v0.6.3, push GitHub, and verify PyPI release" in tasks_text
+    assert "- [x] Run release verification and publish 0.6.3" in tasks_text
+    assert "- [ ] Ship 0.6.5 launch notes" in tasks_text
+    assert "archived=" in status_result.stdout
 
 
 def test_finish_can_run_validation_command_and_record_result(python_repo: Path):
@@ -387,9 +523,9 @@ def test_export_creates_clean_copy_without_autorunne(node_repo: Path):
 
 def test_release_creates_notes_and_manifest_and_clean_export(node_repo: Path):
     _run_in(node_repo, ["adopt"])
-    result = _run_in(node_repo, ["release", "--version", "0.6.4", "--skip-build"])
+    result = _run_in(node_repo, ["release", "--version", "0.6.5", "--skip-build"])
     assert result.exit_code == 0
-    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.4"
+    release_dir = node_repo / ".dist-release" / "releases" / "v0.6.5"
     assert (release_dir / "repo").exists()
     assert (release_dir / "RELEASE_NOTES.md").exists()
     assert (release_dir / "MANIFEST.json").exists()
