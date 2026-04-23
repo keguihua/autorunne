@@ -86,10 +86,12 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.6**
+**0.6.7**
 
-### New in 0.6.6
-- auto-records local repo changes into Autorunne as soon as the workspace watcher sees file edits, instead of leaving progress stuck in the agent transcript
+### New in 0.6.7
+- generated Codex / Claude repo skill files now include valid YAML frontmatter, so `ar-codex` and similar entries load the Autorunne skill cleanly instead of warning about invalid `SKILL.md`
+- generated Cursor rule frontmatter is now cleaner and avoids malformed empty `globs:` metadata
+- keeps auto-recording local repo changes into Autorunne as soon as the workspace watcher sees file edits, instead of leaving progress stuck in the agent transcript
 - repo wrappers (`ar-codex` / `ar-claude` / `ar-hermes`) now start a background Autorunne daemon automatically, so normal coding sessions keep state fresh without extra user steps
 - auto-starts a focused task lane the first time change tracking sees fresh edits, then writes follow-up checkpoints on later edits in the same slice
 - keeps `In progress` as a true single-focus lane instead of letting stale tasks pile up there
@@ -151,7 +153,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.6 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.7 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -175,7 +177,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.6-py3-none-any.whl
+pip install autorunne-0.6.7-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -301,7 +303,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.6
+autorunne release --version 0.6.7
 ```
 
 ---
@@ -616,7 +618,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.6
+## Roadmap after 0.6.7
 - JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
 - stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness

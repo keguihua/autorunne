@@ -2,6 +2,30 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.7 - 2026-04-23
+
+### Highlights
+- Generated Codex and Claude repo skill files now include valid YAML frontmatter, fixing the `missing YAML frontmatter delimited by ---` warning when opening a repo through `ar-codex`.
+- Generated Cursor rule metadata is now cleaner so all shipped agent-side integration files use safer, more consistent formats.
+- Autorunne keeps the 0.6.6 runtime-managed auto-recording flow while making the repo entry experience more reliable across agents.
+
+### Improved
+- `src/autorunne/core/integrations.py`
+  - repo skill files under `.agents/skills/autorunne-workflow/` and `.claude/skills/autorunne-workflow/` now render with valid YAML frontmatter
+  - Cursor rule output no longer emits an empty `globs:` frontmatter key
+- generated repo integrations
+  - Codex / Claude / Hermes / Cursor / Copilot entry files are now easier to dogfood as a group without format warnings masking real problems
+
+### Verification
+- `python -m pytest tests/test_integrations.py -q`
+- `python -m pytest tests/test_cli.py tests/test_install_script.py -q`
+- `python -m pytest -q`
+- generated a fresh demo repo and inspected `.agents/skills/autorunne-workflow/SKILL.md`, `.claude/skills/autorunne-workflow/SKILL.md`, `.cursor/rules/autorunne-workflow.mdc`, and `.github/copilot-instructions.md`
+
+### Release assets
+- `autorunne-0.6.7-py3-none-any.whl`
+- `autorunne-0.6.7.tar.gz`
+
 ## 0.6.6 - 2026-04-23
 
 ### Highlights

@@ -32,6 +32,16 @@ def test_integrate_repo_scope_installs_skills_and_wrappers(git_repo: Path):
     assert (git_repo / ".autorunne" / "bin" / "ar-codex").exists()
     assert (git_repo / ".autorunne" / "bin" / "ar-claude").exists()
     assert (git_repo / ".autorunne" / "bin" / "ar-hermes").exists()
+    agents_skill = (git_repo / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md").read_text(encoding="utf-8")
+    claude_skill = (git_repo / ".claude" / "skills" / "autorunne-workflow" / "SKILL.md").read_text(encoding="utf-8")
+    cursor_rule = (git_repo / ".cursor" / "rules" / "autorunne-workflow.mdc").read_text(encoding="utf-8")
+    assert agents_skill.startswith("---\n")
+    assert "name: autorunne-workflow" in agents_skill
+    assert claude_skill.startswith("---\n")
+    assert "version: 0.6.7" in claude_skill
+    assert cursor_rule.startswith("---\n")
+    assert "alwaysApply: true" in cursor_rule
+    assert "globs:" not in cursor_rule
 
 
 def test_open_auto_installs_repo_integrations(node_repo: Path):
@@ -43,3 +53,5 @@ def test_open_auto_installs_repo_integrations(node_repo: Path):
     assert (node_repo / ".cursor" / "rules" / "autorunne-workflow.mdc").exists()
     assert (node_repo / ".github" / "copilot-instructions.md").exists()
     assert (node_repo / ".autorunne" / "bin" / "ar-codex").exists()
+    skill_text = (node_repo / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md").read_text(encoding="utf-8")
+    assert skill_text.startswith("---\n")

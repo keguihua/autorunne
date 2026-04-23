@@ -16,7 +16,13 @@ def _skill_text(tool: str) -> str:
         "cursor": "Cursor / Cursor Agent repo instructions",
         "copilot": "GitHub Copilot repo instructions",
     }.get(tool, "./.autorunne/bin/ar-codex")
-    return f"""# Autorunne Workflow Skill
+    return f"""---
+name: autorunne-workflow
+description: Repo-local Autorunne workflow instructions for this repository
+version: 0.6.7
+---
+
+# Autorunne Workflow Skill
 
 ## Purpose
 This repository uses Autorunne as the state layer.
@@ -40,7 +46,6 @@ This repository uses Autorunne as the state layer.
 def _cursor_rules_text() -> str:
     return """---
 description: Autorunne workflow contract for this repo
-globs:
 alwaysApply: true
 ---
 
