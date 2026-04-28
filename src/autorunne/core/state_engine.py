@@ -212,6 +212,7 @@ def _seed_state(repo_root: Path, scan: dict[str, Any], action: str) -> dict[str,
         "important_files": scan["important_files"],
         "source_dirs": scan["source_dirs"],
         "commands": scan["commands"],
+        "packages": scan.get("packages", []),
         "tracked_files_count": scan["tracked_files_count"],
         "recent_files": scan["recent_files"],
         "recent_commits": scan["recent_commits"],
@@ -430,6 +431,10 @@ def render_from_state(repo_root: Path) -> dict[str, Any]:
 
 def _touch_current_from_scan(current: dict[str, Any], scan: dict[str, Any], *, action: str) -> None:
     preserved_next_action = current.get("next_action")
+    if current.get("packages") and not scan.get("packages") and scan.get("stack") == ["generic"]:
+        scan = {**scan}
+        for key in ["stack", "framework", "package_manager", "important_files", "source_dirs", "commands", "packages"]:
+            scan[key] = current.get(key, scan.get(key))
     current.update(
         {
             "repo_name": scan["repo_name"],
@@ -440,6 +445,7 @@ def _touch_current_from_scan(current: dict[str, Any], scan: dict[str, Any], *, a
             "important_files": scan["important_files"],
             "source_dirs": scan["source_dirs"],
             "commands": scan["commands"],
+            "packages": scan.get("packages", current.get("packages", [])),
             "tracked_files_count": scan["tracked_files_count"],
             "recent_files": scan["recent_files"],
             "recent_commits": scan["recent_commits"],

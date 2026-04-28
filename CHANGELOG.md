@@ -2,6 +2,25 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.13 - 2026-04-28
+
+### Fixed
+- `autorunne sync` now detects multi-package Node/TypeScript repositories even when the root has no `package.json`.
+- First-level package directories such as `frontend`, `backend`, `contracts`, `sdk`, `integrations`, plus `apps/*` and `packages/*`, are scanned for `package.json` files.
+- Top-level state is promoted from package details, so monorepos no longer render as `generic` / `unknown` when package data exists.
+
+### Added
+- Package-derived commands such as `frontend:build`, `backend:test`, `contracts:compile`, and `contracts:test` render with `cd <package> && npm ...` prefixes.
+- Regression coverage for a haopay-style `frontend` / `backend` / `contracts` repository with no root `package.json`.
+
+### Safety
+- Single-package Node detection remains on its existing path.
+- Sync preserves existing package-derived state instead of overwriting it with `generic` unless the package scan clearly disappears.
+
+### Verification
+- `python -m pytest`
+- manual haopay-style temporary repo smoke test with `autorunne sync`
+
 ## 0.6.12 - 2026-04-28
 
 ### Added

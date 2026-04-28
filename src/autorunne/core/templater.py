@@ -10,6 +10,50 @@ def _bulletize(items: Iterable[str], default: str) -> str:
     return "\n".join(f"- {item}" for item in values)
 
 
+def _script_command(package_path: str, script_name: str, package_manager: str = "npm") -> str:
+    prefix = f"cd {package_path} && " if package_path != "." else ""
+    if script_name == "test":
+        return f"{prefix}{package_manager} test"
+    if script_name == "start":
+        return f"{prefix}{package_manager} start"
+    return f"{prefix}{package_manager} run {script_name}"
+
+
+def _package_summary(current: dict) -> dict:
+    packages = current.get("packages") or []
+    if not packages:
+        return current
+    derived = dict(current)
+    frameworks = []
+    source_dirs = []
+    important_files = []
+    commands = dict(current.get("commands") or {})
+    package_manager = "npm per package"
+    for package in packages:
+        path = str(package.get("path", "")).strip()
+        if not path:
+            continue
+        package_type = package.get("type") or package.get("framework") or "Node.js package"
+        if package_type not in frameworks:
+            frameworks.append(package_type)
+        source_dirs.append(path)
+        important_files.append(f"{path}/package.json")
+        pm = package.get("package_manager") or "npm"
+        package_manager = f"{pm} per package"
+        for script_name in (package.get("scripts") or {}):
+            commands.setdefault(f"{path}:{script_name}", _script_command(path, script_name, pm))
+    if derived.get("stack") in ([], ["generic"], None):
+        derived["stack"] = ["multi-package Node/TypeScript"]
+    if derived.get("framework") in ([], ["generic"], None):
+        derived["framework"] = frameworks or ["Node.js package"]
+    if derived.get("package_manager") in ([], ["unknown"], None):
+        derived["package_manager"] = [package_manager]
+    derived["source_dirs"] = list(dict.fromkeys([*source_dirs, *derived.get("source_dirs", [])]))
+    derived["important_files"] = list(dict.fromkeys([*important_files, *derived.get("important_files", [])]))
+    derived["commands"] = commands
+    return derived
+
+
 def _render_commands(commands: dict) -> str:
     ordered = [
         ("run", "Run"),
@@ -18,10 +62,16 @@ def _render_commands(commands: dict) -> str:
         ("configure", "Configure"),
     ]
     lines = []
+    rendered_keys = set()
     for key, label in ordered:
         value = commands.get(key)
         if value:
             lines.append(f"- **{label}:** `{value}`")
+            rendered_keys.add(key)
+    for key in sorted(k for k in commands if k not in rendered_keys):
+        value = commands.get(key)
+        if value:
+            lines.append(f"- **{key}:** `{value}`")
     if not lines:
         lines.append("- No reliable run/test/build commands detected yet. Confirm them manually.")
     return "\n".join(lines)
@@ -46,7 +96,7 @@ def _render_session_lines(session: dict) -> str:
 
 
 def render_view_bundle(state: dict) -> dict[str, str]:
-    current = state["current"]
+    current = _package_summary(state["current"])
     tasks = state["tasks"]
     decisions = state["decisions"]
     sessions = state["sessions"]

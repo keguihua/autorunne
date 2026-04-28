@@ -62,10 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.12：
+比如安装 0.6.13：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.12 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.13 bash
 ```
 
 适合：
@@ -198,7 +198,60 @@ autorunne daemon --duration 300 --interval 2 --max-syncs 1
 
 ---
 
-## 八、升级 AutoRunne
+## 八、多包项目 / Monorepo 支持
+
+从 0.6.13 开始，根目录没有 `package.json` 也没关系。
+
+比如这种结构：
+
+```text
+frontend/package.json
+backend/package.json
+contracts/package.json
+```
+
+AutoRunne 会自动识别常见子项目位置：
+
+```text
+frontend/
+backend/
+contracts/
+sdk/
+integrations/
+apps/*
+packages/*
+```
+
+识别后，`autorunne sync` 不应该再把项目误判成：
+
+```text
+Stack: generic
+Framework: generic
+Package manager: unknown
+```
+
+它会把子项目汇总成类似：
+
+```text
+Stack: multi-package Node/TypeScript
+Framework: Vite frontend + Node.js backend + Hardhat smart contracts
+Package manager: npm per package
+```
+
+命令也会自动加上 `cd` 子目录前缀，例如：
+
+```bash
+cd frontend && npm run build
+cd backend && npm test
+cd contracts && npm run compile
+cd contracts && npm test
+```
+
+这样 Codex / Claude Code / Hermes 打开 `.autorunne/views/START_HERE.md` 和 `.autorunne/views/COMMANDS.md` 时，就能直接看到真实可执行的前端、后端、合约命令。
+
+---
+
+## 九、升级 AutoRunne
 
 从 0.6.12 开始，AutoRunne 默认采用“提醒有新版，但不偷偷自动升级”的策略。
 
@@ -286,7 +339,7 @@ autorunne open --with-vscode
 
 ---
 
-## 九、常用命令表
+## 十、常用命令表
 
 ### 接管 / 恢复仓库
 

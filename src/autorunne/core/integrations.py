@@ -26,7 +26,7 @@ def _skill_text(tool: str) -> str:
     return f"""---
 name: autorunne-workflow
 description: Repo-local Autorunne workflow instructions for this repository
-version: 0.6.12
+version: 0.6.13
 ---
 
 # Autorunne Workflow Skill

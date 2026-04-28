@@ -60,6 +60,28 @@ def monorepo_repo(git_repo: Path) -> Path:
 
 
 @pytest.fixture()
+def haopay_style_monorepo(git_repo: Path) -> Path:
+    """Multi-package repo with no root package.json, matching a real haopay-style layout."""
+    (git_repo / "frontend").mkdir()
+    (git_repo / "frontend" / "package.json").write_text(
+        '{"name":"haopay-frontend","scripts":{"dev":"vite","build":"tsc && vite build","preview":"vite preview"},"dependencies":{"@vitejs/plugin-react":"latest"},"devDependencies":{"vite":"^5.0.0","typescript":"^5.0.0"}}',
+        encoding="utf-8",
+    )
+    (git_repo / "backend").mkdir()
+    (git_repo / "backend" / "package.json").write_text(
+        '{"name":"haopay-backend","scripts":{"start":"node server.js","dev":"nodemon --legacy-watch --watch server.js --watch routes --watch models --watch utils --watch middleware server.js","worker:indexer":"node workers/indexerWorker.js","worker:webhooks":"node workers/webhookWorker.js","worker:once":"node workers/runWorkersOnce.js","test":"node --test tests/**/*.test.js","test:apiKey":"node --test tests/apiKeyHardening.test.js"},"dependencies":{"express":"^4.18.0"},"devDependencies":{"nodemon":"^3.0.0"}}',
+        encoding="utf-8",
+    )
+    (git_repo / "backend" / "server.js").write_text("import express from 'express'\n", encoding="utf-8")
+    (git_repo / "contracts").mkdir()
+    (git_repo / "contracts" / "package.json").write_text(
+        '{"name":"haopay-contracts","scripts":{"test":"npx hardhat test","compile":"npx hardhat compile","deploy:testnet":"npx hardhat run scripts/deployTestnet.js --network arbitrumSepolia","deploy:all":"npx hardhat run scripts/deployAll.js","deploy:testnet:single":"npx hardhat run scripts/deployTestnet.js --network arbitrumSepolia","deploy:testnet:all":"npx hardhat run scripts/deployTestnetAll.js","plan:set":"npx hardhat run scripts/setMerchantPlan.js --network arbitrumSepolia","plan:read":"npx hardhat run scripts/readMerchantPricing.js --network arbitrumSepolia"},"devDependencies":{"hardhat":"^2.22.0"}}',
+        encoding="utf-8",
+    )
+    return git_repo
+
+
+@pytest.fixture()
 def rust_repo(git_repo: Path) -> Path:
     (git_repo / "Cargo.toml").write_text(
         "[package]\nname='demo'\nversion='0.1.0'\nedition='2021'\n",

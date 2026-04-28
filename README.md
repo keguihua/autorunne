@@ -86,7 +86,13 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.12**
+**0.6.13**
+
+### New in 0.6.13
+- fixes monorepo / multi-package detection when the repo root has no `package.json` but subprojects such as `frontend/`, `backend/`, `contracts/`, `apps/*`, or `packages/*` do
+- derives top-level stack/framework/package manager/commands from subproject `package.json` files instead of leaving the project as `generic`
+- renders package commands with `cd <subproject> && npm ...` prefixes, so handoff docs show usable commands for frontend/backend/contracts layouts
+- keeps single-package Node projects on the existing detection path
 
 ### New in 0.6.12
 - default update reminders: `autorunne open` and `autorunne sync` can tell users when a newer PyPI release is available, but they do **not** auto-upgrade silently
@@ -128,6 +134,7 @@ This project is built around four product directions:
 - Express
 - NestJS
 - monorepos / pnpm workspaces / Turborepo / Nx signals
+- multi-package Node/TypeScript repos with subproject `package.json` files under `frontend/`, `backend/`, `contracts/`, `sdk/`, `integrations/`, `apps/*`, or `packages/*`
 
 ### Python
 - pip
@@ -162,7 +169,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.12 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.13 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -322,7 +329,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.12
+autorunne release --version 0.6.13
 ```
 
 ---

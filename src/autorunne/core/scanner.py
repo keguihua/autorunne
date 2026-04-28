@@ -26,6 +26,9 @@ SOURCE_DIR_CANDIDATES = {
     "server",
     "backend",
     "frontend",
+    "contracts",
+    "sdk",
+    "integrations",
     "tests",
     "cmd",
     "internal",
@@ -34,6 +37,9 @@ SOURCE_DIR_CANDIDATES = {
     "services",
     "include",
 }
+
+MONOREPO_PACKAGE_DIRS = ["frontend", "backend", "contracts", "sdk", "integrations"]
+MONOREPO_PACKAGE_GLOBS = ["apps/*", "packages/*"]
 
 LOW_SIGNAL_PATH_PREFIXES = (
     ".vscode/",
@@ -89,9 +95,106 @@ def _is_low_signal_path(path: str) -> bool:
     return normalized in {".vscode", ".idea", "dist", ".dist-release"} or normalized.startswith(LOW_SIGNAL_PATH_PREFIXES)
 
 
+def _detect_package_manager(repo_root: Path) -> str:
+    if (repo_root / "pnpm-lock.yaml").exists() or (repo_root / "pnpm-workspace.yaml").exists():
+        return "pnpm"
+    if (repo_root / "yarn.lock").exists():
+        return "yarn"
+    if (repo_root / "bun.lockb").exists() or (repo_root / "bun.lock").exists():
+        return "bun"
+    return "npm"
+
+
+def _script_command(package_path: str, script_name: str, package_manager: str = "npm") -> str:
+    prefix = f"cd {package_path} && " if package_path != "." else ""
+    if script_name == "test":
+        return f"{prefix}{package_manager} test"
+    if script_name == "start":
+        return f"{prefix}{package_manager} start"
+    return f"{prefix}{package_manager} run {script_name}"
+
+
+def _infer_package_type(package_dir: Path, package_json: dict) -> str:
+    scripts = package_json.get("scripts", {}) or {}
+    deps = {**(package_json.get("dependencies", {}) or {}), **(package_json.get("devDependencies", {}) or {})}
+    script_blob = "\n".join(str(value).lower() for value in scripts.values())
+    dep_names = {str(name).lower() for name in deps}
+    combined = "\n".join([script_blob, "\n".join(dep_names)])
+
+    if "vite" in combined:
+        return "Vite frontend"
+    if "hardhat" in combined:
+        return "Hardhat smart contracts"
+    if (package_dir / "server.js").exists() or "express" in dep_names or "nodemon" in dep_names or "node --test" in script_blob:
+        return "Node.js backend"
+    return "Node.js package"
+
+
+def _find_package_jsons(repo_root: Path) -> list[Path]:
+    package_paths: list[Path] = []
+    for dirname in MONOREPO_PACKAGE_DIRS:
+        candidate = repo_root / dirname / "package.json"
+        if candidate.exists():
+            package_paths.append(candidate)
+    for pattern in MONOREPO_PACKAGE_GLOBS:
+        for package_dir in sorted(repo_root.glob(pattern)):
+            candidate = package_dir / "package.json"
+            if candidate.exists() and candidate not in package_paths:
+                package_paths.append(candidate)
+    return package_paths
+
+
+def _detect_multi_package_node(repo_root: Path, scan: dict) -> None:
+    package_json_paths = _find_package_jsons(repo_root)
+    if len(package_json_paths) < 2:
+        return
+
+    root_package_manager = _detect_package_manager(repo_root)
+    package_manager = f"{root_package_manager} per package"
+    packages = []
+    frameworks = []
+    commands = {}
+    source_dirs = []
+    important_files = []
+
+    for package_json_path in package_json_paths:
+        package_dir = package_json_path.parent
+        relative_path = package_dir.relative_to(repo_root).as_posix()
+        package_json = _safe_read_json(package_json_path)
+        scripts = package_json.get("scripts", {}) or {}
+        dependencies = package_json.get("dependencies", {}) or {}
+        dev_dependencies = package_json.get("devDependencies", {}) or {}
+        package_type = _infer_package_type(package_dir, package_json)
+        frameworks.append(package_type)
+        source_dirs.append(relative_path)
+        important_files.append(f"{relative_path}/package.json")
+        packages.append(
+            {
+                "path": relative_path,
+                "name": package_json.get("name") or relative_path,
+                "type": package_type,
+                "scripts": scripts,
+                "dependencies": dependencies,
+                "devDependencies": dev_dependencies,
+                "package_manager": root_package_manager,
+            }
+        )
+        for script_name in scripts:
+            commands[f"{relative_path}:{script_name}"] = _script_command(relative_path, script_name, root_package_manager)
+
+    scan["stack"] = ["multi-package Node/TypeScript"]
+    scan["framework"] = _unique(frameworks)
+    scan["package_manager"] = [package_manager]
+    scan["packages"] = packages
+    scan["source_dirs"] = _unique([*source_dirs, *scan.get("source_dirs", [])])
+    scan["important_files"] = _unique([*important_files, *scan.get("important_files", [])])
+    scan["commands"] = commands
+
+
 def _detect_node(repo_root: Path, scan: dict) -> None:
     package_json_path = repo_root / "package.json"
     if not package_json_path.exists():
+        _detect_multi_package_node(repo_root, scan)
         return
 
     package_json = _safe_read_json(package_json_path)
@@ -99,14 +202,7 @@ def _detect_node(repo_root: Path, scan: dict) -> None:
     deps = {**package_json.get("dependencies", {}), **package_json.get("devDependencies", {})}
 
     scan["stack"].append("node")
-    if (repo_root / "pnpm-lock.yaml").exists() or (repo_root / "pnpm-workspace.yaml").exists():
-        package_manager = "pnpm"
-    elif (repo_root / "yarn.lock").exists():
-        package_manager = "yarn"
-    elif (repo_root / "bun.lockb").exists() or (repo_root / "bun.lock").exists():
-        package_manager = "bun"
-    else:
-        package_manager = "npm"
+    package_manager = _detect_package_manager(repo_root)
     scan["package_manager"].append(package_manager)
 
     framework_map = {
@@ -295,6 +391,7 @@ def scan_repo(repo_root: Path) -> dict:
         "important_files": [],
         "source_dirs": [],
         "commands": {},
+        "packages": [],
         "dirs": dirs,
         "tracked_files_count": 0,
         "recent_files": [],
@@ -313,8 +410,8 @@ def scan_repo(repo_root: Path) -> dict:
     scan["framework"] = _unique(scan["framework"]) or ["generic"]
     scan["package_manager"] = _unique(scan["package_manager"]) or ["unknown"]
 
-    scan["important_files"] = [name for name in IMPORTANT_FILES if name in files]
-    scan["source_dirs"] = [name for name in dirs if name in SOURCE_DIR_CANDIDATES]
+    scan["important_files"] = _unique([*scan.get("important_files", []), *[name for name in IMPORTANT_FILES if name in files]])
+    scan["source_dirs"] = _unique([*scan.get("source_dirs", []), *[name for name in dirs if name in SOURCE_DIR_CANDIDATES]])
     _detect_repo_state(repo_root, scan)
     return scan
 

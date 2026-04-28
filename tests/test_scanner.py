@@ -63,6 +63,23 @@ def test_scan_repo_detects_monorepo_workspace(monorepo_repo):
     assert "packages" in scan["source_dirs"]
 
 
+def test_scan_repo_detects_first_level_multi_package_without_root_package_json(haopay_style_monorepo):
+    scan = scan_repo(haopay_style_monorepo)
+
+    assert scan["stack"] == ["multi-package Node/TypeScript"]
+    assert scan["package_manager"] == ["npm per package"]
+    assert scan["framework"] == ["Vite frontend", "Node.js backend", "Hardhat smart contracts"]
+    assert scan["source_dirs"] == ["frontend", "backend", "contracts"]
+    assert "frontend/package.json" in scan["important_files"]
+    assert "backend/package.json" in scan["important_files"]
+    assert "contracts/package.json" in scan["important_files"]
+    assert [package["path"] for package in scan["packages"]] == ["frontend", "backend", "contracts"]
+    assert scan["commands"]["frontend:build"] == "cd frontend && npm run build"
+    assert scan["commands"]["backend:test"] == "cd backend && npm test"
+    assert scan["commands"]["contracts:compile"] == "cd contracts && npm run compile"
+    assert scan["commands"]["contracts:test"] == "cd contracts && npm test"
+
+
 def test_recommend_next_action_prefers_bootstrap_for_greenfield_repos(git_repo):
     scan = scan_repo(git_repo)
     assert recommend_next_action(scan).startswith("Bootstrap the smallest runnable slice")

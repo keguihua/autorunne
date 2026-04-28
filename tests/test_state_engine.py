@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -63,6 +64,63 @@ def test_sync_preserves_explicit_next_action_from_state(python_repo: Path):
     next_text = (python_repo / ".autorunne" / "views" / "NEXT_ACTION.md").read_text(encoding="utf-8")
     assert "Custom next step" in current_text
     assert "Custom next step" in next_text
+
+
+def test_sync_renders_haopay_style_monorepo_from_packages(haopay_style_monorepo: Path):
+    result = _run_in(haopay_style_monorepo, ["sync"])
+    assert result.exit_code == 0
+
+    state_root = haopay_style_monorepo / ".autorunne" / "state"
+    views_root = haopay_style_monorepo / ".autorunne" / "views"
+    current = json.loads((state_root / "current.json").read_text(encoding="utf-8"))
+    start_here = (views_root / "START_HERE.md").read_text(encoding="utf-8")
+    project_context = (views_root / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+    commands = (views_root / "COMMANDS.md").read_text(encoding="utf-8")
+
+    assert current["stack"] == ["multi-package Node/TypeScript"]
+    assert "generic" not in current["stack"]
+    assert "Vite frontend" in current["framework"]
+    assert "Node.js backend" in current["framework"]
+    assert "Hardhat smart contracts" in current["framework"]
+    assert current["commands"]["frontend:build"] == "cd frontend && npm run build"
+    assert current["commands"]["backend:test"] == "cd backend && npm test"
+    assert current["commands"]["contracts:compile"] == "cd contracts && npm run compile"
+    assert current["commands"]["contracts:test"] == "cd contracts && npm test"
+
+    assert "Stack: generic" not in start_here
+    assert "Stack: multi-package Node/TypeScript" in start_here
+    assert "Vite frontend" in project_context
+    assert "Package manager: npm per package" in project_context
+    assert "frontend/package.json" in project_context
+    assert "backend/package.json" in project_context
+    assert "contracts/package.json" in project_context
+    assert "No reliable run/test/build commands detected yet" not in commands
+    assert "cd frontend && npm run build" in commands
+    assert "cd backend && npm test" in commands
+    assert "cd contracts && npm run compile" in commands
+
+
+def test_render_uses_packages_when_existing_current_summary_is_generic(haopay_style_monorepo: Path):
+    _run_in(haopay_style_monorepo, ["sync"])
+    state_file = haopay_style_monorepo / ".autorunne" / "state" / "current.json"
+    current = json.loads(state_file.read_text(encoding="utf-8"))
+    packages = current["packages"]
+    current["stack"] = ["generic"]
+    current["framework"] = ["generic"]
+    current["package_manager"] = ["unknown"]
+    current["commands"] = {}
+    current["packages"] = packages
+    state_file.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    result = _run_in(haopay_style_monorepo, ["render"])
+    assert result.exit_code == 0
+
+    commands = (haopay_style_monorepo / ".autorunne" / "views" / "COMMANDS.md").read_text(encoding="utf-8")
+    start_here = (haopay_style_monorepo / ".autorunne" / "views" / "START_HERE.md").read_text(encoding="utf-8")
+    assert "Stack: generic" not in start_here
+    assert "Stack: multi-package Node/TypeScript" in start_here
+    assert "No reliable run/test/build commands detected yet" not in commands
+    assert "cd frontend && npm run build" in commands
 
 
 def test_checkpoint_records_validation_details(python_repo: Path):
