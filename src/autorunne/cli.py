@@ -504,6 +504,20 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
     table.add_row("Framework", ", ".join(result["framework"]))
     table.add_row("Project phase", result["project_phase"])
     table.add_row("Resume hint", result["resume_hint"])
+    user_summary = result.get("user_summary") or {}
+    if user_summary:
+        table.add_row(
+            "用户摘要",
+            "\n".join(
+                [
+                    f"当前项目状态：{user_summary.get('project_state', '未知')}",
+                    f"上次验证：{user_summary.get('validation_status', '未记录')}",
+                    f"下一步：{user_summary.get('next_action', result['next_action'])}",
+                    f"上下文入口：{user_summary.get('context_entry', '未知')}",
+                    f"记录流程：{user_summary.get('workflow_flow', 'open/sync → start/ingest → checkpoint → finish/validate')}",
+                ]
+            ),
+        )
     table.add_row("Active task", result.get("active_task") or "none")
     table.add_row("Last action", result.get("last_action") or "none")
     table.add_row("Updated at", result.get("updated_at") or "unknown")
@@ -522,6 +536,9 @@ def status(path: str | None = typer.Option(None, help="Target repository path"))
     table.add_row("Next action", result["next_action"])
     table.add_row("Tracked by git", str(result["workflow_tracked"]))
     console.print(table)
+    if user_summary:
+        console.print(f"用户摘要：{user_summary.get('one_line', '')}")
+        console.print(f"记录流程：{user_summary.get('workflow_flow', 'open/sync → start/ingest → checkpoint → finish/validate')}")
     if result.get("legacy_workspace"):
         console.print("Legacy workspace detected. Run `autorunne migrate` to convert markdown memory into `.autorunne/state/*`.")
 

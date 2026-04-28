@@ -30,6 +30,7 @@ VIEW_FILES = [
     "NEXT_ACTION.md",
     "COMMANDS.md",
     "START_HERE.md",
+    "STATUS.md",
 ]
 
 

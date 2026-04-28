@@ -2,6 +2,22 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.16 - 2026-04-28
+
+### Added
+- `autorunne status` now prints a user-readable reliability summary with project state, last validation, next step, context-entry readiness, and the visible workflow flow.
+- Rendered `.autorunne/views/STATUS.md` and `.autorunne/STATUS.md` as a plain-language project status page for users, students, and clients.
+
+### Improved
+- `START_HERE.md` now includes the same user-readable status block so agents and humans can see the current handoff state immediately.
+- The project workflow is explained as `open/sync → start/ingest → checkpoint → finish/validate`, making Autorunne's background work visible instead of hidden in state files.
+
+### Verification
+- focused status visualization tests
+- `python -m pytest -q`
+- `python -m build`
+- real `course-leads-demo` smoke test planned before release publication
+
 ## 0.6.15 - 2026-04-28
 
 ### Improved

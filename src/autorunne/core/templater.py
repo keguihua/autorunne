@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from autorunne.core.user_status import build_user_summary
+
 
 def _bulletize(items: Iterable[str], default: str) -> str:
     values = [str(item).strip() for item in items if str(item).strip()]
@@ -172,6 +174,8 @@ def render_view_bundle(state: dict) -> dict[str, str]:
     decisions_md += "## Recorded decisions\n"
     decisions_md += "\n".join(recorded or ["- No durable decisions recorded yet"]) + "\n"
 
+    user_summary = build_user_summary(state)
+
     session_items = sessions.get('items', [])
     session_log = "# Session Log\n\n"
     if session_items:
@@ -211,6 +215,13 @@ def render_view_bundle(state: dict) -> dict[str, str]:
 
 Autorunne is the state layer for this repository, designed to work with Claude Code, Codex, Gemini, Hermes, Cursor, and GitHub Copilot.
 
+## User-readable status
+- 当前项目状态：{user_summary['project_state']}
+- 上次验证：{user_summary['validation_status']}
+- 下一步：{user_summary['next_action']}
+- 上下文入口：{user_summary['context_entry']}
+- 记录流程：{user_summary['workflow_flow']}
+
 ## Read order
 1. `{agents_root}/autorunne-workflow.md`
 2. `{views_root}/PROJECT_CONTEXT.md`
@@ -241,6 +252,32 @@ Open Codex / Claude Code / Hermes directly in this repo and just give the task. 
 {commands_markdown}
 """
 
+    status_md = f"""# 面向用户的项目状态
+
+这份文件给项目负责人/课程学员看，不要求理解内部状态文件。
+
+## 一句话总结
+{user_summary['one_line']}
+
+## 当前安心感
+- 当前项目状态：{user_summary['project_state']}
+- 上次验证：{user_summary['validation_status']}
+- 下一步：{user_summary['next_action']}
+- 上下文入口：{user_summary['context_entry']}
+
+## Autorunne 记录流程
+{user_summary['workflow_flow']}
+
+含义：
+1. `open/sync`：打开或刷新项目上下文。
+2. `start/ingest`：记录用户刚交代的新任务。
+3. `checkpoint`：中途把进展和改动文件写回。
+4. `finish/validate`：验证通过后收尾，留下总结和下一步。
+
+## 给用户看的判断
+如果这里显示“可继续开发”并且“上次验证：通过”，用户就可以放心继续派下一个任务，不需要重新解释项目上下文。
+"""
+
     return {
         "PROJECT_CONTEXT.md": project_context,
         "TASKS.md": tasks_md,
@@ -250,6 +287,7 @@ Open Codex / Claude Code / Hermes directly in this repo and just give the task. 
         "NEXT_ACTION.md": next_action_md,
         "COMMANDS.md": commands_md,
         "START_HERE.md": start_here_md,
+        "STATUS.md": status_md,
     }
 
 

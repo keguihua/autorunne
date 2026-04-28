@@ -66,7 +66,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### 用公开 release wheel 固定安装一个版本
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.15 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.16 bash
 ```
 
 安装完成后，直接进入你的仓库运行：
@@ -147,7 +147,7 @@ pip install -e .[dev]
 
 ### 从 release 安装
 ```bash
-pip install autorunne-0.6.15-py3-none-any.whl
+pip install autorunne-0.6.16-py3-none-any.whl
 ```
 
 ### 公开发布后的推荐安装
@@ -253,7 +253,7 @@ autorunne export
 
 ### 创建正式发布包目录
 ```bash
-autorunne release --version 0.6.15
+autorunne release --version 0.6.16
 ```
 
 ### 安装 hooks 和 pre-commit

@@ -39,7 +39,7 @@ Autorunne 提供：
 - 想把 AI 编程流程标准化的服务商
 
 ## 6. 产品形态
-### 免费开源层（0.6.15 已覆盖）
+### 免费开源层（0.6.16 已覆盖）
 - state-first CLI
 - `.autorunne/state/*` + `.autorunne/views/*`
 - 基础命令：open/migrate/start/checkpoint/finish/record/status/show/history/trace/doctor/export/release
@@ -81,7 +81,7 @@ Autorunne 提供：
 - 显式 task 操作、状态观测与 doctor 检查
 - direct agent 工作流说明
 - 0.6.13 多包项目识别与 sync 渲染修复，能支撑真实 frontend/backend/contracts 项目演示
-- 0.6.14/0.6.15 轻量 Python demo 识别与全 agent 入口补齐，能支撑课程开发项目演示
+- 0.6.14/0.6.16 轻量 Python demo 识别与全 agent 入口补齐，能支撑课程开发项目演示
 - 初步对外说明文档、产品说明书、中文操作手册、商业稳定性说明
 
 当前更准确的阶段是：

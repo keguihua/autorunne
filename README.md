@@ -44,8 +44,9 @@ Autorunne is built for the harder problem:
 - [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
 - [Autorunne 自动识别 / 自动初始化 / 自动恢复](docs/Autorunne-Auto-Mode-ZH.md)
 - [Autorunne 发布与合并策略](docs/Autorunne-Release-Playbook-ZH.md)
-- [Autorunne 0.6.15 发布说明](docs/Autorunne-Release-Notes-0.6.15-ZH.md)
+- [Autorunne 0.6.16 发布说明](docs/Autorunne-Release-Notes-0.6.16-ZH.md)
 - [Autorunne 商业稳定性说明](docs/Autorunne-商业稳定性说明-ZH.md)
+- [Autorunne 0.6.15 发布说明](docs/Autorunne-Release-Notes-0.6.15-ZH.md)
 - [Autorunne 0.6.14 发布说明](docs/Autorunne-Release-Notes-0.6.14-ZH.md)
 - [Autorunne 0.6.13 发布说明](docs/Autorunne-Release-Notes-0.6.13-ZH.md)
 - [Autorunne 产品说明书](docs/Autorunne-产品说明书-ZH.md)
@@ -90,7 +91,12 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.15**
+**0.6.16**
+
+### New in 0.6.16
+- adds a user-readable reliability snapshot to `autorunne status`, showing project state, last validation, next step, context-entry readiness, and the visible workflow flow
+- renders `.autorunne/views/STATUS.md` and `.autorunne/STATUS.md` so project owners can see whether the repo is “可继续开发” without reading internal state JSON
+- keeps the same lightweight multi-agent workflow while making Autorunne’s work more visible and reassuring for teaching, client delivery, and early commercial demos
 
 ### New in 0.6.15
 - published and verified as `autorunne==0.6.15` on PyPI, with GitHub release assets available at `v0.6.15`
@@ -184,7 +190,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.15 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.16 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -208,7 +214,7 @@ pip install -e .[dev]
 
 ### Option B — install from release asset
 ```bash
-pip install autorunne-0.6.15-py3-none-any.whl
+pip install autorunne-0.6.16-py3-none-any.whl
 ```
 
 ### Fallback install modes
@@ -344,7 +350,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.15
+autorunne release --version 0.6.16
 ```
 
 ---
@@ -632,13 +638,13 @@ So you get:
 
 ## Validation status
 
-Current public release: `autorunne==0.6.15`
+Current public release: `autorunne==0.6.16`
 
 Release verification completed for:
-- GitHub release: https://github.com/keguihua/autorunne/releases/tag/v0.6.15
-- PyPI package: https://pypi.org/project/autorunne/0.6.15/
+- GitHub release: https://github.com/keguihua/autorunne/releases/tag/v0.6.16
+- PyPI package: https://pypi.org/project/autorunne/0.6.16/
 - wheel + source tarball on PyPI
-- server runtime venv: `AutoRunne 0.6.15`
+- server runtime venv: `AutoRunne 0.6.16`
 - real `course-leads-demo` smoke test: `open → sync → start --task → pytest → finish --summary --validate`
 
 Validated locally for:
@@ -659,7 +665,7 @@ Automated validation:
 - `pytest`
 - GitHub Actions on Python 3.11 and 3.12
 - release workflow uploads wheel + source tarball
-- PyPI trusted publishing for `autorunne==0.6.15`
+- PyPI trusted publishing for `autorunne==0.6.16`
 
 ---
 
@@ -682,7 +688,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.15
+## Roadmap after 0.6.16
 - JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
 - stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness

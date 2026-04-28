@@ -34,6 +34,7 @@ def run(target: Path) -> dict:
                 "session_count": state_summary["session_count"],
                 "event_count": state_summary["event_count"],
                 "repo_integrations": state_summary["repo_integrations"],
+                "user_summary": state_summary["user_summary"],
                 "workflow_mode": "state",
             }
         )

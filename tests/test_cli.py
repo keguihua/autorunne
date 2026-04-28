@@ -348,6 +348,61 @@ def test_status_prefers_explicit_state_over_scan_output(python_repo: Path):
     assert "task_started" in result.stdout
 
 
+def test_status_prints_user_readable_reliability_summary(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    _run_in(python_repo, ["start", "--task", "Keep auth stable", "--next", "Run validation"])
+    finish = _run_in(
+        python_repo,
+        [
+            "finish",
+            "--summary",
+            "Auth stability check passed",
+            "--validate",
+            "python -m pytest -q",
+            "--next",
+            "开发下一个小功能",
+        ],
+    )
+    assert finish.exit_code == 0
+
+    result = _run_in(python_repo, ["status"])
+    assert result.exit_code == 0
+    assert "用户摘要" in result.stdout
+    assert "当前项目状态：可继续开发" in result.stdout
+    assert "上次验证：通过" in result.stdout
+    assert "下一步：开发下一个小功能" in result.stdout
+    assert "上下文入口：已准备好" in result.stdout
+    assert "记录流程：open/sync → start/ingest → checkpoint → finish/validate" in result.stdout
+
+
+def test_status_view_renders_user_readable_workflow_snapshot(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    _run_in(python_repo, ["start", "--task", "Keep auth stable", "--next", "Run validation"])
+    finish = _run_in(
+        python_repo,
+        [
+            "finish",
+            "--summary",
+            "Auth stability check passed",
+            "--validate",
+            "python -m pytest -q",
+            "--next",
+            "开发下一个小功能",
+        ],
+    )
+    assert finish.exit_code == 0
+
+    status_view = (python_repo / ".autorunne" / "views" / "STATUS.md").read_text(encoding="utf-8")
+    root_status_view = (python_repo / ".autorunne" / "STATUS.md").read_text(encoding="utf-8")
+    for text in (status_view, root_status_view):
+        assert "# 面向用户的项目状态" in text
+        assert "当前项目状态：可继续开发" in text
+        assert "上次验证：通过" in text
+        assert "下一步：开发下一个小功能" in text
+        assert "上下文入口：已准备好" in text
+        assert "open/sync → start/ingest → checkpoint → finish/validate" in text
+
+
 def test_sync_appends_summary_and_updates_next_action(python_repo: Path):
     _run_in(python_repo, ["adopt"])
     initial_log = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")

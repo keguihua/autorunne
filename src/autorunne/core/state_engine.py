@@ -17,6 +17,7 @@ from autorunne.core.paths import (
     write_json,
 )
 from autorunne.core.templater import render_agent_compat_bundle, render_view_bundle
+from autorunne.core.user_status import build_user_summary
 from autorunne.core.writer import ensure_workflow_layout, write_agent_compat_files, write_rendered_views, write_snapshot
 
 
@@ -804,6 +805,7 @@ def workflow_summary(repo_root: Path) -> dict[str, Any]:
     tasks = state["tasks"]
     integrations = current.get("integrations", {})
     repo_integrations = integrations.get("repo", {})
+    user_summary = build_user_summary(state)
     return {
         "repo_root": str(repo_root),
         "repo": current.get("repo_name", repo_root.name),
@@ -824,6 +826,7 @@ def workflow_summary(repo_root: Path) -> dict[str, Any]:
             "known_unknowns": len(tasks.get("known_unknowns", [])),
         },
         "repo_integrations": repo_integrations,
+        "user_summary": user_summary,
         "session_count": len(state["sessions"].get("items", [])),
         "event_count": len(state.get("events", [])),
     }

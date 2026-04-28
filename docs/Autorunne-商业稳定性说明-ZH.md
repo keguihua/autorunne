@@ -1,15 +1,15 @@
-# Autorunne 商业稳定性说明（0.6.15）
+# Autorunne 商业稳定性说明（0.6.16）
 
 ## 结论
 
-Autorunne 0.6.15 当前可以作为 **早期商业演示、AI 编程课程、顾问交付流程标准化** 的稳定 Beta 版本使用。更准确地说，它是一个可商用验证的 Beta 工作流层。
+Autorunne 0.6.16 当前可以作为 **早期商业演示、AI 编程课程、顾问交付流程标准化** 的稳定 Beta 版本使用。更准确地说，它是一个可商用验证的 Beta 工作流层。
 
 它已经不是只停留在本地 demo 的脚本：
 
-- GitHub Release 已发布：<https://github.com/keguihua/autorunne/releases/tag/v0.6.15>
-- PyPI 已发布：`autorunne==0.6.15`
+- GitHub Release 已发布：<https://github.com/keguihua/autorunne/releases/tag/v0.6.16>
+- PyPI 已发布：`autorunne==0.6.16`
 - 可用 `pipx install autorunne` 或 `pipx upgrade autorunne` 安装升级
-- Hermes 服务器运行环境已确认是 `AutoRunne 0.6.15`
+- Hermes 服务器运行环境已确认是 `AutoRunne 0.6.16`
 - 真实课程开发项目已跑通 `open → sync → start → test → finish`
 
 ## 适合现在对外承诺什么
@@ -34,7 +34,7 @@ Autorunne 0.6.15 当前可以作为 **早期商业演示、AI 编程课程、顾
 
 ## 暂时不要过度承诺什么
 
-不要把 0.6.15 说成：
+不要把 0.6.16 说成：
 
 - 已经是成熟企业版平台；
 - 可以完全替代研发管理；
@@ -43,7 +43,7 @@ Autorunne 0.6.15 当前可以作为 **早期商业演示、AI 编程课程、顾
 
 更准确的说法是：
 
-> Autorunne 是一个本地优先、轻量、可恢复、可多 agent 接力的 AI 开发工作流层；0.6.15 已经适合进入教学、交付和早期商业验证。
+> Autorunne 是一个本地优先、轻量、可恢复、可多 agent 接力的 AI 开发工作流层；0.6.16 已经适合进入教学、交付和早期商业验证。
 
 ## 推荐成交场景
 
@@ -68,14 +68,14 @@ Autorunne 0.6.15 当前可以作为 **早期商业演示、AI 编程课程、顾
 - 每个 repo `autorunne open --with-vscode`；
 - 后续直接在 Codex / Claude / Hermes / Cursor / Copilot 里派任务。
 
-## 0.6.15 验证摘要
+## 0.6.16 验证摘要
 
 已验证：
 
 ```text
-GitHub Release: v0.6.15
-PyPI: autorunne==0.6.15
-Runtime: AutoRunne 0.6.15
+GitHub Release: v0.6.16
+PyPI: autorunne==0.6.16
+Runtime: AutoRunne 0.6.16
 Course demo: 4 passed, finish validation passed
 Repo integrations: claude, codex, copilot, cursor, hermes
 Missing files: none
@@ -83,4 +83,4 @@ Missing files: none
 
 ## 对外一句话
 
-> Autorunne 0.6.15 已经可以作为“AI 项目持续开发工作流层”对外演示和早期成交：用户只管给 agent 分配任务，Autorunne 在 repo 里保存项目记忆、任务状态和下一步。
+> Autorunne 0.6.16 已经可以作为“AI 项目持续开发工作流层”对外演示和早期成交：用户只管给 agent 分配任务，Autorunne 在 repo 里保存项目记忆、任务状态和下一步。
