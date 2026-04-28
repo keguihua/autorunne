@@ -21,10 +21,11 @@ def _run_install_script(*, extra_env: dict[str, str] | None = None) -> subproces
     return subprocess.run(["bash", str(SCRIPT_PATH)], text=True, capture_output=True, env=env, check=False)
 
 
-def test_install_script_dry_run_defaults_to_pypi_install_and_prints_vscode_flow():
+def test_install_script_dry_run_defaults_to_public_pypi_no_cache_install_and_prints_vscode_flow():
     result = _run_install_script()
     assert result.returncode == 0
     assert "Installing Autorunne from autorunne" in result.stdout
+    assert "--no-cache-dir -i https://pypi.org/simple" in result.stdout
     assert "autorunne open --with-vscode" in result.stdout
     assert "launch Codex or Claude Code directly from that repo" in result.stdout
     assert "fallback install modes" in result.stdout

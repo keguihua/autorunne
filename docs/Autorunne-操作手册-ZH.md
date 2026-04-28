@@ -62,10 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.9：
+比如安装 0.6.10：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.9 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.10 bash
 ```
 
 适合：
@@ -198,7 +198,72 @@ autorunne daemon --duration 300 --interval 2 --max-syncs 1
 
 ---
 
-## 八、常用命令表
+## 八、升级 AutoRunne
+
+推荐用 `pipx` 直接升级，并强制走官方 PyPI、跳过本地缓存：
+
+```bash
+pipx upgrade autorunne --pip-args="--no-cache-dir -i https://pypi.org/simple"
+```
+
+验证当前安装版本，推荐看 pipx 管理的包版本：
+
+```bash
+pipx runpip autorunne show autorunne
+```
+
+也可以使用 CLI 内置版本命令：
+
+```bash
+autorunne version
+autorunne --version
+```
+
+注意：旧版 CLI 可能没有 `autorunne --version` 参数，所以排查旧环境时，优先使用：
+
+```bash
+pipx runpip autorunne show autorunne
+```
+
+如果你执行普通升级时看到：
+
+```text
+autorunne is already at latest version 0.6.6
+```
+
+但 PyPI 实际已经有新版，通常是 pipx 缓存、pip 镜像源或旧索引缓存导致。不要先卸载，先执行：
+
+```bash
+pipx upgrade autorunne --pip-args="--no-cache-dir -i https://pypi.org/simple"
+```
+
+或者使用 Autorunne 提供的安全升级入口：
+
+```bash
+autorunne self-upgrade
+```
+
+这个命令等价于优先执行上面的 pipx 安全升级方式，只升级 CLI 本身，不会删除或重建任何项目里的 `.autorunne/` 目录。
+
+最后 fallback 才是卸载重装：
+
+```bash
+pipx uninstall autorunne
+pipx install --pip-args="--no-cache-dir -i https://pypi.org/simple" autorunne
+```
+
+升级后进入项目执行：
+
+```bash
+autorunne sync
+autorunne open --with-vscode
+```
+
+如果项目里的 `.autorunne/config.json` 版本较旧，Autorunne 会安全迁移到当前包版本；它只补齐/更新配置字段，不会删除你的任务、报告、状态、runtime、skills 或历史记录。
+
+---
+
+## 九、常用命令表
 
 ### 接管 / 恢复仓库
 
@@ -268,7 +333,7 @@ autorunne release --version 0.6.8
 
 ---
 
-## 九、最推荐你的真实工作流
+## 十、最推荐你的真实工作流
 
 如果你主要是：
 - VS Code
@@ -303,7 +368,7 @@ autorunne open --with-vscode
 
 ---
 
-## 十、一句话总结
+## 十一、一句话总结
 
 **Autorunne 负责让仓库“进入可续做状态”，Codex / Claude Code 负责真正继续开发。**
 

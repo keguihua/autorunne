@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from autorunne import __version__ as AUTORUNNE_VERSION
 from autorunne.models.config import WorkflowConfig
 
 CONFIG_FILENAME = "config.json"
@@ -86,6 +87,27 @@ def load_config(repo_root: Path) -> WorkflowConfig:
     if path.exists():
         return WorkflowConfig.model_validate(json.loads(path.read_text(encoding="utf-8")))
     return WorkflowConfig()
+
+
+def migrate_config(repo_root: Path) -> dict[str, Any]:
+    """Safely bring `.autorunne/config.json` up to the running package version.
+
+    This only touches the config file: existing user values and unknown keys are
+    preserved, missing modern defaults are added, and the version field is set to
+    the installed Autorunne package version. It does not remove state, reports,
+    runtime files, skills, or rendered views.
+    """
+    path = config_path(repo_root)
+    defaults = WorkflowConfig().model_dump()
+    existing: dict[str, Any] = {}
+    if path.exists():
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    merged = {**defaults, **existing}
+    merged["version"] = AUTORUNNE_VERSION
+    if merged != existing:
+        ensure_dir(workflow_dir(repo_root))
+        path.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return {"path": str(path), "updated": merged != existing, "version": merged["version"]}
 
 
 def save_config(repo_root: Path, config: WorkflowConfig) -> Path:

@@ -86,7 +86,12 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.9**
+**0.6.10**
+
+### New in 0.6.10
+- safer upgrades: `autorunne self-upgrade` and the installer now use official PyPI with `--no-cache-dir` so pipx is less likely to stay on stale cached versions
+- new `autorunne version` and `autorunne --version` commands make installed-version checks explicit
+- `autorunne sync` safely migrates old `.autorunne/config.json` versions without deleting existing project state, tasks, reports, runtime files, or skills
 
 ### New in 0.6.9
 - direct agent use is now the default product story: users should open Codex / Hermes / Claude Code directly in the repo and just give the task
@@ -149,7 +154,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.9 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.10 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -309,7 +314,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.9
+autorunne release --version 0.6.10
 ```
 
 ---

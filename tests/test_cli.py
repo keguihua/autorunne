@@ -7,6 +7,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from autorunne.cli import app
+from autorunne import __version__
 
 runner = CliRunner()
 
@@ -18,6 +19,57 @@ def _run_in(repo: Path, args: list[str]):
         return runner.invoke(app, args, catch_exceptions=False)
     finally:
         os.chdir(old)
+
+
+def test_version_command_and_option_print_package_version():
+    result = runner.invoke(app, ["version"], catch_exceptions=False)
+    assert result.exit_code == 0
+    assert f"AutoRunne {__version__}" in result.stdout
+
+    option_result = runner.invoke(app, ["--version"], catch_exceptions=False)
+    assert option_result.exit_code == 0
+    assert f"AutoRunne {__version__}" in option_result.stdout
+
+
+def test_self_upgrade_dry_run_uses_public_pypi_no_cache_pipx_command():
+    result = runner.invoke(app, ["self-upgrade", "--dry-run"], catch_exceptions=False)
+    assert result.exit_code == 0
+    assert "pipx upgrade autorunne" in result.stdout
+    assert "--no-cache-dir -i https://pypi.org/simple" in result.stdout
+    assert "does not touch project .autorunne/ directories" in result.stdout
+
+
+def test_sync_migrates_old_config_version_without_deleting_user_state(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    config_path = python_repo / ".autorunne" / "config.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["version"] = "0.5.0"
+    config["preferred_agent"] = "codex"
+    config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    preserved_files = [
+        python_repo / ".autorunne" / "START_HERE.md",
+        python_repo / ".autorunne" / "NEXT_ACTION.md",
+        python_repo / ".autorunne" / "TASKS.md",
+        python_repo / ".autorunne" / "state" / "current.json",
+        python_repo / ".autorunne" / "reports" / "keep.md",
+        python_repo / ".autorunne" / "runtime" / "keep.json",
+        python_repo / ".autorunne" / "skills" / "keep.md",
+    ]
+    for path in preserved_files:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            path.write_text("keep\n", encoding="utf-8")
+
+    result = _run_in(python_repo, ["sync"])
+    assert result.exit_code == 0
+
+    migrated = json.loads(config_path.read_text(encoding="utf-8"))
+    assert migrated["version"] == __version__
+    assert migrated["preferred_agent"] == "codex"
+    assert migrated["auto_record_on_change"] is True
+    for path in preserved_files:
+        assert path.exists(), f"expected sync to preserve {path}"
 
 
 def test_init_creates_workflow_files(git_repo: Path):

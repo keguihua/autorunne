@@ -8,6 +8,7 @@ AUTORUNNE_INSTALL_SOURCE="${AUTORUNNE_INSTALL_SOURCE:-pypi}"
 AUTORUNNE_VERSION="${AUTORUNNE_VERSION:-}"
 AUTORUNNE_DRY_RUN="${AUTORUNNE_DRY_RUN:-0}"
 AUTORUNNE_PIPX_BIN_OVERRIDE="${AUTORUNNE_PIPX_BIN:-}"
+AUTORUNNE_PIP_ARGS="${AUTORUNNE_PIP_ARGS:---no-cache-dir -i https://pypi.org/simple}"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "autorunne installer requires python3" >&2
@@ -72,13 +73,24 @@ resolve_install_target
 
 echo "Installing Autorunne from $INSTALL_TARGET"
 echo "Resolved pipx runner: $PIPX_BIN"
+if [ "$AUTORUNNE_INSTALL_SOURCE" = "pypi" ]; then
+  echo "Pip args: $AUTORUNNE_PIP_ARGS"
+fi
 if [ "$AUTORUNNE_DRY_RUN" = "1" ]; then
   echo
   echo "Dry run only. No changes were made."
 elif [ "$PIPX_BIN" = "python3 -m pipx" ]; then
-  python3 -m pipx install --force "$INSTALL_TARGET"
+  if [ "$AUTORUNNE_INSTALL_SOURCE" = "pypi" ]; then
+    python3 -m pipx install --force "$INSTALL_TARGET" --pip-args "$AUTORUNNE_PIP_ARGS"
+  else
+    python3 -m pipx install --force "$INSTALL_TARGET"
+  fi
 else
-  "$PIPX_BIN" install --force "$INSTALL_TARGET"
+  if [ "$AUTORUNNE_INSTALL_SOURCE" = "pypi" ]; then
+    "$PIPX_BIN" install --force "$INSTALL_TARGET" --pip-args "$AUTORUNNE_PIP_ARGS"
+  else
+    "$PIPX_BIN" install --force "$INSTALL_TARGET"
+  fi
 fi
 
 echo

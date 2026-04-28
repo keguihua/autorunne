@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import shutil
+import subprocess
+import sys
 import typer
 from rich.console import Console
 from rich.table import Table
 
+from autorunne import __version__
 from autorunne.commands import adopt as adopt_cmd
 from autorunne.commands import auto_finish as auto_finish_cmd
 from autorunne.commands import checkpoint as checkpoint_cmd
@@ -40,8 +44,55 @@ app.add_typer(task_app, name="task")
 console = Console()
 
 
+def _version_callback(value: bool):
+    if value:
+        console.print(f"AutoRunne {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(False, "--version", callback=_version_callback, is_eager=True, help="Print the installed Autorunne version and exit."),
+):
+    """Turn any git repository into an Autorunne workspace."""
+
+
 def _target(path: str | None) -> Path:
     return Path(path).expanduser().resolve() if path else Path.cwd()
+
+
+@app.command()
+def version():
+    """Print the installed Autorunne package version."""
+    console.print(f"AutoRunne {__version__}")
+
+
+@app.command("self-upgrade")
+def self_upgrade(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the upgrade command without executing it."),
+    index_url: str = typer.Option("https://pypi.org/simple", help="Python package index to use for upgrade checks."),
+):
+    """Upgrade Autorunne from the official PyPI index without touching project state."""
+    pip_args = f"--no-cache-dir -i {index_url}"
+    recommended = ["pipx", "upgrade", "autorunne", "--pip-args", pip_args]
+    print("Recommended pipx upgrade command:")
+    print(" ".join(recommended))
+    print("This upgrades the installed CLI only and does not touch project .autorunne/ directories.")
+    if dry_run:
+        return
+
+    pipx_bin = shutil.which("pipx")
+    if pipx_bin:
+        command = [pipx_bin, "upgrade", "autorunne", "--pip-args", pip_args]
+    else:
+        console.print("pipx was not found; falling back to the current Python environment.")
+        command = [sys.executable, "-m", "pip", "install", "--upgrade", "--no-cache-dir", "-i", index_url, "autorunne"]
+    completed = subprocess.run(command, text=True, capture_output=True, check=False)
+    if completed.stdout:
+        console.print(completed.stdout, end="")
+    if completed.stderr:
+        console.print(completed.stderr, end="")
+    raise typer.Exit(completed.returncode)
 
 
 @app.command()

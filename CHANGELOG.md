@@ -2,6 +2,27 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.10 - 2026-04-28
+
+### Highlights
+- Fixed the upgrade path for users who saw `pipx upgrade autorunne` stay on an old cached version even after a newer PyPI release was available.
+- Added explicit version commands so users can verify the installed package without relying on pip internals.
+- Existing project `.autorunne/` state is preserved during sync/open config migration.
+
+### Added
+- `autorunne version` and `autorunne --version` now print the installed package version.
+- `autorunne self-upgrade` runs the safe pipx upgrade path using official PyPI and `--no-cache-dir`.
+- Chinese operation manual now includes a dedicated “升级 AutoRunne” section.
+
+### Improved
+- `scripts/install.sh` now defaults PyPI installs to `--no-cache-dir -i https://pypi.org/simple` to avoid stale caches or mirror lag.
+- `autorunne sync` safely migrates old `.autorunne/config.json` files to the running package version while preserving existing tasks, state, reports, runtime files, skills, and rendered views.
+
+### Verification
+- `python -m pytest`
+- `autorunne version`
+- `autorunne sync`
+
 ## 0.6.9 - 2026-04-23
 
 ### Highlights
