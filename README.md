@@ -44,6 +44,7 @@ Autorunne is built for the harder problem:
 - [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
 - [Autorunne 自动识别 / 自动初始化 / 自动恢复](docs/Autorunne-Auto-Mode-ZH.md)
 - [Autorunne 发布与合并策略](docs/Autorunne-Release-Playbook-ZH.md)
+- [Autorunne 0.6.15 发布说明](docs/Autorunne-Release-Notes-0.6.15-ZH.md)
 - [Autorunne 0.6.14 发布说明](docs/Autorunne-Release-Notes-0.6.14-ZH.md)
 - [Autorunne 0.6.13 发布说明](docs/Autorunne-Release-Notes-0.6.13-ZH.md)
 - [Autorunne 产品说明书](docs/Autorunne-产品说明书-ZH.md)
@@ -88,7 +89,10 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.14**
+**0.6.15**
+
+### New in 0.6.15
+- extends the skill-first workflow language to Cursor rules and GitHub Copilot instructions, so every generated agent entrypoint points back to the same Autorunne repo skill / START_HERE flow
 
 ### New in 0.6.14
 - detects lightweight Python teaching/demo repos that only have files such as `app.py`, `store.py`, `tests/`, and `README.md`

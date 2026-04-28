@@ -2,8 +2,8 @@
 
 Short instruction layer for this repo:
 1. Users should open Codex / Claude Code / Hermes directly and just give the task.
-2. Read `.autorunne/views/START_HERE.md` first.
-3. Use repo skill files under `.agents/skills/autorunne-workflow/` or `.claude/skills/autorunne-workflow/`.
+2. Agents should load this repo skill automatically when supported: `.agents/skills/autorunne-workflow/SKILL.md` or `.claude/skills/autorunne-workflow/SKILL.md`.
+3. Do not wait for the user to remind you to read Autorunne; read `.autorunne/views/START_HERE.md` first.
 4. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
 5. GitHub Copilot should use `.github/copilot-instructions.md` when present.
 6. Do not write `.autorunne/state/*` directly.

@@ -1,7 +1,7 @@
 ---
 name: autorunne-workflow
 description: Repo-local Autorunne workflow instructions for this repository
-version: 0.6.9
+version: 0.6.15
 ---
 
 # Autorunne Workflow Skill
@@ -11,6 +11,9 @@ This repository uses Autorunne as the backend workflow and project-memory layer.
 
 ## User-facing rule
 The user should be able to open Claude Code directly, talk naturally, and let Autorunne maintain state in the background. Do not ask the user to chat through Autorunne first.
+
+## Skill-first rule for agents
+When this repo skill is available, load this repo skill as the workflow source of truth and follow it automatically. Do not wait for the user to remind you to read Autorunne, START_HERE, or the workflow files.
 
 ## Required startup flow
 1. Read `.autorunne/views/START_HERE.md`.

@@ -26,7 +26,7 @@ def _skill_text(tool: str) -> str:
     return f"""---
 name: autorunne-workflow
 description: Repo-local Autorunne workflow instructions for this repository
-version: 0.6.14
+version: 0.6.15
 ---
 
 # Autorunne Workflow Skill
@@ -67,12 +67,14 @@ alwaysApply: true
 # Autorunne Cursor Workflow
 
 1. The user should be able to open Cursor directly and just give the task; Autorunne stays in the background.
-2. Read `.autorunne/views/START_HERE.md` before multi-step work.
-3. Treat `.autorunne/state/*` as the only mutable project state source of truth.
-4. Do not edit `.autorunne/state/*` directly; use `autorunne ingest`, `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
-5. If a fresh user task is not recorded yet, capture it with `autorunne ingest --source cursor --task <task>`.
-6. When code changes are verified, write the result back through Autorunne so the rendered views stay fresh.
-7. In your final report, include changed files, completion status, and the Autorunne commands executed.
+2. When this repo skill is available, load this repo skill as the workflow source of truth and follow it automatically.
+3. Do not wait for the user to remind you to read Autorunne, START_HERE, or the workflow files.
+4. Read `.autorunne/views/START_HERE.md` before multi-step work.
+5. Treat `.autorunne/state/*` as the only mutable project state source of truth.
+6. Do not edit `.autorunne/state/*` directly; use `autorunne ingest`, `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
+7. If a fresh user task is not recorded yet, capture it with `autorunne ingest --source cursor --task <task>`.
+8. When code changes are verified, write the result back through Autorunne so the rendered views stay fresh.
+9. In your final report, include changed files, completion status, and the Autorunne commands executed.
 """
 
 
@@ -83,13 +85,15 @@ This repository uses Autorunne as the backend workflow and project-memory layer.
 
 Required behavior:
 1. The user should be able to open Copilot or its agent mode directly and just give the task.
-2. Read `.autorunne/views/START_HERE.md` first.
-3. Treat `.autorunne/state/*` as the only mutable project state source of truth.
-4. Do not edit `.autorunne/state/*` directly.
-5. If a fresh user task is not recorded yet, capture it with `autorunne ingest --source copilot --task <task>`.
-6. Use `autorunne checkpoint` for meaningful partial progress.
-7. Use `autorunne finish` after verification is complete.
-8. Include changed files, completion status, and Autorunne commands in the final report.
+2. When this repo skill is available, load this repo skill as the workflow source of truth and follow it automatically.
+3. Do not wait for the user to remind you to read Autorunne, START_HERE, or the workflow files.
+4. Read `.autorunne/views/START_HERE.md` first.
+5. Treat `.autorunne/state/*` as the only mutable project state source of truth.
+6. Do not edit `.autorunne/state/*` directly.
+7. If a fresh user task is not recorded yet, capture it with `autorunne ingest --source copilot --task <task>`.
+8. Use `autorunne checkpoint` for meaningful partial progress.
+9. Use `autorunne finish` after verification is complete.
+10. Include changed files, completion status, and Autorunne commands in the final report.
 """
 
 

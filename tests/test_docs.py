@@ -9,6 +9,7 @@ BUSINESS_PLAN = ROOT / "docs" / "Autorunne-商业计划书-ZH.md"
 SALES_POSITIONING = ROOT / "docs" / "Autorunne-对外定位与销售话术-ZH.md"
 RELEASE_NOTES_0613 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.13-ZH.md"
 RELEASE_NOTES_0614 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.14-ZH.md"
+RELEASE_NOTES_0615 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.15-ZH.md"
 
 
 def test_chinese_manual_documents_safe_upgrade_path_and_version_check():
@@ -85,3 +86,14 @@ def test_usage_guides_are_updated_for_0614_lightweight_python():
     assert "自动读取 Autorunne workflow" in zh
     assert "load the Autorunne workflow automatically" in en
     assert "不需要用户每次提醒" in release
+
+
+def test_release_notes_0615_documents_all_agent_skill_first():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    release = RELEASE_NOTES_0615.read_text(encoding="utf-8")
+    assert "0.6.15" in readme
+    assert "Cursor" in release
+    assert "GitHub Copilot" in release
+    assert "先读 Autorunne" in release
+    assert ".cursor/rules/autorunne-workflow.mdc" in release
+    assert ".github/copilot-instructions.md" in release

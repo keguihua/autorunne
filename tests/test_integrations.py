@@ -35,10 +35,11 @@ def test_integrate_repo_scope_installs_skills_and_wrappers(git_repo: Path):
     agents_skill = (git_repo / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md").read_text(encoding="utf-8")
     claude_skill = (git_repo / ".claude" / "skills" / "autorunne-workflow" / "SKILL.md").read_text(encoding="utf-8")
     cursor_rule = (git_repo / ".cursor" / "rules" / "autorunne-workflow.mdc").read_text(encoding="utf-8")
+    copilot = (git_repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     assert agents_skill.startswith("---\n")
     assert "name: autorunne-workflow" in agents_skill
     assert claude_skill.startswith("---\n")
-    assert "version: 0.6.14" in claude_skill
+    assert "version: 0.6.15" in claude_skill
     assert "open Codex directly" in agents_skill
     assert "autorunne ingest --source codex --task <task>" in agents_skill
     assert "load this repo skill" in agents_skill
@@ -46,6 +47,12 @@ def test_integrate_repo_scope_installs_skills_and_wrappers(git_repo: Path):
     assert cursor_rule.startswith("---\n")
     assert "alwaysApply: true" in cursor_rule
     assert "globs:" not in cursor_rule
+    assert "autorunne ingest --source cursor --task <task>" in cursor_rule
+    assert "load this repo skill" in cursor_rule
+    assert "Do not wait for the user to remind you to read Autorunne" in cursor_rule
+    assert "autorunne ingest --source copilot --task <task>" in copilot
+    assert "load this repo skill" in copilot
+    assert "Do not wait for the user to remind you to read Autorunne" in copilot
 
 
 def test_open_auto_installs_repo_integrations(node_repo: Path):
