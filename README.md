@@ -44,6 +44,7 @@ Autorunne is built for the harder problem:
 - [Autorunne 与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
 - [Autorunne 自动识别 / 自动初始化 / 自动恢复](docs/Autorunne-Auto-Mode-ZH.md)
 - [Autorunne 发布与合并策略](docs/Autorunne-Release-Playbook-ZH.md)
+- [Autorunne 0.6.14 发布说明](docs/Autorunne-Release-Notes-0.6.14-ZH.md)
 - [Autorunne 0.6.13 发布说明](docs/Autorunne-Release-Notes-0.6.13-ZH.md)
 - [Autorunne 产品说明书](docs/Autorunne-产品说明书-ZH.md)
 - [Autorunne 商业计划书](docs/Autorunne-商业计划书-ZH.md)
@@ -87,7 +88,13 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.13**
+**0.6.14**
+
+### New in 0.6.14
+- detects lightweight Python teaching/demo repos that only have files such as `app.py`, `store.py`, `tests/`, and `README.md`
+- renders reliable Python commands such as `python app.py` and `python -m pytest -q` instead of leaving `COMMANDS.md` empty
+- recognizes standard-library HTTP server projects and records `python standard library` / `http.server` in handoff docs
+- generated repo skills now tell agents to load the Autorunne workflow skill automatically, so users do not need to keep saying “先读 Autorunne”
 
 ### New in 0.6.13
 - fixes monorepo / multi-package detection when the repo root has no `package.json` but subprojects such as `frontend/`, `backend/`, `contracts/`, `apps/*`, or `packages/*` do

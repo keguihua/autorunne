@@ -123,3 +123,22 @@ def python_repo(git_repo: Path) -> Path:
     (git_repo / "tests").mkdir()
     (git_repo / "tests" / "test_basic.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
     return git_repo
+
+
+@pytest.fixture()
+def standard_library_python_repo(git_repo: Path) -> Path:
+    (git_repo / "README.md").write_text(
+        "# course demo\n\n```bash\npython -m pytest -q\npython app.py\n```\n",
+        encoding="utf-8",
+    )
+    (git_repo / "app.py").write_text(
+        "from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer\n\n"
+        "class Handler(BaseHTTPRequestHandler):\n    pass\n\n"
+        "def run():\n    ThreadingHTTPServer(('127.0.0.1', 8010), Handler).serve_forever()\n\n"
+        "if __name__ == '__main__':\n    run()\n",
+        encoding="utf-8",
+    )
+    (git_repo / "store.py").write_text("class Store:\n    pass\n", encoding="utf-8")
+    (git_repo / "tests").mkdir()
+    (git_repo / "tests" / "test_store.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
+    return git_repo

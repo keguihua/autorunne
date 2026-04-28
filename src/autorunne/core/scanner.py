@@ -18,6 +18,8 @@ IMPORTANT_FILES = [
     "nx.json",
     "CMakeLists.txt",
     "Makefile",
+    "app.py",
+    "main.py",
 ]
 
 SOURCE_DIR_CANDIDATES = {
@@ -241,13 +243,22 @@ def _detect_node(repo_root: Path, scan: dict) -> None:
 def _detect_python(repo_root: Path, scan: dict) -> None:
     pyproject_path = repo_root / "pyproject.toml"
     requirements_path = repo_root / "requirements.txt"
-    if not pyproject_path.exists() and not requirements_path.exists():
+    python_files = sorted(
+        path
+        for path in repo_root.glob("*.py")
+        if path.is_file() and not path.name.startswith(".")
+    )
+    has_tests = (repo_root / "tests").exists()
+    if not pyproject_path.exists() and not requirements_path.exists() and not python_files and not has_tests:
         return
 
+    scan["important_files"] = _unique([*scan.get("important_files", []), *[path.name for path in python_files[:5]]])
     scan["stack"].append("python")
     pyproject_text = _read_text(pyproject_path)
     requirements_text = _read_text(requirements_path)
-    combined = pyproject_text + "\n" + requirements_text
+    readme_text = _read_text(repo_root / "README.md")
+    python_texts = {path.name: _read_text(path) for path in python_files}
+    combined = pyproject_text + "\n" + requirements_text + "\n" + readme_text + "\n" + "\n".join(python_texts.values())
 
     framework_tokens = {
         "fastapi": "fastapi",
@@ -259,18 +270,35 @@ def _detect_python(repo_root: Path, scan: dict) -> None:
         if token in combined and name not in scan["framework"]:
             scan["framework"].append(name)
 
+    if not scan["framework"] and not pyproject_path.exists() and not requirements_path.exists():
+        scan["framework"].append("python standard library")
+    if "http.server" in combined or "threadinghttpserver" in combined:
+        scan["framework"].append("http.server")
+
     if "poetry" in pyproject_text:
         scan["package_manager"].append("poetry")
     elif "uv" in pyproject_text:
         scan["package_manager"].append("uv")
-    else:
+    elif pyproject_path.exists() or requirements_path.exists():
         scan["package_manager"].append("pip")
+    else:
+        scan["package_manager"].append("none")
 
-    if "pytest" in combined or (repo_root / "tests").exists():
-        scan["commands"].setdefault("test", "pytest")
+    if "pytest" in combined or has_tests:
+        test_command = "pytest" if pyproject_path.exists() or requirements_path.exists() else "python -m pytest -q"
+        scan["commands"].setdefault("test", test_command)
     else:
         scan["commands"].setdefault("test", "python -m unittest")
-    scan["commands"].setdefault("run", "python -m <entrypoint>")
+
+    entrypoint = None
+    for candidate in ["app.py", "main.py"]:
+        if (repo_root / candidate).exists():
+            entrypoint = candidate
+            break
+    if entrypoint:
+        scan["commands"].setdefault("run", f"python {entrypoint}")
+    else:
+        scan["commands"].setdefault("run", "python -m <entrypoint>")
     if "build-system" in pyproject_text:
         scan["commands"].setdefault("build", "python -m build")
 
@@ -423,7 +451,7 @@ def recommend_next_action(scan: dict) -> str:
         return "Bootstrap the smallest runnable slice first, then capture the first real task in TASKS.md."
     if "README.md" not in scan.get("important_files", []):
         return "Create or improve the project README so both humans and agents know how to run the project."
-    if scan.get("commands", {}).get("test") == "pytest":
+    if scan.get("commands", {}).get("test") in {"pytest", "python -m pytest -q"}:
         return "Run the Python test command and record any failing modules before changing code."
     if "monorepo" in scan.get("framework", []):
         return "Map the workspace packages first, then choose the smallest affected app or package before changing code."

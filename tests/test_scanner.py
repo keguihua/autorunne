@@ -16,6 +16,19 @@ def test_scan_repo_detects_python_stack(python_repo):
     assert scan["commands"]["test"] == "pytest"
 
 
+def test_scan_repo_detects_standard_library_python_without_packaging(standard_library_python_repo):
+    scan = scan_repo(standard_library_python_repo)
+    assert scan["stack"] == ["python"]
+    assert "python standard library" in scan["framework"]
+    assert "http.server" in scan["framework"]
+    assert scan["package_manager"] == ["none"]
+    assert "app.py" in scan["important_files"]
+    assert "store.py" in scan["important_files"]
+    assert "tests" in scan["source_dirs"]
+    assert scan["commands"]["test"] == "python -m pytest -q"
+    assert scan["commands"]["run"] == "python app.py"
+
+
 def test_scan_repo_detects_nextjs_and_pnpm(next_pnpm_repo):
     scan = scan_repo(next_pnpm_repo)
     assert scan["package_manager"] == ["pnpm"]

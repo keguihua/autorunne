@@ -38,9 +38,11 @@ def test_integrate_repo_scope_installs_skills_and_wrappers(git_repo: Path):
     assert agents_skill.startswith("---\n")
     assert "name: autorunne-workflow" in agents_skill
     assert claude_skill.startswith("---\n")
-    assert "version: 0.6.13" in claude_skill
+    assert "version: 0.6.14" in claude_skill
     assert "open Codex directly" in agents_skill
     assert "autorunne ingest --source codex --task <task>" in agents_skill
+    assert "load this repo skill" in agents_skill
+    assert "Do not wait for the user to remind you to read Autorunne" in agents_skill
     assert cursor_rule.startswith("---\n")
     assert "alwaysApply: true" in cursor_rule
     assert "globs:" not in cursor_rule
@@ -57,3 +59,17 @@ def test_open_auto_installs_repo_integrations(node_repo: Path):
     assert (node_repo / ".autorunne" / "bin" / "ar-codex").exists()
     skill_text = (node_repo / ".agents" / "skills" / "autorunne-workflow" / "SKILL.md").read_text(encoding="utf-8")
     assert skill_text.startswith("---\n")
+
+
+def test_open_renders_standard_library_python_commands(standard_library_python_repo: Path):
+    result = _run_in(standard_library_python_repo, ["open"])
+    assert result.exit_code == 0
+    start_here = (standard_library_python_repo / ".autorunne" / "views" / "START_HERE.md").read_text(encoding="utf-8")
+    commands = (standard_library_python_repo / ".autorunne" / "views" / "COMMANDS.md").read_text(encoding="utf-8")
+    context = (standard_library_python_repo / ".autorunne" / "views" / "PROJECT_CONTEXT.md").read_text(encoding="utf-8")
+    assert "Stack: python" in start_here
+    assert "Framework: python standard library, http.server" in start_here
+    assert "python -m pytest -q" in start_here
+    assert "python app.py" in start_here
+    assert "No reliable run/test/build commands detected yet" not in commands
+    assert "Package manager: none" in context

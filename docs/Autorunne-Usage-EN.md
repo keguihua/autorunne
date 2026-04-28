@@ -9,7 +9,10 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.13
+## 2. Core upgrades in 0.6.14
+- 0.6.14 detects lightweight Python teaching/demo repositories even when they have no `pyproject.toml` or `requirements.txt`
+- `COMMANDS.md` can now render `python app.py` and `python -m pytest -q` from simple `app.py` + `tests/` projects
+- generated repo skills and agent instructions tell models to load the Autorunne workflow automatically instead of waiting for user reminders
 - 0.6.13 fixes real-world multi-package detection: repositories with no root `package.json` but with `frontend/`, `backend/`, `contracts/`, `apps/*`, or `packages/*` package files no longer fall back to `generic`
 - `autorunne sync` promotes child packages into top-level project summaries such as `multi-package Node/TypeScript`, `Vite frontend`, `Node.js backend`, and `Hardhat smart contracts`
 - `COMMANDS.md` now derives package scripts with `cd <subproject> && ...` prefixes so agents see usable commands immediately
@@ -38,6 +41,8 @@ It is designed for:
 - Django
 - Flask
 - Streamlit
+- standard-library Python teaching/demo projects such as `app.py` + `tests/`
+- `http.server` / `ThreadingHTTPServer` small services
 
 ### Systems / compiled languages
 - Go
@@ -63,6 +68,30 @@ autorunne open --with-vscode
 ```
 
 After that, just open the repo normally. Autorunne will auto-bootstrap or resume on open, and `.autorunne/views/START_HERE.md` remains the clean agent entry point.
+
+### Lightweight Python usage in 0.6.14
+If a repo has no `pyproject.toml` and no `requirements.txt`, but includes:
+
+```text
+app.py
+tests/
+README.md
+```
+
+run:
+
+```bash
+autorunne sync
+```
+
+Autorunne will render commands such as:
+
+```bash
+python app.py
+python -m pytest -q
+```
+
+This keeps small teaching demos and standard-library HTTP server projects usable as repo-local handoff workspaces.
 
 ### Multi-package / monorepo usage in 0.6.13
 If the repo root has no `package.json` but includes package files like:

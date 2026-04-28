@@ -26,7 +26,7 @@ def _skill_text(tool: str) -> str:
     return f"""---
 name: autorunne-workflow
 description: Repo-local Autorunne workflow instructions for this repository
-version: 0.6.13
+version: 0.6.14
 ---
 
 # Autorunne Workflow Skill
@@ -36,6 +36,9 @@ This repository uses Autorunne as the backend workflow and project-memory layer.
 
 ## User-facing rule
 The user should be able to open {direct_agent} directly, talk naturally, and let Autorunne maintain state in the background. Do not ask the user to chat through Autorunne first.
+
+## Skill-first rule for agents
+When this repo skill is available, load this repo skill as the workflow source of truth and follow it automatically. Do not wait for the user to remind you to read Autorunne, START_HERE, or the workflow files.
 
 ## Required startup flow
 1. Read `.autorunne/views/START_HERE.md`.
@@ -95,8 +98,8 @@ def _agents_text() -> str:
 
 Short instruction layer for this repo:
 1. Users should open Codex / Claude Code / Hermes directly and just give the task.
-2. Read `.autorunne/views/START_HERE.md` first.
-3. Use repo skill files under `.agents/skills/autorunne-workflow/` or `.claude/skills/autorunne-workflow/`.
+2. Agents should load this repo skill automatically when supported: `.agents/skills/autorunne-workflow/SKILL.md` or `.claude/skills/autorunne-workflow/SKILL.md`.
+3. Do not wait for the user to remind you to read Autorunne; read `.autorunne/views/START_HERE.md` first.
 4. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
 5. GitHub Copilot should use `.github/copilot-instructions.md` when present.
 6. Do not write `.autorunne/state/*` directly.

@@ -2,6 +2,22 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.14 - 2026-04-28
+
+### Added
+- Detect lightweight Python teaching/demo repositories even when they have no `pyproject.toml` or `requirements.txt`.
+- Infer `python app.py` or `python main.py` as the run command when those entrypoints exist.
+- Infer `python -m pytest -q` when a simple Python repo has a `tests/` directory.
+- Recognize standard-library HTTP server projects from `http.server` / `ThreadingHTTPServer` signals.
+
+### Improved
+- Generated repo skills and agent instructions now explicitly tell agents to load the Autorunne workflow skill automatically instead of waiting for the user to remind them.
+
+### Verification
+- `python -m pytest tests/test_scanner.py tests/test_integrations.py -q`
+- `python -m pytest -q`
+- real `course-leads-demo` smoke test: `autorunne open`, `autorunne sync`, `python -m pytest -q`
+
 ## 0.6.13 - 2026-04-28
 
 ### Documentation
