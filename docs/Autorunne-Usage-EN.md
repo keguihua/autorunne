@@ -128,7 +128,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.13-py3-none-any.whl
+pip install autorunne-0.6.15-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -230,7 +230,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.6.13
+autorunne release --version 0.6.15
 ```
 
 ### Install hooks and pre-commit support

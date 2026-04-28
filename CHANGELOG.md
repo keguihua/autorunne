@@ -8,10 +8,16 @@ All notable changes to Autorunne are documented here.
 - Cursor and GitHub Copilot repo instructions now also explicitly tell agents to load the repo Autorunne workflow skill when available.
 - This closes the remaining agent-integration gap after 0.6.14: Codex/Claude/Hermes, Cursor, and Copilot all point back to the same repo-local Autorunne workflow instead of relying on the user to say “read Autorunne” each time.
 
+### Documentation
+- Refreshed GitHub-facing README install/version/validation sections for `autorunne==0.6.15`.
+- Added a dedicated Chinese commercial stability note for early sales, teaching, and delivery positioning.
+- Updated product brief, business plan, sales positioning, and 0.6.15 release notes to reflect GitHub Release + PyPI + runtime + real course-demo verification.
+
 ### Verification
 - `python -m pytest tests/test_integrations.py -q`
 - `python -m pytest -q`
 - real `course-leads-demo` smoke test with generated repo instructions
+- GitHub Release, PyPI wheel/sdist, Hermes runtime venv, and real course-demo smoke test verified for 0.6.15
 
 ## 0.6.14 - 2026-04-28
 

@@ -44,3 +44,41 @@ autorunne version
 ```text
 AutoRunne 0.6.15
 ```
+
+
+## 发布与验证状态
+
+0.6.15 已完成四层验证：
+
+1. GitHub Release：<https://github.com/keguihua/autorunne/releases/tag/v0.6.15>
+2. PyPI：`autorunne==0.6.15`，包含 wheel 和 sdist
+3. Hermes 服务器运行环境：`autorunne --version` 显示 `AutoRunne 0.6.15`
+4. 真实课程开发项目 smoke test：
+
+```bash
+autorunne open --path .
+autorunne sync --path .
+autorunne start --path . --task "简单测试 Autorunne 0.6.15" --next "运行 pytest 并 finish"
+python -m pytest -q
+autorunne finish --path . --summary "Autorunne 0.6.15 简单验证通过" --validate "python -m pytest -q"
+```
+
+验证结果：
+
+```text
+4 passed
+Validation: passed
+Active task: none
+Last action: task_finished
+Missing files: none
+```
+
+## 商业稳定性判断
+
+0.6.15 可以作为早期商业演示、AI 编程课程、顾问交付流程里的稳定 Beta 版本使用。
+
+推荐对外说法：
+
+> Autorunne 0.6.15 已跑通 GitHub Release、PyPI、真实服务器环境和课程开发项目 smoke test，适合用于演示“多 agent 共享 repo-local 项目记忆”的真实工作流。
+
+同时保持边界清楚：它是轻量 workflow layer，不是最终企业级全自动研发平台。

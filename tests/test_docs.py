@@ -10,6 +10,7 @@ SALES_POSITIONING = ROOT / "docs" / "Autorunne-对外定位与销售话术-ZH.md
 RELEASE_NOTES_0613 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.13-ZH.md"
 RELEASE_NOTES_0614 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.14-ZH.md"
 RELEASE_NOTES_0615 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.15-ZH.md"
+COMMERCIAL_STABILITY = ROOT / "docs" / "Autorunne-商业稳定性说明-ZH.md"
 
 
 def test_chinese_manual_documents_safe_upgrade_path_and_version_check():
@@ -34,7 +35,7 @@ def test_chinese_manual_documents_monorepo_support():
     assert "packages/*" in text
     assert "cd frontend && npm run build" in text
     assert "sync` 不应该再把项目误判" in text
-    assert "autorunne release --version 0.6.13" in text
+    assert "autorunne release --version 0.6.15" in text
 
 
 def test_usage_guides_are_updated_for_0613_monorepos():
@@ -48,29 +49,33 @@ def test_usage_guides_are_updated_for_0613_monorepos():
         assert "cd frontend && npm run build" in text
         assert "cd backend && npm test" in text
         assert "cd contracts && npm run compile" in text
-        assert "autorunne-0.6.13-py3-none-any.whl" in text
-        assert "autorunne release --version 0.6.13" in text
+        assert "autorunne-0.6.15-py3-none-any.whl" in text
+        assert "autorunne release --version 0.6.15" in text
 
 
 def test_business_docs_position_autorunne_as_repo_local_memory_layer():
     product = PRODUCT_BRIEF.read_text(encoding="utf-8")
     business = BUSINESS_PLAN.read_text(encoding="utf-8")
     sales = SALES_POSITIONING.read_text(encoding="utf-8")
-    release = RELEASE_NOTES_0613.read_text(encoding="utf-8")
+    release = RELEASE_NOTES_0615.read_text(encoding="utf-8")
+    commercial = COMMERCIAL_STABILITY.read_text(encoding="utf-8")
 
-    assert "当前版本定位：0.6.13" in product
+    assert "当前版本定位：0.6.15" in product
     assert "repo-local 项目记忆" in product
     assert "frontend/backend/contracts" in product
+    assert "商业稳定性结论" in product
 
-    assert "免费开源层（0.6.13 已覆盖）" in business
+    assert "免费开源层（0.6.15 已覆盖）" in business
     assert "Hermes 记住用户和跨项目经验，Autorunne 记住这个 repo 的项目状态" in business
     assert "教学 + 交付 + 顾问服务" in business
 
     assert "AI 项目记忆与开发工作流内核" in sales
-    assert "0.6.13 更适合真实全栈项目" in sales
+    assert "0.6.15 更适合真实项目演示" in sales
 
-    assert "Autorunne 0.6.13 发布说明" in release
-    assert "PyPI `autorunne==0.6.13`" in release
+    assert "Autorunne 0.6.15 发布说明" in release
+    assert "PyPI：`autorunne==0.6.15`" in release
+    assert "商业稳定性说明" in commercial
+    assert "可商用验证的 Beta 工作流层" in commercial
 
 
 def test_usage_guides_are_updated_for_0614_lightweight_python():
@@ -97,3 +102,6 @@ def test_release_notes_0615_documents_all_agent_skill_first():
     assert "先读 Autorunne" in release
     assert ".cursor/rules/autorunne-workflow.mdc" in release
     assert ".github/copilot-instructions.md" in release
+    assert "GitHub Release" in release
+    assert "PyPI：`autorunne==0.6.15`" in release
+    assert "商业稳定性判断" in release

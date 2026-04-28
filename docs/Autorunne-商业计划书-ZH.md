@@ -39,13 +39,15 @@ Autorunne 提供：
 - 想把 AI 编程流程标准化的服务商
 
 ## 6. 产品形态
-### 免费开源层（0.6.13 已覆盖）
+### 免费开源层（0.6.15 已覆盖）
 - state-first CLI
 - `.autorunne/state/*` + `.autorunne/views/*`
 - 基础命令：open/migrate/start/checkpoint/finish/record/status/show/history/trace/doctor/export/release
 - repo 级 skill / wrapper / VS Code 接入
 - direct agent 任务入口：`autorunne ingest`
 - 多包 Node/TypeScript 项目识别：`frontend/`、`backend/`、`contracts/`、`apps/*`、`packages/*`
+- 轻量 Python 教学/demo 项目识别：无 package manager 也能给出 `python app.py`、`python -m pytest -q`
+- Codex / Claude / Hermes / Cursor / Copilot repo 入口统一指向 Autorunne workflow
 
 ### 未来商业层
 - 团队协作版模板
@@ -79,15 +81,16 @@ Autorunne 提供：
 - 显式 task 操作、状态观测与 doctor 检查
 - direct agent 工作流说明
 - 0.6.13 多包项目识别与 sync 渲染修复，能支撑真实 frontend/backend/contracts 项目演示
-- 初步对外说明文档、产品说明书、中文操作手册
+- 0.6.14/0.6.15 轻量 Python demo 识别与全 agent 入口补齐，能支撑课程开发项目演示
+- 初步对外说明文档、产品说明书、中文操作手册、商业稳定性说明
 
 当前更准确的阶段是：
-### **可在真实项目里持续使用、可做对外演示和早期成交的 Beta 产品**
-还不是最终成熟企业版，但已经适合进入“教学 + 交付 + 顾问服务”组合验证。
+### **可在真实项目里持续使用、可做对外演示和早期成交的商业验证版 Beta 产品**
+还不是最终成熟企业版，但 GitHub Release、PyPI、服务器本机运行环境和真实课程开发 demo 都已验证，已经适合进入“教学 + 交付 + 顾问服务”组合验证。
 
 ## 10. 接下来的关键里程碑
 ### M1：真实项目连续跑状态工作流
-- 用 `open → sync → ingest → finish → show/history/trace` 连续跑多个真实项目
+- 用 `open → sync → ingest/start → finish → show/history/trace` 连续跑多个真实项目
 - 优先覆盖 AI 教学、全栈开发、frontend/backend/contracts 项目
 - 验证恢复体验、多模型协作体验、legacy migration 体验
 
