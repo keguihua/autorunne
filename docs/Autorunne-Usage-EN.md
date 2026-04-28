@@ -9,12 +9,12 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.9
-- direct agent mode is now the default product story: users should open Codex / Claude Code / Hermes directly and just give the task
-- adds `autorunne ingest` so agents can capture a fresh natural-language task into `.autorunne/` without forcing the user to chat through Autorunne first
-- generated repo skill / START_HERE / AGENTS / Copilot / Cursor instructions now describe Autorunne as the backend workflow + memory layer, with wrappers only as optional fallback entrypoints
-- keeps `.autorunne/state/*` as the only source of truth
-- keeps `status` state-aware so it still shows the real active task, next action, task counts, and integration state
+## 2. Core upgrades in 0.6.13
+- 0.6.13 fixes real-world multi-package detection: repositories with no root `package.json` but with `frontend/`, `backend/`, `contracts/`, `apps/*`, or `packages/*` package files no longer fall back to `generic`
+- `autorunne sync` promotes child packages into top-level project summaries such as `multi-package Node/TypeScript`, `Vite frontend`, `Node.js backend`, and `Hardhat smart contracts`
+- `COMMANDS.md` now derives package scripts with `cd <subproject> && ...` prefixes so agents see usable commands immediately
+- direct agent mode remains the default product story: users should open Codex / Claude Code / Hermes directly and just give the task
+- `.autorunne/state/*` remains the source of truth, while `.autorunne/views/*` is the stable human/agent handoff surface
 
 ## 3. Supported languages / project types
 ### Web / app / service
@@ -28,6 +28,7 @@ It is designed for:
 - Express
 - NestJS
 - monorepo / pnpm workspace / Turborepo / Nx signals
+- multi-package Node/TypeScript repos with no root package.json but with frontend/backend/contracts/apps/packages subprojects
 
 ### Python
 - pip
@@ -63,6 +64,32 @@ autorunne open --with-vscode
 
 After that, just open the repo normally. Autorunne will auto-bootstrap or resume on open, and `.autorunne/views/START_HERE.md` remains the clean agent entry point.
 
+### Multi-package / monorepo usage in 0.6.13
+If the repo root has no `package.json` but includes package files like:
+
+```text
+frontend/package.json
+backend/package.json
+contracts/package.json
+```
+
+run this from the repo root:
+
+```bash
+autorunne sync
+```
+
+Autorunne will detect the child packages, summarize the stack, and render commands such as:
+
+```text
+frontend:build -> cd frontend && npm run build
+backend:test -> cd backend && npm test
+contracts:compile -> cd contracts && npm run compile
+contracts:test -> cd contracts && npm test
+```
+
+This keeps agent handoff docs usable without asking the model to guess project commands.
+
 ### Development install
 ```bash
 python -m venv .venv
@@ -72,7 +99,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.9-py3-none-any.whl
+pip install autorunne-0.6.13-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -174,7 +201,7 @@ autorunne export
 
 ### Create a release bundle
 ```bash
-autorunne release --version 0.6.8
+autorunne release --version 0.6.13
 ```
 
 ### Install hooks and pre-commit support

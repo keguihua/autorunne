@@ -404,7 +404,7 @@ autorunne doctor
 
 ```bash
 autorunne export
-autorunne release --version 0.6.8
+autorunne release --version 0.6.13
 ```
 
 ---

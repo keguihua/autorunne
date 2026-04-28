@@ -1,13 +1,14 @@
 # Autorunne 产品说明书
 
 ## 一句话定义
-Autorunne 是一个 **本地优先的 AI 开发工作流系统**，把任意 Git 仓库变成可持续推进、可恢复上下文、可多模型共享的开发工作区。
+Autorunne 是一个 **本地优先的 AI 项目记忆与开发工作流层**，把任意 Git 仓库变成可持续推进、可恢复上下文、可多模型共享的开发工作区。
 
 ## 核心价值
-- 让 Claude Code、Codex、Hermes、Cursor 等代理共享同一套项目记忆
+- 让 Claude Code、Codex、Hermes、Cursor、Copilot 等代理共享同一套 repo-local 项目记忆
 - 把开发过程中的上下文、任务、决策、下一步动作落到 `.autorunne/`
 - 保持正式发布版本干净，不把内部工作流文件混进交付物
 - 让“今天做一半、明天继续、换模型继续、换人继续”真正可行
+- 0.6.13 起能稳定识别 frontend/backend/contracts 这类多包 Node/TypeScript 项目，不再因为根目录缺少 package.json 而回退 generic
 
 ## 适用对象
 - 独立开发者
@@ -72,19 +73,21 @@ Autorunne 是一个 **本地优先的 AI 开发工作流系统**，把任意 Git
 5. 需要显式维护 backlog 时使用 `autorunne task add / done / remove`
 6. 需要正式交付时执行 `autorunne export` 或 `autorunne release`
 
-## 当前版本定位
-当前版本已经属于 **可在真实项目里跑通完整状态工作流的 Beta 前期产品**：
+## 当前版本定位：0.6.13
+当前版本已经属于 **可在真实项目里持续使用和演示的 Beta 产品**：
 - 已有 state-first CLI 主路径
 - 已支持 legacy markdown workspace 迁移
 - 已支持显式 task 操作与状态观测命令
-- 已能构建并发布可安装包
-- 已有 pytest 验证
+- 已支持 direct agent 模式：用户直接在 Hermes / Codex / Claude Code / Cursor 里发任务，Autorunne 在后台维护项目状态
+- 已支持常见 frontend/backend/contracts 多包项目识别、命令派生和视图渲染
+- 已能通过 GitHub Release 与 PyPI 发布，可用 `pipx install/upgrade autorunne` 安装升级
+- 已有 pytest 验证和临时真实结构 smoke 验证
 
 ## 当前边界
 还未完成：
 - JSON 输出模式与更深的脚本化接入
 - 更强的 release / changelog / publish 自动化
-- 更深的 monorepo 图谱感知
+- 更复杂 monorepo 的依赖图谱和跨包任务关系
 - 更细的商业版功能分层
 
 ## 推荐使用场景

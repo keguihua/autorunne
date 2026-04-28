@@ -4,6 +4,10 @@ All notable changes to Autorunne are documented here.
 
 ## 0.6.13 - 2026-04-28
 
+### Documentation
+- refreshed Chinese/English usage guides, product brief, business plan, sales positioning, auto-mode guide, and release playbook around the shipped 0.6.13 multi-package behavior
+- added dedicated Chinese 0.6.13 release notes for frontend/backend/contracts monorepo detection and PyPI upgrade guidance
+
 ### Fixed
 - `autorunne sync` now detects multi-package Node/TypeScript repositories even when the root has no `package.json`.
 - First-level package directories such as `frontend`, `backend`, `contracts`, `sdk`, `integrations`, plus `apps/*` and `packages/*`, are scanned for `package.json` files.
