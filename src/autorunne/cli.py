@@ -17,6 +17,7 @@ from autorunne.commands import finish as finish_cmd
 from autorunne.commands import hermes_task as hermes_task_cmd
 from autorunne.commands import history as history_cmd
 from autorunne.commands import hooks as hooks_cmd
+from autorunne.commands import ingest as ingest_cmd
 from autorunne.commands import init as init_cmd
 from autorunne.commands import integrate as integrate_cmd
 from autorunne.commands import migrate as migrate_cmd
@@ -365,6 +366,31 @@ def hermes_task(
     """Bridge a Hermes chat task into local Autorunne workflow files."""
     result = hermes_task_cmd.run(_target(path), task=task, next_action=next, context=context, decision=decision)
     console.print(f"Hermes task captured: {result['task']}")
+    console.print(f"Workspace action: {result['workspace_action']}")
+    console.print(f"Next action: {result['next_action']}")
+    if result.get("decision"):
+        console.print(f"Decision captured: {result['decision']}")
+
+
+@app.command()
+def ingest(
+    task: str = typer.Option(..., help="Task text coming from a direct agent chat entry."),
+    source: str = typer.Option("agent", help="Agent/source label, for example codex, claude, or hermes."),
+    next: str | None = typer.Option(None, "--next", help="Concrete next action to write immediately."),
+    context: str | None = typer.Option(None, help="Optional user request or extra chat context."),
+    decision: str | None = typer.Option(None, help="Optional durable decision to append immediately."),
+    path: str | None = typer.Option(None, help="Target repository path"),
+):
+    """Capture a natural-language task from direct Codex/Hermes/Claude Code use while Autorunne stays in the background."""
+    result = ingest_cmd.run(
+        _target(path),
+        task=task,
+        source=source,
+        next_action=next,
+        context=context,
+        decision=decision,
+    )
+    console.print(f"Task captured from {result['source']}: {result['task']}")
     console.print(f"Workspace action: {result['workspace_action']}")
     console.print(f"Next action: {result['next_action']}")
     if result.get("decision"):

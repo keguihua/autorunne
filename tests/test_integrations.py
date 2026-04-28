@@ -38,7 +38,9 @@ def test_integrate_repo_scope_installs_skills_and_wrappers(git_repo: Path):
     assert agents_skill.startswith("---\n")
     assert "name: autorunne-workflow" in agents_skill
     assert claude_skill.startswith("---\n")
-    assert "version: 0.6.8" in claude_skill
+    assert "version: 0.6.9" in claude_skill
+    assert "open Codex directly" in agents_skill
+    assert "autorunne ingest --source codex --task <task>" in agents_skill
     assert cursor_rule.startswith("---\n")
     assert "alwaysApply: true" in cursor_rule
     assert "globs:" not in cursor_rule

@@ -9,6 +9,13 @@ VALID_SCOPES = {"repo", "user"}
 
 
 def _skill_text(tool: str) -> str:
+    direct_agent = {
+        "codex": "Codex",
+        "claude": "Claude Code",
+        "hermes": "Hermes",
+        "cursor": "Cursor / Cursor Agent",
+        "copilot": "GitHub Copilot",
+    }.get(tool, "your coding agent")
     wrapper = {
         "codex": "./.autorunne/bin/ar-codex",
         "claude": "./.autorunne/bin/ar-claude",
@@ -19,20 +26,25 @@ def _skill_text(tool: str) -> str:
     return f"""---
 name: autorunne-workflow
 description: Repo-local Autorunne workflow instructions for this repository
-version: 0.6.8
+version: 0.6.9
 ---
 
 # Autorunne Workflow Skill
 
 ## Purpose
-This repository uses Autorunne as the state layer.
+This repository uses Autorunne as the backend workflow and project-memory layer.
+
+## User-facing rule
+The user should be able to open {direct_agent} directly, talk naturally, and let Autorunne maintain state in the background. Do not ask the user to chat through Autorunne first.
 
 ## Required startup flow
 1. Read `.autorunne/views/START_HERE.md`.
 2. Treat `.autorunne/state/*` as the only project state source of truth.
-3. Never write `.autorunne/state/*` directly. Use `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
-4. Before beginning a new implementation slice, run `autorunne open` or use `{wrapper}`.
-5. After meaningful verified progress, write back through Autorunne so the rendered views stay fresh.
+3. Never write `.autorunne/state/*` directly. Use `autorunne ingest`, `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
+4. If the user gives a fresh natural-language task and no matching active task is recorded yet, capture it with `autorunne ingest --source {tool} --task <task>`.
+5. Before beginning a new implementation slice, run `autorunne open` if the workspace has not been resumed yet in this session.
+6. After meaningful verified progress, write back through Autorunne so the rendered views stay fresh.
+7. Prefer the wrapper `{wrapper}` only as an optional hard-entry fallback, not as the default requirement you impose on the user.
 
 ## Read order
 1. `.autorunne/views/START_HERE.md`
@@ -51,27 +63,30 @@ alwaysApply: true
 
 # Autorunne Cursor Workflow
 
-1. Read `.autorunne/views/START_HERE.md` before multi-step work.
-2. Treat `.autorunne/state/*` as the only mutable project state source of truth.
-3. Do not edit `.autorunne/state/*` directly; use `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
-4. When code changes are verified, write the result back through Autorunne so the rendered views stay fresh.
-5. In your final report, include changed files, completion status, and the Autorunne commands executed.
+1. The user should be able to open Cursor directly and just give the task; Autorunne stays in the background.
+2. Read `.autorunne/views/START_HERE.md` before multi-step work.
+3. Treat `.autorunne/state/*` as the only mutable project state source of truth.
+4. Do not edit `.autorunne/state/*` directly; use `autorunne ingest`, `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.
+5. If a fresh user task is not recorded yet, capture it with `autorunne ingest --source cursor --task <task>`.
+6. When code changes are verified, write the result back through Autorunne so the rendered views stay fresh.
+7. In your final report, include changed files, completion status, and the Autorunne commands executed.
 """
 
 
 def _copilot_instructions_text() -> str:
     return """# Autorunne Copilot Instructions
 
-This repository uses Autorunne as the workflow and project-memory layer.
+This repository uses Autorunne as the backend workflow and project-memory layer.
 
 Required behavior:
-1. Read `.autorunne/views/START_HERE.md` first.
-2. Treat `.autorunne/state/*` as the only mutable project state source of truth.
-3. Do not edit `.autorunne/state/*` directly.
-4. Use `autorunne start` when the task has not been recorded yet.
-5. Use `autorunne checkpoint` for meaningful partial progress.
-6. Use `autorunne finish` after verification is complete.
-7. Include changed files, completion status, and Autorunne commands in the final report.
+1. The user should be able to open Copilot or its agent mode directly and just give the task.
+2. Read `.autorunne/views/START_HERE.md` first.
+3. Treat `.autorunne/state/*` as the only mutable project state source of truth.
+4. Do not edit `.autorunne/state/*` directly.
+5. If a fresh user task is not recorded yet, capture it with `autorunne ingest --source copilot --task <task>`.
+6. Use `autorunne checkpoint` for meaningful partial progress.
+7. Use `autorunne finish` after verification is complete.
+8. Include changed files, completion status, and Autorunne commands in the final report.
 """
 
 
@@ -79,12 +94,14 @@ def _agents_text() -> str:
     return """# AGENTS
 
 Short instruction layer for this repo:
-1. Read `.autorunne/views/START_HERE.md` first.
-2. Use repo skill files under `.agents/skills/autorunne-workflow/` or `.claude/skills/autorunne-workflow/`.
-3. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
-4. GitHub Copilot should use `.github/copilot-instructions.md` when present.
-5. Do not write `.autorunne/state/*` directly.
-6. Prefer `./.autorunne/bin/ar-codex`, `./.autorunne/bin/ar-claude`, or `./.autorunne/bin/ar-hermes` for a hard Autorunne entry.
+1. Users should open Codex / Claude Code / Hermes directly and just give the task.
+2. Read `.autorunne/views/START_HERE.md` first.
+3. Use repo skill files under `.agents/skills/autorunne-workflow/` or `.claude/skills/autorunne-workflow/`.
+4. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
+5. GitHub Copilot should use `.github/copilot-instructions.md` when present.
+6. Do not write `.autorunne/state/*` directly.
+7. If a fresh task is not recorded yet, capture it with `autorunne ingest --source <agent> --task <task>`.
+8. Wrappers like `./.autorunne/bin/ar-codex`, `./.autorunne/bin/ar-claude`, or `./.autorunne/bin/ar-hermes` are optional fallback entrypoints, not the required default UX.
 """
 
 

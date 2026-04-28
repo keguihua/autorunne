@@ -2,6 +2,36 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.9 - 2026-04-23
+
+### Highlights
+- Direct Codex / Claude Code / Hermes use is now the primary product story: users should open the agent in the repo and just give the task, while Autorunne stays in the background.
+- Added an agent-neutral ingress command so fresh natural-language tasks can be captured into `.autorunne/` without pretending the user is chatting through Autorunne itself.
+- Generated repo instructions now consistently describe wrappers as optional fallback entrypoints instead of the default UX.
+
+### Added
+- `src/autorunne/commands/ingest.py`
+  - agent-neutral task ingress entrypoint for direct Codex / Claude Code / Hermes sessions
+- `autorunne ingest`
+  - CLI command for capturing a fresh direct-agent task into workflow state with an explicit `--source`
+
+### Improved
+- `src/autorunne/core/state_engine.py`
+  - generalized task ingress logging so different agents can record source-specific ingress events like `codex_task_ingressed`
+- `src/autorunne/commands/hermes_task.py`
+  - now reuses the generic ingress path while staying backward-compatible for Hermes-specific callers
+- `src/autorunne/core/integrations.py`
+  - repo skill files, Cursor rules, Copilot instructions, and `AGENTS.md` now describe Autorunne as a backend layer and direct agent use as the default
+- `src/autorunne/core/templater.py`
+  - `START_HERE.md` and adapter docs now tell agents to read the repo state, capture fresh tasks with `autorunne ingest`, and keep wrappers optional
+- `README.md`
+  - docs now explain the 0.6.9 default workflow in user-facing language
+
+### Verification
+- `python -m pytest tests/test_cli.py tests/test_integrations.py -q`
+- `python -m pytest -q`
+- real repo smoke test: direct `autorunne ingest --source codex ...` into a live repo after `autorunne open`
+
 ## 0.6.8 - 2026-04-23
 
 ### Highlights

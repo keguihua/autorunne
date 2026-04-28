@@ -653,9 +653,10 @@ def finish_task(
     return state, matched
 
 
-def record_hermes_ingress(
+def record_task_ingress(
     repo_root: Path,
     *,
+    source: str,
     task: str,
     next_action: str,
     workspace_action: str,
@@ -664,13 +665,16 @@ def record_hermes_ingress(
 ) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
+    clean_source = source.strip() if source and source.strip() else "agent"
+    event_name = f"{clean_source}_task_ingressed"
     lines = [
-        "Source: hermes",
+        f"Source: {clean_source}",
         f"Task: {task.strip()}",
         f"Next action: {next_action.strip()}",
         f"Workspace action: {workspace_action}",
     ]
     payload: dict[str, Any] = {
+        "source": clean_source,
         "task": task.strip(),
         "next_action": next_action.strip(),
         "workspace_action": workspace_action,
@@ -681,16 +685,36 @@ def record_hermes_ingress(
         payload["context"] = clean_context
     if decision and decision.strip():
         clean_decision = decision.strip()
-        state["decisions"].setdefault("items", []).append({"timestamp": timestamp, "text": clean_decision, "source": "hermes"})
+        state["decisions"].setdefault("items", []).append({"timestamp": timestamp, "text": clean_decision, "source": clean_source})
         lines.append(f"Decision: {clean_decision}")
         payload["decision"] = clean_decision
-    _append_session(state, title="hermes task ingress", lines=lines, timestamp=timestamp)
+    _append_session(state, title=f"{clean_source} task ingress", lines=lines, timestamp=timestamp)
     state["current"]["updated_at"] = timestamp
-    state["current"]["last_action"] = "hermes_task_ingressed"
+    state["current"]["last_action"] = event_name
     save_workspace_state(repo_root, state)
-    append_event(repo_root, "hermes_task_ingressed", payload)
+    append_event(repo_root, event_name, payload)
     render_views(repo_root)
     return state
+
+
+def record_hermes_ingress(
+    repo_root: Path,
+    *,
+    task: str,
+    next_action: str,
+    workspace_action: str,
+    context: str | None,
+    decision: str | None,
+) -> dict[str, Any]:
+    return record_task_ingress(
+        repo_root,
+        source="hermes",
+        task=task,
+        next_action=next_action,
+        workspace_action=workspace_action,
+        context=context,
+        decision=decision,
+    )
 
 
 def record_integration(repo_root: Path, *, scope: str, tools: list[str], wrappers: list[str], action: str) -> dict[str, Any]:

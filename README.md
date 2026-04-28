@@ -86,15 +86,14 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.8**
+**0.6.9**
 
-### New in 0.6.8
-- auto-record now ignores wrapper / integration noise like `.codex`, `.agents`, `.claude`, `.cursor`, `AGENTS.md`, and Copilot instruction scaffolding, so session history focuses on real project edits
-- repo wrappers now attempt an automatic `auto-finish` step after a successful agent run, which closes small natural-language tasks without asking the user to manually run `autorunne finish`
-- doc-only dogfood tasks now auto-finish without forcing a full test run, while code changes still keep validation behavior available through the normal finish path
-- generated Codex / Claude repo skill files still include valid YAML frontmatter, so `ar-codex` and similar entries load the Autorunne skill cleanly instead of warning about invalid `SKILL.md`
-- generated Cursor rule frontmatter stays clean and avoids malformed empty `globs:` metadata
-- repo wrappers (`ar-codex` / `ar-claude` / `ar-hermes`) still start a background Autorunne daemon automatically, so local file edits get recorded without extra user steps
+### New in 0.6.9
+- direct agent use is now the default product story: users should open Codex / Hermes / Claude Code directly in the repo and just give the task
+- new agent-neutral `autorunne ingest` command lets Codex / Claude Code / Hermes capture a fresh natural-language task into `.autorunne/` without pretending the user is chatting through Autorunne first
+- generated Codex / Claude / Hermes / Cursor / Copilot instructions now describe Autorunne as the backend workflow + memory layer, with wrappers only as optional fallback entrypoints
+- `START_HERE.md`, repo skills, and adapter docs now consistently tell agents to keep Autorunne in the background and only use wrappers when a hard entrypoint is specifically wanted
+- 0.6.8 auto-record / auto-finish behavior remains in place, so direct agent sessions can still keep project state fresh with the same backend write-back model
 
 ### Earlier releases laid the base
 - state-first workflow core under `.autorunne/state/*` + `.autorunne/views/*`
@@ -150,7 +149,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.8 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.9 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -161,7 +160,7 @@ autorunne open --with-vscode
 
 Then just open the repo. Autorunne will auto-bootstrap or resume on open, and `.autorunne/views/START_HERE.md` becomes the main entry point for Claude Code, Codex, Gemini, Hermes, Cursor, or GitHub Copilot.
 
-**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you can open VS Code and launch Codex or Claude Code directly from that repo terminal, or use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude` when you want a hard Autorunne-first wrapper. Those wrappers now start a background Autorunne daemon automatically, so local file edits get recorded without asking the user to run `start` / `checkpoint` by hand.
+**Practical workflow:** install Autorunne once globally; then for each repo run `autorunne open --with-vscode` once. After that you should be able to open the repo, launch Codex / Claude Code / Hermes directly, and just give the task. Autorunne stays in the background as the shared workflow + memory layer. Use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude` / `./.autorunne/bin/ar-hermes` only when you explicitly want a hard Autorunne-first wrapper.
 
 ### Option A — local development install
 ```bash
@@ -223,7 +222,17 @@ autorunne daemon --duration 300 --interval 2
 autorunne daemon --duration 300 --interval 2 --max-syncs 1
 ```
 
-### Push a Hermes chat task straight into local workflow memory
+### Capture a fresh task from direct agent chat
+```bash
+autorunne ingest \
+  --source codex \
+  --task "Continue billing integration" \
+  --next "Write Stripe webhook contract test" \
+  --context "User opened Codex directly in the repo and wants the next safe slice"
+```
+
+If the task originated specifically from a Hermes chat bridge, the older alias still works:
+
 ```bash
 autorunne hermes-task \
   --task "Continue billing integration" \
@@ -231,7 +240,7 @@ autorunne hermes-task \
   --context "User asked Hermes to keep moving without re-explaining the repo"
 ```
 
-Then point your coding agent at `.autorunne/views/START_HERE.md`, use `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude`, or just continue from the repo after Autorunne opens it.
+Then let the coding agent continue from the repo normally. Wrappers like `./.autorunne/bin/ar-codex` / `./.autorunne/bin/ar-claude` are optional fallback entrypoints, not the default UX.
 
 ### Record a durable note without closing the slice
 ```bash
@@ -300,7 +309,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.8
+autorunne release --version 0.6.9
 ```
 
 ---
@@ -387,8 +396,19 @@ autorunne daemon --duration 300 --interval 2 --max-syncs 1
 - `--max-syncs 1` is useful when you want the daemon to stop after the first meaningful detected change.
 - Daemon output now shows the last changed files and the last automatic record it wrote.
 
+### `autorunne ingest`
+Capture a fresh natural-language task from direct Codex / Claude Code / Hermes use while keeping Autorunne as the backend state layer.
+
+```bash
+autorunne ingest \
+  --source codex \
+  --task "Continue billing integration" \
+  --next "Write Stripe webhook contract test" \
+  --context "User opened Codex directly in the repo and wants the next safe slice"
+```
+
 ### `autorunne hermes-task`
-Capture a task from a Hermes chat entry and write it straight into `.autorunne/`.
+Backward-compatible alias for Hermes chat ingress. Use it when the task specifically came from a Hermes chat bridge.
 
 ```bash
 autorunne hermes-task \
@@ -615,7 +635,7 @@ Automated validation:
 
 ---
 
-## Roadmap after 0.6.8
+## Roadmap after 0.6.9
 - JSON output mode for status/show/history/trace/doctor so wrappers and demos can consume state directly
 - stronger release automation (`autorunne release` + tag + changelog + publish handoff)
 - deeper monorepo graph awareness

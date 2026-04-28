@@ -148,12 +148,13 @@ def render_view_bundle(state: dict) -> dict[str, str]:
 {commands_markdown}
 
 ## Open-first workflow
-1. Run `autorunne open` when you enter the repo.
+1. Open Codex / Claude Code / Hermes directly in the repo, or run `autorunne open` when you want to refresh the workspace explicitly.
 2. All supported agents should read `{views_root}/START_HERE.md` and `{agents_root}/autorunne-workflow.md` first.
-3. Use `./.autorunne/bin/ar-codex` or `./.autorunne/bin/ar-claude` when you want a hard Autorunne entrypoint.
-4. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
-5. GitHub Copilot should use `.github/copilot-instructions.md` when present.
-6. End each slice with `autorunne checkpoint` or `autorunne finish`.
+3. If the user gives a fresh natural-language task and no matching active task exists yet, capture it with `autorunne ingest --source <agent> --task <task>`.
+4. Wrappers like `./.autorunne/bin/ar-codex` or `./.autorunne/bin/ar-claude` are optional hard-entry fallbacks, not the default UX.
+5. Cursor should use `.cursor/rules/autorunne-workflow.mdc` when present.
+6. GitHub Copilot should use `.github/copilot-instructions.md` when present.
+7. End each slice with `autorunne checkpoint` or `autorunne finish`.
 """
 
     start_here_md = f"""# Start Here
@@ -180,11 +181,11 @@ Autorunne is the state layer for this repository, designed to work with Claude C
 - Repo skill for Claude Code: `.claude/skills/autorunne-workflow/SKILL.md`
 - Native Cursor rule: `.cursor/rules/autorunne-workflow.mdc`
 - Native Copilot instructions: `.github/copilot-instructions.md`
-- Wrappers:
+- Optional wrappers (fallback only):
 {wrapper_lines}
 
 ## Zero-prompt handoff
-If your coding agent can read repo files, point it at `{views_root}/START_HERE.md` first, then continue from the latest next action and keep write-backs flowing through Autorunne commands.
+Open Codex / Claude Code / Hermes directly in this repo and just give the task. The agent should read `{views_root}/START_HERE.md`, capture a fresh task with `autorunne ingest --source <agent> --task <task>` when needed, then keep write-backs flowing through Autorunne in the background.
 
 ## Recommended local commands
 {commands_markdown}
@@ -204,11 +205,11 @@ If your coding agent can read repo files, point it at `{views_root}/START_HERE.m
 
 def render_agent_compat_bundle() -> dict[str, str]:
     return {
-        "autorunne-workflow.md": "# Shared Autorunne Workflow Contract\n\nThis file (`.autorunne/agents/autorunne-workflow.md`) is the shared workflow contract for all supported agents.\n\n- Read `.autorunne/views/START_HERE.md` first.\n- Treat `.autorunne/state/*` as the only mutable project state source of truth.\n- Do not edit `.autorunne/state/*` directly; use `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.\n- After verified code changes, write progress back through Autorunne so the rendered views stay fresh.\n- Always report changed files, completion status, and the Autorunne commands executed.\n",
-        "common.md": "# Common Agent Rules\n\n- Read `.autorunne/agents/autorunne-workflow.md` first.\n- Then read `.autorunne/views/START_HERE.md`.\n- Use Autorunne commands to update project state.\n- Keep edits minimal and traceable.\n",
-        "claude-code.md": "# Claude Code Adapter\n\n- Start with `.autorunne/agents/autorunne-workflow.md`, then `.autorunne/views/START_HERE.md`.\n- Prefer `./.autorunne/bin/ar-claude` for repo-scoped entry.\n- Summarize changed files back through `autorunne checkpoint` or `autorunne finish`.\n",
-        "codex.md": "# Codex Adapter\n\n- Start with `.autorunne/agents/autorunne-workflow.md`, then `.autorunne/views/START_HERE.md`.\n- Prefer `./.autorunne/bin/ar-codex` for repo-scoped entry.\n- Do not edit `.autorunne/state/*` directly.\n",
-        "hermes.md": "# Hermes Adapter\n\n- Load `.autorunne/agents/autorunne-workflow.md` first.\n- Then load `.autorunne/views/START_HERE.md`.\n- Use the next action as the default starting point.\n- Keep project memory synced after each task.\n",
+        "autorunne-workflow.md": "# Shared Autorunne Workflow Contract\n\nThis file (`.autorunne/agents/autorunne-workflow.md`) is the shared workflow contract for all supported agents.\n\n- Users should open Codex / Claude Code / Hermes directly and just give the task.\n- Read `.autorunne/views/START_HERE.md` first.\n- Treat `.autorunne/state/*` as the only mutable project state source of truth.\n- Do not edit `.autorunne/state/*` directly; use `autorunne ingest`, `autorunne start`, `autorunne checkpoint`, `autorunne finish`, or `autorunne sync`.\n- If a fresh user task is not recorded yet, capture it with `autorunne ingest --source <agent> --task <task>`.\n- After verified code changes, write progress back through Autorunne so the rendered views stay fresh.\n- Always report changed files, completion status, and the Autorunne commands executed.\n",
+        "common.md": "# Common Agent Rules\n\n- Read `.autorunne/agents/autorunne-workflow.md` first.\n- Then read `.autorunne/views/START_HERE.md`.\n- Keep Autorunne in the background; do not ask the user to chat through Autorunne first.\n- Use Autorunne commands to update project state.\n- Keep edits minimal and traceable.\n",
+        "claude-code.md": "# Claude Code Adapter\n\n- Start with `.autorunne/agents/autorunne-workflow.md`, then `.autorunne/views/START_HERE.md`.\n- Claude Code should work directly in the repo; wrappers are optional fallback entrypoints.\n- Capture fresh tasks with `autorunne ingest --source claude --task <task>` when needed.\n- Summarize changed files back through `autorunne checkpoint` or `autorunne finish`.\n",
+        "codex.md": "# Codex Adapter\n\n- Start with `.autorunne/agents/autorunne-workflow.md`, then `.autorunne/views/START_HERE.md`.\n- Codex should work directly in the repo; wrappers are optional fallback entrypoints.\n- Capture fresh tasks with `autorunne ingest --source codex --task <task>` when needed.\n- Do not edit `.autorunne/state/*` directly.\n",
+        "hermes.md": "# Hermes Adapter\n\n- Load `.autorunne/agents/autorunne-workflow.md` first.\n- Then load `.autorunne/views/START_HERE.md`.\n- Hermes should chat directly in the repo while Autorunne stays in the background.\n- Capture fresh tasks with `autorunne ingest --source hermes --task <task>` when needed.\n- Keep project memory synced after each task.\n",
         "cursor.md": "# Cursor Adapter\n\n- Read `.autorunne/agents/autorunne-workflow.md` and `.autorunne/views/START_HERE.md` before agent edits.\n- Keep Cursor changes narrow, validated, and written back through Autorunne.\n- Native repo rule file: `.cursor/rules/autorunne-workflow.mdc`.\n",
         "copilot.md": "# GitHub Copilot Adapter\n\n- Read `.autorunne/agents/autorunne-workflow.md` and `.autorunne/views/START_HERE.md` before edits.\n- Prefer small, testable changes and update Autorunne after each slice.\n- Native repo instructions file: `.github/copilot-instructions.md`.\n",
     }

@@ -9,13 +9,12 @@ It is designed for:
 - cloned open-source repositories
 - teams or solo builders who want Claude Code, Codex, Hermes, Cursor, and similar agents to resume work quickly
 
-## 2. Core upgrades in 0.6.8
+## 2. Core upgrades in 0.6.9
+- direct agent mode is now the default product story: users should open Codex / Claude Code / Hermes directly and just give the task
+- adds `autorunne ingest` so agents can capture a fresh natural-language task into `.autorunne/` without forcing the user to chat through Autorunne first
+- generated repo skill / START_HERE / AGENTS / Copilot / Cursor instructions now describe Autorunne as the backend workflow + memory layer, with wrappers only as optional fallback entrypoints
 - keeps `.autorunne/state/*` as the only source of truth
-- adds `autorunne migrate` so older markdown-only workspaces can be upgraded cleanly
-- makes `status` state-aware so it shows the real active task, next action, task counts, and integration state
-- adds explicit task operators: `autorunne task add`, `autorunne task done`, `autorunne task remove`
-- lowers the priority of editor noise such as `.vscode/` when computing resume hints
-- extends `doctor` so it reports whether a legacy workspace still needs migration
+- keeps `status` state-aware so it still shows the real active task, next action, task counts, and integration state
 
 ## 3. Supported languages / project types
 ### Web / app / service
@@ -73,7 +72,7 @@ pip install -e .[dev]
 
 ### Install from release artifact
 ```bash
-pip install autorunne-0.6.8-py3-none-any.whl
+pip install autorunne-0.6.9-py3-none-any.whl
 ```
 
 ### Recommended public install path later
@@ -94,14 +93,24 @@ autorunne open
 autorunne open --with-vscode
 ```
 
-On the first open of an older repo, Autorunne will create `.autorunne/`. On later opens, it will refresh and resume the existing workflow state. If you enter through `ar-codex`, `ar-claude`, or `ar-hermes`, the wrapper now starts a background daemon automatically so file edits keep writing back into Autorunne.
+On the first open of an older repo, Autorunne will create `.autorunne/`. On later opens, it will refresh and resume the existing workflow state. After that, users should be able to open Codex / Claude Code / Hermes directly in the repo and just give the task. If you explicitly choose `ar-codex`, `ar-claude`, or `ar-hermes`, those wrappers still act as optional fallback entrypoints and start a background daemon automatically.
 
 ### Keep a repo warm locally
 ```bash
 autorunne daemon --duration 300 --interval 2
 ```
 
-### Push a Hermes chat request into local workflow memory
+### Capture a task from direct agent chat
+```bash
+autorunne ingest \
+  --source codex \
+  --task "Continue billing integration" \
+  --next "Write Stripe webhook contract test" \
+  --context "User opened Codex directly in the repo and wants the next safe slice"
+```
+
+If the task specifically came from a Hermes chat bridge, the older alias still works:
+
 ```bash
 autorunne hermes-task \
   --task "Continue billing integration" \

@@ -58,6 +58,7 @@ def test_adopt_scans_existing_repo(node_repo: Path):
     assert "Cursor" in start_here_text
     assert "GitHub Copilot" in start_here_text
     assert "Zero-prompt handoff" in start_here_text
+    assert "Open Codex / Claude Code / Hermes directly" in start_here_text
     assert "START_HERE.md" in copilot_text
     assert "autorunne-workflow.md" in workflow_text
     assert "completion status" in workflow_text
@@ -178,6 +179,34 @@ def test_hermes_task_bootstraps_repo_and_writes_task_context(python_repo: Path):
     assert "hermes task ingress" in log_text.lower()
     assert "User asked Hermes" in log_text
     assert "Billing work should stay in the smallest safe slice." in decisions_text
+
+
+def test_ingest_captures_direct_codex_task_without_user_chatting_through_autorunne(python_repo: Path):
+    result = _run_in(
+        python_repo,
+        [
+            "ingest",
+            "--source",
+            "codex",
+            "--task",
+            "Polish onboarding copy",
+            "--next",
+            "Update docs/onboarding.md with the approved wording",
+            "--context",
+            "User opened Codex directly in the repo and asked for a copy tweak.",
+        ],
+    )
+    assert result.exit_code == 0
+    assert "Task captured from codex: Polish onboarding copy" in result.stdout
+
+    tasks_text = (python_repo / ".autorunne" / "TASKS.md").read_text(encoding="utf-8")
+    log_text = (python_repo / ".autorunne" / "SESSION_LOG.md").read_text(encoding="utf-8")
+    current_state = json.loads((python_repo / ".autorunne" / "state" / "current.json").read_text(encoding="utf-8"))
+    assert "- [ ] Polish onboarding copy" in tasks_text
+    assert "Update docs/onboarding.md with the approved wording" in tasks_text
+    assert "codex task ingress" in log_text.lower()
+    assert "User opened Codex directly in the repo" in log_text
+    assert current_state["last_action"] == "codex_task_ingressed"
 
 
 def test_auto_finish_closes_active_task_after_minimal_docs_change(python_repo: Path):
