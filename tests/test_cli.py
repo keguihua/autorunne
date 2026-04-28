@@ -35,7 +35,7 @@ def test_self_upgrade_dry_run_uses_public_pypi_no_cache_pipx_command():
     result = runner.invoke(app, ["self-upgrade", "--dry-run"], catch_exceptions=False)
     assert result.exit_code == 0
     assert "pipx upgrade autorunne" in result.stdout
-    assert "--no-cache-dir -i https://pypi.org/simple" in result.stdout
+    assert "'--no-cache-dir -i https://pypi.org/simple'" in result.stdout
     assert "does not touch project .autorunne/ directories" in result.stdout
 
 

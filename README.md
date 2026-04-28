@@ -86,7 +86,10 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.10**
+**0.6.11**
+
+### New in 0.6.11
+- `autorunne self-upgrade --dry-run` now prints a copy-paste-safe pipx command with quoted `--pip-args`.
 
 ### New in 0.6.10
 - safer upgrades: `autorunne self-upgrade` and the installer now use official PyPI with `--no-cache-dir` so pipx is less likely to stay on stale cached versions
@@ -154,7 +157,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.10 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.11 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -314,7 +317,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.10
+autorunne release --version 0.6.11
 ```
 
 ---

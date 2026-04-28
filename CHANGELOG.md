@@ -2,6 +2,16 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.11 - 2026-04-28
+
+### Improved
+- `autorunne self-upgrade --dry-run` now prints the safe pipx command with quoted `--pip-args`, so users can copy and paste it directly.
+
+### Verification
+- `python -m pytest`
+- `autorunne version`
+- `autorunne sync`
+
 ## 0.6.10 - 2026-04-28
 
 ### Highlights

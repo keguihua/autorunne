@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import shlex
 import shutil
 import subprocess
 import sys
@@ -75,8 +76,9 @@ def self_upgrade(
     """Upgrade Autorunne from the official PyPI index without touching project state."""
     pip_args = f"--no-cache-dir -i {index_url}"
     recommended = ["pipx", "upgrade", "autorunne", "--pip-args", pip_args]
+    printable = " ".join(shlex.quote(part) for part in recommended)
     print("Recommended pipx upgrade command:")
-    print(" ".join(recommended))
+    print(printable)
     print("This upgrades the installed CLI only and does not touch project .autorunne/ directories.")
     if dry_run:
         return
