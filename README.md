@@ -86,7 +86,12 @@ This project is built around four product directions:
 ---
 
 ## Current version
-**0.6.11**
+**0.6.12**
+
+### New in 0.6.12
+- default update reminders: `autorunne open` and `autorunne sync` can tell users when a newer PyPI release is available, but they do **not** auto-upgrade silently
+- new `autorunne update-check` command for manual version checks
+- update checks cache under `.autorunne/runtime/update_check.json` and do not delete or rewrite project tasks, state, reports, runtime files, or skills
 
 ### New in 0.6.11
 - `autorunne self-upgrade --dry-run` now prints a copy-paste-safe pipx command with quoted `--pip-args`.
@@ -157,7 +162,7 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 ### Install a pinned public release wheel with pipx
 ```bash
 curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh \
-  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.11 bash
+  | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.12 bash
 ```
 
 This installs Autorunne with `pipx`, so you can open any repo in VS Code and immediately run:
@@ -317,7 +322,7 @@ autorunne export
 
 ### Build release bundle
 ```bash
-autorunne release --version 0.6.11
+autorunne release --version 0.6.12
 ```
 
 ---

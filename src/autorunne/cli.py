@@ -38,6 +38,8 @@ from autorunne.commands import task as task_cmd
 from autorunne.commands import trace as trace_cmd
 from autorunne.commands import vscode as vscode_cmd
 from autorunne.commands import watch as watch_cmd
+from autorunne.core.paths import workflow_dir
+from autorunne.core.update import check_for_update
 
 app = typer.Typer(help="Turn any git repository into an Autorunne workspace.")
 task_app = typer.Typer(help="Manage explicit task state inside the Autorunne workspace.")
@@ -62,10 +64,46 @@ def _target(path: str | None) -> Path:
     return Path(path).expanduser().resolve() if path else Path.cwd()
 
 
+def _update_notice_for_repo(repo_root: Path | None = None, force: bool = False, latest_version: str | None = None) -> str | None:
+    cache_path = None
+    if repo_root is not None:
+        cache_path = workflow_dir(repo_root) / "runtime" / "update_check.json"
+    kwargs = {
+        "current_version": __version__,
+        "cache_path": cache_path,
+        "force": force,
+    }
+    if latest_version:
+        kwargs["fetch_latest"] = lambda: latest_version
+    result = check_for_update(**kwargs)
+    return result.notice
+
+
+def _maybe_print_update_notice(repo_root: Path | None = None) -> None:
+    notice = _update_notice_for_repo(repo_root)
+    if notice:
+        console.print()
+        console.print(notice)
+
+
 @app.command()
 def version():
     """Print the installed Autorunne package version."""
     console.print(f"AutoRunne {__version__}")
+
+
+@app.command("update-check")
+def update_check(
+    latest_version: str | None = typer.Option(None, "--latest-version", help="Testing/diagnostic override for the latest available version."),
+    force: bool = typer.Option(True, "--force/--cached", help="Force a fresh update check instead of using the daily cache."),
+    path: str | None = typer.Option(None, help="Target repository path for the update-check cache."),
+):
+    """Check whether a newer AutoRunne release is available; reminder only, no auto-upgrade."""
+    notice = _update_notice_for_repo(_target(path), force=force, latest_version=latest_version)
+    if notice:
+        console.print(notice)
+    else:
+        console.print(f"AutoRunne {__version__} is up to date or the update check is temporarily unavailable.")
 
 
 @app.command("self-upgrade")
@@ -143,6 +181,7 @@ def open(
     console.print(f"Open now: {result['start_here_path']}")
     if result.get("vscode"):
         console.print(f"VS Code integration ready: {result['vscode']['tasks_path']}")
+    _maybe_print_update_notice(Path(result["repo_root"]))
 
 
 @app.command()
@@ -273,6 +312,7 @@ def sync(
     result = sync_cmd.run(_target(path), note=note)
     console.print(f"Synced Autorunne in [bold]{result['repo_root']}[/bold]")
     console.print(f"Next action: {result['scan']['next_action']}")
+    _maybe_print_update_notice(Path(result["repo_root"]))
 
 
 @app.command()

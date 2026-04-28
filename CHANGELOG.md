@@ -2,6 +2,22 @@
 
 All notable changes to Autorunne are documented here.
 
+## 0.6.12 - 2026-04-28
+
+### Added
+- `autorunne update-check` checks PyPI for a newer AutoRunne release and prints an upgrade reminder only.
+- `autorunne open` and `autorunne sync` now show a cached daily update reminder when a newer release is available.
+
+### Safety
+- AutoRunne still does not silently auto-upgrade by default.
+- Update-check cache is stored under `.autorunne/runtime/update_check.json` and does not delete project tasks, state, reports, runtime files, or skills.
+
+### Verification
+- `python -m pytest`
+- `autorunne version`
+- `autorunne update-check --latest-version 9.9.9`
+- `autorunne sync`
+
 ## 0.6.11 - 2026-04-28
 
 ### Improved

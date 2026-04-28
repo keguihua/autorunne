@@ -62,10 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/ins
 
 ### 方式 C：固定安装某个公开版本
 
-比如安装 0.6.11：
+比如安装 0.6.12：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.11 bash
+curl -fsSL https://raw.githubusercontent.com/keguihua/autorunne/main/scripts/install.sh | AUTORUNNE_INSTALL_SOURCE=release-wheel AUTORUNNE_VERSION=v0.6.12 bash
 ```
 
 适合：
@@ -199,6 +199,29 @@ autorunne daemon --duration 300 --interval 2 --max-syncs 1
 ---
 
 ## 八、升级 AutoRunne
+
+从 0.6.12 开始，AutoRunne 默认采用“提醒有新版，但不偷偷自动升级”的策略。
+
+日常执行这些命令时，如果 PyPI 上有新版，可能会看到升级提醒：
+
+```bash
+autorunne open
+autorunne sync
+```
+
+你也可以手动检查：
+
+```bash
+autorunne update-check
+```
+
+提醒只会告诉你怎么升级，不会自动改你的电脑环境，也不会删除项目里的 `.autorunne/` 状态。检查结果会缓存在：
+
+```text
+.autorunne/runtime/update_check.json
+```
+
+这样避免每次运行都访问网络。
 
 推荐用 `pipx` 直接升级，并强制走官方 PyPI、跳过本地缓存：
 

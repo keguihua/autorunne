@@ -39,6 +39,34 @@ def test_self_upgrade_dry_run_uses_public_pypi_no_cache_pipx_command():
     assert "does not touch project .autorunne/ directories" in result.stdout
 
 
+def test_update_check_command_prints_reminder_without_upgrading():
+    result = runner.invoke(app, ["update-check", "--latest-version", "9.9.9"], catch_exceptions=False)
+    assert result.exit_code == 0
+    assert "New AutoRunne version available: 9.9.9" in result.stdout
+    assert "not auto-upgraded" in result.stdout
+    assert "autorunne self-upgrade" in result.stdout
+
+
+def test_sync_prints_update_reminder_by_default_without_deleting_state(python_repo: Path, monkeypatch):
+    import autorunne.cli as cli
+
+    _run_in(python_repo, ["adopt"])
+    state_file = python_repo / ".autorunne" / "state" / "current.json"
+    keep_file = python_repo / ".autorunne" / "runtime" / "keep.json"
+    keep_file.parent.mkdir(parents=True, exist_ok=True)
+    keep_file.write_text('{"keep": true}\n', encoding="utf-8")
+
+    def fake_notice(repo_root: Path | None = None, force: bool = False, latest_version: str | None = None):
+        return "New AutoRunne version available: 9.9.9\nRun: autorunne self-upgrade"
+
+    monkeypatch.setattr(cli, "_update_notice_for_repo", fake_notice)
+    result = _run_in(python_repo, ["sync"])
+    assert result.exit_code == 0
+    assert "New AutoRunne version available: 9.9.9" in result.stdout
+    assert state_file.read_text(encoding="utf-8") != ""
+    assert keep_file.read_text(encoding="utf-8") == '{"keep": true}\n'
+
+
 def test_sync_migrates_old_config_version_without_deleting_user_state(python_repo: Path):
     _run_in(python_repo, ["adopt"])
     config_path = python_repo / ".autorunne" / "config.json"
