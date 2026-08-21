@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 __all__ = ["app", "__version__"]
-__version__ = "0.6.31"
+__version__ = "0.6.34"
 
 
 def __getattr__(name: str):

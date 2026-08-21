@@ -1,9 +1,11 @@
 from pathlib import Path
 from pydantic import BaseModel, Field
 
+from autorunne import __version__ as AUTORUNNE_VERSION
+
 
 class WorkflowConfig(BaseModel):
-    version: str = "0.6.31"
+    version: str = AUTORUNNE_VERSION
     workflow_dir: str = ".autorunne"
     export_dir: str = ".dist-release"
     excluded_paths: list[str] = Field(

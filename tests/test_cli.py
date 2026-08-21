@@ -2,6 +2,7 @@ import json
 import os
 import threading
 import time
+import tomllib
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -39,12 +40,37 @@ def test_self_upgrade_dry_run_uses_public_pypi_no_cache_pipx_command():
     assert "does not touch project .autorunne/ directories" in result.stdout
 
 
-def test_update_check_command_prints_reminder_without_upgrading():
-    result = runner.invoke(app, ["update-check", "--latest-version", "9.9.9"], catch_exceptions=False)
+def test_update_check_command_prints_reminder_without_upgrading(tmp_path: Path, monkeypatch):
+    monkeypatch.delenv("AUTORUNNE_DISABLE_UPDATE_CHECK", raising=False)
+    result = runner.invoke(
+        app,
+        [
+            "update-check",
+            "--latest-version",
+            "9.9.9",
+            "--path",
+            str(tmp_path),
+        ],
+        catch_exceptions=False,
+    )
     assert result.exit_code == 0
     assert "New AutoRunne version available: 9.9.9" in result.stdout
     assert "not auto-upgraded" in result.stdout
     assert "autorunne self-upgrade" in result.stdout
+    cache = tmp_path / ".autorunne" / "runtime" / "update_check.json"
+    assert cache.exists()
+
+
+def test_release_version_contract_matches_runtime_config_and_metadata():
+    from autorunne.models.config import WorkflowConfig
+
+    root = Path(__file__).resolve().parents[1]
+    metadata = tomllib.loads(
+        (root / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    assert __version__ == "0.6.34"
+    assert metadata["project"]["version"] == __version__
+    assert WorkflowConfig().version == __version__
 
 
 def test_sync_prints_update_reminder_by_default_without_deleting_state(python_repo: Path, monkeypatch):
