@@ -11,14 +11,20 @@ Autorunne 解决的是这个问题。
 
 它会在项目里维护一个 `.autorunne/` 工作区，把项目上下文、任务、决策、会话记录、推荐命令、验证证据和下一步整理成稳定文件。你仍然用自己熟悉的工具写代码，Autorunne 只负责把项目状态留在仓库本地。
 
-## 0.6.32 重点
+## 0.6.34 候选（release candidate）
 
-这一版主要针对真实项目使用中的两个痛点进行了改进：
+0.6.34 保持现有 UX：AI 进入项目后仍然先看当前进度、任务和下一步。这一版只加强本地状态层：
 
-- **缓存文件过滤优化**：现在会自动忽略 `__pycache__`、`.pytest_cache`、`node_modules`、`dist`、`build`、`.venv` 等常见缓存和构建目录，不再把它们当成业务改动记录。
-- **自动摘要质量提升**：`finish` 自动生成的进度摘要现在会优先展示真实的业务代码改动，而不是大量集成文件，让交接信息更清晰有用。
+- 并发状态写入串行化
+- JSON 原子保存和最近一次有效备份
+- 主文件与备份都坏时 fail closed，不静默清空
+- `events.jsonl` 安全追加和尾部恢复
+- 同月归档追加，压缩批次可幂等重试
+- 版本元数据统一为 0.6.34
 
-继续保留 0.6.31 的零提示 `checkpoint` / `finish` 能力，以及长期记忆压缩功能。
+详细说明见 [0.6.34 状态可靠性候选说明](docs/Autorunne-Release-Notes-0.6.34-ZH.md)。在外部发布完成前，不要把候选版当成已经上线的 GitHub Release 或 PyPI 包。
+
+继续保留 0.6.32 的缓存过滤、0.6.31 的零提示 `checkpoint` / `finish` 能力，以及长期记忆压缩功能。
 
 ## 适合谁
 
@@ -50,7 +56,7 @@ pipx install autorunne
 curl -fsSL https://raw.githubusercontent.com/HUAFIRE777/autorunne/main/scripts/install.sh | bash
 ```
 
-当前公开版本：**0.6.31**
+当前候选版本：**0.6.34**（release candidate；GitHub Release / PyPI 尚未发布）
 
 ## 发布 GitHub 版本说说
 
@@ -183,6 +189,7 @@ autorunne export-session --last 20
 7. [对外定位与销售话术](docs/Autorunne-对外定位与销售话术-ZH.md)
 8. [商业稳定性说明](docs/Autorunne-商业稳定性说明-ZH.md)
 9. [0.6.20 PyPI/GitHub 同步发布说明](docs/Autorunne-Release-Notes-0.6.20-ZH.md)
+10. [0.6.34 状态可靠性候选说明](docs/Autorunne-Release-Notes-0.6.34-ZH.md)
 10. [0.6.31 自动 summary fallback](docs/Autorunne-Release-Notes-0.6.31-ZH.md)
 10. [0.6.30 自动长期记忆压缩](docs/Autorunne-Release-Notes-0.6.30-ZH.md)
 11. [0.6.29 长期项目记忆管理](docs/Autorunne-Release-Notes-0.6.29-ZH.md)
@@ -200,7 +207,7 @@ autorunne export-session --last 20
 
 ## 当前阶段
 
-0.6.31 让自动化更顺手：用户只派任务，agent / wrapper 可以直接调用 checkpoint 或 finish，Autorunne 自动生成 summary，不再因为缺少流程说明打断。
+0.6.34 候选版在不改变交接体验的前提下，把并发写入、损坏恢复和同月归档做成可验证的可靠性补丁。0.6.31 仍然让自动化更顺手：用户只派任务，agent / wrapper 可以直接调用 checkpoint 或 finish，Autorunne 自动生成 summary，不再因为缺少流程说明打断。
 
 更准确地说：Autorunne 现在是一个可持续使用的 Beta 项目记忆层。它不是最终企业平台，但已经足够支撑真实项目里的“接着做”和上线后的日常维护。
 

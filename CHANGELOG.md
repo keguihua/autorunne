@@ -3,6 +3,23 @@
 All notable changes to Autorunne are documented here.
 
 
+## 0.6.34 - 2026-08-22
+
+### Fixed
+- Concurrent Autorunne commands no longer clobber JSON state: a re-entrant workspace lock serializes the full read-modify-write-render transaction across threads and processes.
+- Malformed primary JSON is restored from the last valid `*.bak` copy; if both primary and backup are unreadable, commands fail closed and leave the original bytes untouched.
+- Interrupted `events.jsonl` appends repair only a malformed trailing fragment; a corrupt middle line fails closed.
+- Same-month `autorunne compact` archives append instead of replacing earlier batches, and a retried batch is idempotent.
+
+### Reliability
+- JSON and archive writes use same-directory temporary files, `fsync`, and `os.replace`.
+- Package, runtime, default config, and repo skill version lines are aligned at 0.6.34.
+- Update-check tests cache `9.9.9` under `tmp_path`, not the source checkout.
+
+### Verification
+- Focused persistence/state/memory/update tests, the full suite, and `python -m build` were run on this candidate. Wheel metadata reports `Version: 0.6.34`. This changelog entry is for a release candidate; GitHub Release and PyPI publish were not performed.
+
+
 ## 0.6.33 - 2026-06-14
 
 ### Improved

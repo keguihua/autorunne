@@ -17,6 +17,7 @@ RELEASE_NOTES_0622 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.22-ZH.md"
 RELEASE_NOTES_0629 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.29-ZH.md"
 RELEASE_NOTES_0630 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.30-ZH.md"
 RELEASE_NOTES_0631 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.31-ZH.md"
+RELEASE_NOTES_0634 = ROOT / "docs" / "Autorunne-Release-Notes-0.6.34-ZH.md"
 COMMERCIAL_STABILITY = ROOT / "docs" / "Autorunne-商业稳定性说明-ZH.md"
 
 
@@ -141,3 +142,20 @@ def test_release_notes_0631_documents_automatic_summary_fallback():
     assert "autorunne finish" in release
     assert "不需要问用户" in release
     assert "PyPI：`autorunne==0.6.31`" in release
+
+
+def test_release_notes_0634_document_reliability_candidate_without_publication_claim():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    release = RELEASE_NOTES_0634.read_text(encoding="utf-8")
+    assert "0.6.34" in readme
+    assert "0.6.34" in changelog
+    assert "0.6.34" in release
+    assert "原子" in release
+    assert "备份" in release
+    assert "同月" in release
+    assert "release candidate" in release
+    assert "daemon" in release
+    assert "worktree" in release
+    assert "GitHub Release / PyPI 尚未发布" in release
+    assert "release candidate" in changelog.lower() or "release candidate" in changelog
