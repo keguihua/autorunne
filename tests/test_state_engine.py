@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import concurrent.futures
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -412,3 +416,29 @@ def test_finish_changed_files_are_classified_and_keep_integration_out_of_busines
     assert ".agents/skills/autorunne-workflow/SKILL.md" not in payload["changed_files"]
     assert ".agents/skills/autorunne-workflow/SKILL.md" in payload["changed_files_by_type"]["integration"]
     assert "src/app.py" in payload["changed_files_by_type"]["business"]
+
+
+def test_concurrent_task_add_preserves_every_unique_task(python_repo: Path):
+    _run_in(python_repo, ["adopt"])
+    env = os.environ.copy()
+    env["AUTORUNNE_DISABLE_UPDATE_CHECK"] = "1"
+    autorunne_bin = str(Path(sys.prefix) / "bin" / "autorunne")
+    texts = [f"concurrent task {index}" for index in range(40)]
+
+    def add_one(text: str) -> int:
+        completed = subprocess.run(
+            [autorunne_bin, "task", "add", "--text", text, "--path", str(python_repo)],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return completed.returncode
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
+        codes = list(pool.map(add_one, texts))
+
+    assert codes == [0] * 40
+    expected = {f"concurrent task {index}" for index in range(40)}
+    tasks = json.loads((python_repo / ".autorunne/state/tasks.json").read_text())
+    assert expected <= {item["text"] for item in tasks["next_up"]}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from autorunne.cli import app
@@ -168,3 +169,56 @@ def test_auto_compact_can_be_disabled_in_config(python_repo: Path):
     assert not (python_repo / ".autorunne" / "archive" / "2026-01.md").exists()
     sessions = json.loads((python_repo / ".autorunne" / "state" / "sessions.json").read_text(encoding="utf-8"))["items"]
     assert len(sessions) > 5
+
+
+def test_two_same_month_compactions_preserve_both_batches(python_repo: Path):
+    _run_in(python_repo, ["open"])
+    for idx in range(6):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+
+    first = _run_in(python_repo, ["compact", "--keep-sessions", "3"])
+    assert first.exit_code == 0
+    archive_path = python_repo / ".autorunne" / "archive" / "2026-01.md"
+    first_archive = archive_path.read_text(encoding="utf-8")
+    assert "test session 0" in first_archive
+
+    for idx in range(6, 12):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+
+    second = _run_in(python_repo, ["compact", "--keep-sessions", "3"])
+    assert second.exit_code == 0
+    archive = archive_path.read_text(encoding="utf-8")
+    assert "test session 0" in archive
+    assert "test session 6" in archive
+    assert archive.count("<!-- autorunne-archive-batch:") == 2
+
+
+def test_archive_batch_write_is_idempotent(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _run_in(python_repo, ["open"])
+    for idx in range(6):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+
+    original_save = memory.save_workspace_state
+    calls = {"count": 0}
+
+    def fail_once(repo_root, state):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise RuntimeError("simulated crash after archive persistence")
+        return original_save(repo_root, state)
+
+    monkeypatch.setattr(memory, "save_workspace_state", fail_once)
+    with pytest.raises(RuntimeError, match="simulated crash after archive persistence"):
+        memory.compact_memory(python_repo, keep_sessions=3)
+
+    monkeypatch.setattr(memory, "save_workspace_state", original_save)
+    memory.compact_memory(python_repo, keep_sessions=3)
+
+    archive = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
+    assert archive.count("<!-- autorunne-archive-batch:") == 1
+    assert archive.count("test session 0") == 1
