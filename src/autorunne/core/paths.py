@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 from autorunne import __version__ as AUTORUNNE_VERSION
+from autorunne.core.persistence import atomic_write_json, atomic_write_text, read_json_recovering
 from autorunne.models.config import WorkflowConfig
 
 CONFIG_FILENAME = "config.json"
@@ -86,7 +86,7 @@ def config_path(repo_root: Path) -> Path:
 def load_config(repo_root: Path) -> WorkflowConfig:
     path = config_path(repo_root)
     if path.exists():
-        return WorkflowConfig.model_validate(json.loads(path.read_text(encoding="utf-8")))
+        return WorkflowConfig.model_validate(read_json(path, default={}))
     return WorkflowConfig()
 
 
@@ -102,33 +102,27 @@ def migrate_config(repo_root: Path) -> dict[str, Any]:
     defaults = WorkflowConfig().model_dump()
     existing: dict[str, Any] = {}
     if path.exists():
-        existing = json.loads(path.read_text(encoding="utf-8"))
+        existing = read_json(path, default={})
     merged = {**defaults, **existing}
     merged["version"] = AUTORUNNE_VERSION
     if merged != existing:
-        ensure_dir(workflow_dir(repo_root))
-        path.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        write_json(path, merged)
     return {"path": str(path), "updated": merged != existing, "version": merged["version"]}
 
 
 def save_config(repo_root: Path, config: WorkflowConfig) -> Path:
-    ensure_dir(workflow_dir(repo_root))
     path = config_path(repo_root)
-    path.write_text(json.dumps(config.model_dump(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    write_json(path, config.model_dump())
     return path
 
 
 def read_json(path: Path, default: Any | None = None) -> Any:
-    if not path.exists():
-        return {} if default is None else default
-    return json.loads(path.read_text(encoding="utf-8"))
+    return read_json_recovering(path, default=default)
 
 
 def write_json(path: Path, payload: Any) -> None:
-    ensure_dir(path.parent)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    atomic_write_json(path, payload)
 
 
 def write_text(path: Path, content: str) -> None:
-    ensure_dir(path.parent)
-    path.write_text(content.rstrip() + "\n", encoding="utf-8")
+    atomic_write_text(path, content.rstrip() + "\n")

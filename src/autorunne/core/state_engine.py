@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -16,7 +17,9 @@ from autorunne.core.paths import (
     workflow_dir,
     workflow_file,
     write_json,
+    write_text,
 )
+from autorunne.core.persistence import read_jsonl_recovering, workspace_locked
 from autorunne.core.templater import render_agent_compat_bundle, render_view_bundle
 from autorunne.core.user_status import build_user_summary
 from autorunne.core.writer import ensure_workflow_layout, write_agent_compat_files, write_rendered_views, write_snapshot
@@ -371,10 +374,11 @@ def collect_git_details(repo_root: Path) -> dict[str, Any]:
 def _ensure_event_file(repo_root: Path) -> Path:
     path = state_file(repo_root, "events.jsonl")
     if not path.exists():
-        path.write_text("", encoding="utf-8")
+        write_text(path, "")
     return path
 
 
+@workspace_locked
 def append_event(repo_root: Path, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
     event = {
         "timestamp": utc_now(),
@@ -383,20 +387,17 @@ def append_event(repo_root: Path, event_type: str, payload: dict[str, Any]) -> d
     }
     ensure_workflow_layout(repo_root)
     path = _ensure_event_file(repo_root)
+    line = json.dumps(event, ensure_ascii=False) + "\n"
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(event, ensure_ascii=False) + "\n")
+        handle.write(line)
+        handle.flush()
+        os.fsync(handle.fileno())
     return event
 
 
+@workspace_locked
 def load_events(repo_root: Path) -> list[dict[str, Any]]:
-    path = _ensure_event_file(repo_root)
-    events = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        events.append(json.loads(stripped))
-    return events
+    return read_jsonl_recovering(state_file(repo_root, "events.jsonl"))
 
 
 def _seed_state(repo_root: Path, scan: dict[str, Any], action: str) -> dict[str, Any]:
@@ -570,6 +571,7 @@ def workflow_needs_migration(repo_root: Path) -> bool:
     return legacy_workspace_exists(repo_root) and not workflow_exists(repo_root)
 
 
+@workspace_locked
 def load_workspace_state(repo_root: Path) -> dict[str, Any]:
     tasks = read_json(state_file(repo_root, "tasks.json"), default={})
     tasks.setdefault("completed", [])
@@ -586,6 +588,7 @@ def load_workspace_state(repo_root: Path) -> dict[str, Any]:
     }
 
 
+@workspace_locked
 def save_workspace_state(repo_root: Path, state: dict[str, Any]) -> None:
     ensure_workflow_layout(repo_root)
     write_json(state_file(repo_root, "current.json"), state["current"])
@@ -618,6 +621,7 @@ def save_workspace_state(repo_root: Path, state: dict[str, Any]) -> None:
     )
 
 
+@workspace_locked
 def render_views(repo_root: Path) -> dict[str, str]:
     state = load_workspace_state(repo_root)
     if _clean_next_slots(state):
@@ -769,6 +773,7 @@ def _prune_workflow_items_from_next_up(state: dict[str, Any], *, keep_text: str 
     return removed
 
 
+@workspace_locked
 def repair_handoff_state(repo_root: Path) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
@@ -845,6 +850,7 @@ def diagnose_handoff_consistency(repo_root: Path) -> dict[str, Any]:
         "ok": not mismatches and not workflow_backlog,
     }
 
+@workspace_locked
 def bootstrap_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: str | None = None) -> dict[str, Any]:
     state = _seed_state(repo_root, scan, action)
     if workflow_dir(repo_root).exists():
@@ -867,6 +873,7 @@ def bootstrap_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, n
     return state
 
 
+@workspace_locked
 def sync_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: str | None = None) -> dict[str, Any]:
     if not workflow_exists(repo_root):
         return bootstrap_workspace(repo_root, scan, action=action, note=note)
@@ -902,6 +909,7 @@ def sync_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: 
     return state
 
 
+@workspace_locked
 def start_task(repo_root: Path, task: str, next_action: str) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
@@ -926,6 +934,7 @@ def start_task(repo_root: Path, task: str, next_action: str) -> dict[str, Any]:
     return state
 
 
+@workspace_locked
 def record_checkpoint(
     repo_root: Path,
     summary: str,
@@ -967,6 +976,7 @@ def record_checkpoint(
     return state
 
 
+@workspace_locked
 def finish_task(
     repo_root: Path,
     *,
@@ -1063,6 +1073,7 @@ def finish_task(
     return state, matched
 
 
+@workspace_locked
 def record_task_ingress(
     repo_root: Path,
     *,
@@ -1107,6 +1118,7 @@ def record_task_ingress(
     return state
 
 
+@workspace_locked
 def record_hermes_ingress(
     repo_root: Path,
     *,
@@ -1127,6 +1139,7 @@ def record_hermes_ingress(
     )
 
 
+@workspace_locked
 def record_integration(
     repo_root: Path,
     *,
@@ -1175,6 +1188,7 @@ def record_integration(
     return state
 
 
+@workspace_locked
 def manual_record(
     repo_root: Path,
     *,
@@ -1210,6 +1224,7 @@ def manual_record(
     return {"state": state, "payload": payload}
 
 
+@workspace_locked
 def migrate_legacy_workspace(repo_root: Path, scan: dict, *, note: str | None = None) -> dict[str, Any]:
     if workflow_exists(repo_root):
         return sync_workspace(repo_root, scan, action="workspace_migrated", note=note or "state workspace already exists")
@@ -1262,6 +1277,7 @@ def workflow_summary(repo_root: Path) -> dict[str, Any]:
     }
 
 
+@workspace_locked
 def mutate_task_list(
     repo_root: Path,
     *,

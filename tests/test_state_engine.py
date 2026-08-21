@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from autorunne import __version__
@@ -442,3 +443,32 @@ def test_concurrent_task_add_preserves_every_unique_task(python_repo: Path):
     expected = {f"concurrent task {index}" for index in range(40)}
     tasks = json.loads((python_repo / ".autorunne/state/tasks.json").read_text())
     assert expected <= {item["text"] for item in tasks["next_up"]}
+
+
+@pytest.mark.parametrize("command", [["open"], ["doctor", "--handoff"]])
+def test_malformed_sessions_recover_from_valid_backup(python_repo: Path, command: list[str]):
+    _run_in(python_repo, ["adopt"])
+    _run_in(python_repo, ["sync"])
+    sessions = python_repo / ".autorunne" / "state" / "sessions.json"
+    backup = sessions.with_name("sessions.json.bak")
+    assert backup.exists()
+    sessions.write_text("{", encoding="utf-8")
+    result = _run_in(python_repo, command)
+    assert result.exit_code == 0
+    json.loads(sessions.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("command", [["open"], ["doctor", "--handoff"]])
+def test_unrecoverable_sessions_fail_closed_without_overwrite(python_repo: Path, command: list[str]):
+    _run_in(python_repo, ["adopt"])
+    sessions = python_repo / ".autorunne" / "state" / "sessions.json"
+    backup = sessions.with_name("sessions.json.bak")
+    sessions.write_text("{", encoding="utf-8")
+    backup.write_text("[", encoding="utf-8")
+    result = _run_in(python_repo, command)
+    combined = f"{result.stdout}{result.stderr}"
+    assert result.exit_code == 1
+    assert "Autorunne state is corrupt" in combined
+    assert "did not reset state" in combined
+    assert sessions.read_text(encoding="utf-8") == "{"
+    assert backup.read_text(encoding="utf-8") == "["
