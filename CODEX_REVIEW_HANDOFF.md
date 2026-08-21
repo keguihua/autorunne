@@ -10,7 +10,7 @@ COMPLETE
 - Original checkout: `/Users/huafire777/Desktop/program/autorunne` (left on `main` at `a7debe1`)
 - Branch: `grok/autorunne-0.6.34-reliability`
 - Base SHA: `a7debe1465ab902f0c6ffd1ac8c6916420322512` (contains reviewed 0.6.33 baseline `f1828d4cea433a0337c997892fa10b29544581d5`; HEAD was not rewound)
-- Head SHA: `35d7f3209c6a488068f39fa3c1f17ad9b0dc8996`
+- Head SHA: `7acbafd10aa4111d5c766759d86dd83f36c6d70c` (documentation commit on this branch; confirm with `git rev-parse HEAD`)
 - Worktree Python: `/Users/huafire777/.config/superpowers/worktrees/autorunne/grok-autorunne-0.6.34-reliability/.venv/bin/python` (CPython 3.11.15)
 
 The original repo `.venv` is a symlink to `/Users/huafire777/Documents/Codex/2026-08-22/new-chat/work/autorunne-dev-venv`, which this environment cannot read (`Operation not permitted`). It was not deleted, rebuilt, or committed. All verification below used the worktree venv.
