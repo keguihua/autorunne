@@ -8,12 +8,12 @@
 
 ## 这一版修了什么
 
-- **并发写入串行化**：同一工作区的多线程、多进程状态读写会抢 `.autorunne/runtime/state.lock`。锁覆盖完整的 read-modify-write-render，不是只锁最后一次写文件。同线程嵌套调用不会死锁。
+- **并发写入串行化**：同一工作区的多线程、多进程状态读写会抢 `.autorunne/runtime/state.lock`。锁覆盖完整的 read-modify-write-render，不是只锁最后一次写文件。`timeout` 同时约束同进程线程等待和跨进程 OS 锁。同线程嵌套调用不会死锁。
 - **JSON 原子替换和最近一次有效备份**：状态 JSON 先写同目录临时文件，再 `os.replace()`。只有当前主文件能解析时，才会把它的精确字节复制到 `*.bak`。损坏的主文件不会覆盖有效备份。
 - **安全自动恢复**：主文件坏、备份好时，`open` 和 `doctor` 会把备份原子恢复回主文件，然后继续。
 - **无有效备份时 fail closed**：主文件和备份都坏时，命令以非零退出，明确写出 `Autorunne state is corrupt` 和 `did not reset state`，并保留原文件字节。Autorunne 不会用空 dict、空列表或 seed state 覆盖损坏历史。
-- **events.jsonl 安全追加**：追加时持锁，写完一行后 flush + fsync。只修复末尾半行；中间坏行会 fail closed，不改文件。
-- **同月归档只追加、批次幂等**：`.autorunne/archive/YYYY-MM.md` 不再被第二次 compact 覆盖。每个压缩批次带确定性 SHA-256 marker。相同批次崩溃后重跑不会重复追加。已有无 marker 的旧归档内容原样保留。
+- **events.jsonl 安全追加**：追加时持锁，写完一行后 flush + fsync。只有没有换行符的末尾半行才视为中断写入并修复；已经换行结束的坏记录、中间坏行都会 fail closed，不改文件。
+- **同月归档只追加、批次幂等**：`.autorunne/archive/YYYY-MM.md` 不再被第二次 compact 覆盖。每个压缩批次带确定性 SHA-256 marker。compact 会先把原始批次写入 `.autorunne/runtime/pending-compaction.json`，崩溃重试识别原始批次，而不是按已裁剪状态重算。已有无 marker 的旧归档内容原样保留。
 - **版本一致**：`autorunne.__version__`、`pyproject.toml`、`WorkflowConfig.version` 和仓库 skill 的 version 行统一为 `0.6.34`。
 - **测试隔离**：update-check 的 `9.9.9` 缓存只写到测试用的 `tmp_path`，不再污染真实 checkout。
 
@@ -44,8 +44,10 @@
 - 主 `sessions.json` 损坏、backup 有效时，`open` 和 `doctor --handoff` 可继续；
 - 主文件和 backup 都损坏时，`open` / `doctor` 明确失败且不覆盖原文件；
 - 同月两次 compact 保留两批记录；
-- 同一批次模拟中断后重跑不重复；
-- `events.jsonl` 末尾半行可安全修复，中间坏行明确失败；
+- 同一批次在 archive 后、sessions 保存后或 events 重写前崩溃，重跑都不重复；
+- `events.jsonl` 没有换行的末尾半行可安全修复；已换行的坏末条和中间坏行明确失败且不改字节；
+- 同进程线程锁等待会按 timeout 抛错，不会无限阻塞；
+- 新的临时虚拟环境安装 wheel 后 `autorunne --version` 为 `AutoRunne 0.6.34`；
 - wheel metadata 为 `Name: autorunne`、`Version: 0.6.34`。
 
 以上只是候选构建证据，不代表外部发布已经完成。

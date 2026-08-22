@@ -8,16 +8,18 @@ All notable changes to Autorunne are documented here.
 ### Fixed
 - Concurrent Autorunne commands no longer clobber JSON state: a re-entrant workspace lock serializes the full read-modify-write-render transaction across threads and processes.
 - Malformed primary JSON is restored from the last valid `*.bak` copy; if both primary and backup are unreadable, commands fail closed and leave the original bytes untouched.
-- Interrupted `events.jsonl` appends repair only a malformed trailing fragment; a corrupt middle line fails closed.
-- Same-month `autorunne compact` archives append instead of replacing earlier batches, and a retried batch is idempotent.
+- Interrupted `events.jsonl` appends repair only a malformed trailing fragment that has no terminating newline. A newline-terminated bad final record fails closed and is not deleted.
+- Same-month `autorunne compact` archives append instead of replacing earlier batches. A retried batch is idempotent even if sessions were saved before events were rewritten.
+- `workspace_lock(timeout=...)` now times out same-process thread waiters as well as cross-process OS lock waiters.
 
 ### Reliability
 - JSON and archive writes use same-directory temporary files, `fsync`, and `os.replace`.
+- Compaction records the original batch in `.autorunne/runtime/pending-compaction.json` before mutating state, then resumes that journal on retry.
 - Package, runtime, default config, and repo skill version lines are aligned at 0.6.34.
 - Update-check tests cache `9.9.9` under `tmp_path`, not the source checkout.
 
 ### Verification
-- Focused persistence/state/memory/update tests, the full suite, and `python -m build` were run on this candidate. Wheel metadata reports `Version: 0.6.34`. This changelog entry is for a release candidate; GitHub Release and PyPI publish were not performed.
+- Focused persistence/state/memory/update tests, the full suite, `python -m build`, and a fresh-venv wheel install were run on this candidate. Wheel metadata reports `Version: 0.6.34`. This changelog entry is for a release candidate; GitHub Release and PyPI publish were not performed.
 
 
 ## 0.6.33 - 2026-06-14
