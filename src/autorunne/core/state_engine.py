@@ -19,6 +19,7 @@ from autorunne.core.paths import (
     write_json,
     write_text,
 )
+from autorunne.core.mutation import state_mutator
 from autorunne.core.persistence import read_jsonl_recovering, workspace_locked
 from autorunne.core.templater import render_agent_compat_bundle, render_view_bundle
 from autorunne.core.user_status import build_user_summary
@@ -773,7 +774,7 @@ def _prune_workflow_items_from_next_up(state: dict[str, Any], *, keep_text: str 
     return removed
 
 
-@workspace_locked
+@state_mutator
 def repair_handoff_state(repo_root: Path) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
@@ -850,7 +851,7 @@ def diagnose_handoff_consistency(repo_root: Path) -> dict[str, Any]:
         "ok": not mismatches and not workflow_backlog,
     }
 
-@workspace_locked
+@state_mutator
 def bootstrap_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: str | None = None) -> dict[str, Any]:
     state = _seed_state(repo_root, scan, action)
     if workflow_dir(repo_root).exists():
@@ -873,7 +874,7 @@ def bootstrap_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, n
     return state
 
 
-@workspace_locked
+@state_mutator
 def sync_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: str | None = None) -> dict[str, Any]:
     if not workflow_exists(repo_root):
         return bootstrap_workspace(repo_root, scan, action=action, note=note)
@@ -909,7 +910,7 @@ def sync_workspace(repo_root: Path, scan: dict[str, Any], *, action: str, note: 
     return state
 
 
-@workspace_locked
+@state_mutator
 def start_task(repo_root: Path, task: str, next_action: str) -> dict[str, Any]:
     state = load_workspace_state(repo_root)
     timestamp = utc_now()
@@ -934,7 +935,7 @@ def start_task(repo_root: Path, task: str, next_action: str) -> dict[str, Any]:
     return state
 
 
-@workspace_locked
+@state_mutator
 def record_checkpoint(
     repo_root: Path,
     summary: str,
@@ -976,7 +977,7 @@ def record_checkpoint(
     return state
 
 
-@workspace_locked
+@state_mutator
 def finish_task(
     repo_root: Path,
     *,
@@ -1073,7 +1074,7 @@ def finish_task(
     return state, matched
 
 
-@workspace_locked
+@state_mutator
 def record_task_ingress(
     repo_root: Path,
     *,
@@ -1118,7 +1119,7 @@ def record_task_ingress(
     return state
 
 
-@workspace_locked
+@state_mutator
 def record_hermes_ingress(
     repo_root: Path,
     *,
@@ -1139,7 +1140,7 @@ def record_hermes_ingress(
     )
 
 
-@workspace_locked
+@state_mutator
 def record_integration(
     repo_root: Path,
     *,
@@ -1188,7 +1189,7 @@ def record_integration(
     return state
 
 
-@workspace_locked
+@state_mutator
 def manual_record(
     repo_root: Path,
     *,
@@ -1224,7 +1225,7 @@ def manual_record(
     return {"state": state, "payload": payload}
 
 
-@workspace_locked
+@state_mutator
 def migrate_legacy_workspace(repo_root: Path, scan: dict, *, note: str | None = None) -> dict[str, Any]:
     if workflow_exists(repo_root):
         return sync_workspace(repo_root, scan, action="workspace_migrated", note=note or "state workspace already exists")
@@ -1277,7 +1278,7 @@ def workflow_summary(repo_root: Path) -> dict[str, Any]:
     }
 
 
-@workspace_locked
+@state_mutator
 def mutate_task_list(
     repo_root: Path,
     *,

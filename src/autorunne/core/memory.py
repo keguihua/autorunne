@@ -141,6 +141,22 @@ def _clear_pending_compaction(repo_root: Path) -> None:
         path.unlink()
 
 
+@workspace_locked
+def recover_pending_compaction(repo_root: Path) -> dict[str, Any] | None:
+    pending = _load_pending_compaction(repo_root)
+    if pending is None:
+        return None
+    try:
+        return _apply_compaction_plan(repo_root, pending)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Autorunne could not finish a previous compact for {repo_root}. "
+            "Restore compact before making more state changes. "
+            "The pending compaction journal was left in place. "
+            "Autorunne did not reset state."
+        ) from exc
+
+
 def _apply_compaction_plan(repo_root: Path, plan: dict[str, Any]) -> dict[str, Any]:
     archive_dir = ensure_dir(workflow_dir(repo_root) / "archive")
     for batch in plan.get("batches") or []:
@@ -316,7 +332,7 @@ def compact_memory(repo_root: Path, *, keep_sessions: int = 200, dry_run: bool =
 
     pending = _load_pending_compaction(repo_root)
     if pending is not None:
-        return _apply_compaction_plan(repo_root, pending)
+        return recover_pending_compaction(repo_root)
 
     if not old_sessions and not old_events:
         save_workspace_state(repo_root, state)

@@ -290,3 +290,169 @@ def test_compact_after_crash_retry_still_appends_a_new_batch(python_repo: Path, 
     assert archive.count("test session 6") == 1
     assert archive.count("event 0") == 1
     assert archive.count("event 6") == 1
+
+
+def _pending_path(repo: Path) -> Path:
+    return repo / ".autorunne" / "runtime" / "pending-compaction.json"
+
+
+def _crash_compact_after_session_save(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _run_in(python_repo, ["open"])
+    for idx in range(6):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+
+    original_write = memory._write_events
+    calls = {"count": 0}
+
+    def fail_once(repo_root, events):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise RuntimeError("simulated crash after session save")
+        return original_write(repo_root, events)
+
+    monkeypatch.setattr(memory, "_write_events", fail_once)
+    with pytest.raises(RuntimeError, match="simulated crash after session save"):
+        memory.compact_memory(python_repo, keep_sessions=3)
+    monkeypatch.setattr(memory, "_write_events", original_write)
+    assert _pending_path(python_repo).exists()
+    return original_write
+
+
+def test_pending_compaction_recovers_before_new_manual_record(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _crash_compact_after_session_save(python_repo, monkeypatch)
+    result = _run_in(
+        python_repo,
+        [
+            "record",
+            "--summary",
+            "record created after crash",
+            "--next",
+            "continue after crash",
+        ],
+    )
+    assert result.exit_code == 0
+    if _pending_path(python_repo).exists():
+        memory.compact_memory(python_repo, keep_sessions=3)
+
+    sessions_text = (python_repo / ".autorunne" / "state" / "sessions.json").read_text(encoding="utf-8")
+    events_text = (python_repo / ".autorunne" / "state" / "events.jsonl").read_text(encoding="utf-8")
+    current = json.loads((python_repo / ".autorunne" / "state" / "current.json").read_text(encoding="utf-8"))
+    archive = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
+    assert sessions_text.count("record created after crash") == 1
+    assert events_text.count("record created after crash") == 1
+    assert archive.count("<!-- autorunne-archive-batch:") == 1
+    assert archive.count("test session 0") == 1
+    assert archive.count("event 0") == 1
+    assert not _pending_path(python_repo).exists()
+    assert current["next_action"] == "continue after crash"
+
+
+def test_pending_compaction_recovers_before_new_start(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _crash_compact_after_session_save(python_repo, monkeypatch)
+    result = _run_in(
+        python_repo,
+        ["start", "--task", "task after crash", "--next", "next after crash"],
+    )
+    assert result.exit_code == 0
+    if _pending_path(python_repo).exists():
+        memory.compact_memory(python_repo, keep_sessions=3)
+
+    sessions_text = (python_repo / ".autorunne" / "state" / "sessions.json").read_text(encoding="utf-8")
+    events_text = (python_repo / ".autorunne" / "state" / "events.jsonl").read_text(encoding="utf-8")
+    current = json.loads((python_repo / ".autorunne" / "state" / "current.json").read_text(encoding="utf-8"))
+    archive = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
+    assert sessions_text.count("task after crash") == 1
+    assert events_text.count("task after crash") == 1
+    assert current["active_task"] == "task after crash"
+    assert current["next_action"] == "next after crash"
+    assert archive.count("<!-- autorunne-archive-batch:") == 1
+    assert not _pending_path(python_repo).exists()
+
+
+def test_failed_pending_recovery_blocks_new_state_mutation(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _crash_compact_after_session_save(python_repo, monkeypatch)
+    sessions_before = (python_repo / ".autorunne" / "state" / "sessions.json").read_bytes()
+    events_before = (python_repo / ".autorunne" / "state" / "events.jsonl").read_bytes()
+    current_before = (python_repo / ".autorunne" / "state" / "current.json").read_bytes()
+    tasks_before = (python_repo / ".autorunne" / "state" / "tasks.json").read_bytes()
+
+    def fail_recovery(repo_root, events):
+        raise RuntimeError("simulated pending recovery failure")
+
+    monkeypatch.setattr(memory, "_write_events", fail_recovery)
+    result = _run_in(
+        python_repo,
+        [
+            "record",
+            "--summary",
+            "record created after crash",
+            "--next",
+            "continue after crash",
+        ],
+    )
+    combined = f"{result.stdout}{result.stderr}"
+    assert result.exit_code == 1
+    assert "compact" in combined.lower()
+    assert "record created after crash" not in (
+        python_repo / ".autorunne" / "state" / "sessions.json"
+    ).read_text(encoding="utf-8")
+    assert "record created after crash" not in (
+        python_repo / ".autorunne" / "state" / "events.jsonl"
+    ).read_text(encoding="utf-8")
+    assert _pending_path(python_repo).exists()
+    assert (python_repo / ".autorunne" / "state" / "events.jsonl").read_bytes() == events_before
+    assert (python_repo / ".autorunne" / "state" / "current.json").read_bytes() == current_before
+    assert (python_repo / ".autorunne" / "state" / "tasks.json").read_bytes() == tasks_before
+    assert "continue after crash" not in (python_repo / ".autorunne" / "state" / "current.json").read_text(
+        encoding="utf-8"
+    )
+    assert sessions_before  # crash left a sessions file; mutation must not add the new record
+
+
+def test_pending_recovery_then_new_compact_appends_one_batch(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _crash_compact_after_session_save(python_repo, monkeypatch)
+    recorded = _run_in(
+        python_repo,
+        [
+            "record",
+            "--summary",
+            "record created after crash",
+            "--next",
+            "continue after crash",
+        ],
+    )
+    assert recorded.exit_code == 0
+    if _pending_path(python_repo).exists():
+        memory.compact_memory(python_repo, keep_sessions=3)
+
+    for idx in range(6, 12):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+    compacted = _run_in(python_repo, ["compact", "--keep-sessions", "3"])
+    assert compacted.exit_code == 0
+
+    january = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
+    archives = "".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((python_repo / ".autorunne" / "archive").glob("*.md"))
+    )
+    live = (python_repo / ".autorunne" / "state" / "sessions.json").read_text(
+        encoding="utf-8"
+    ) + (python_repo / ".autorunne" / "state" / "events.jsonl").read_text(encoding="utf-8")
+    assert january.count("<!-- autorunne-archive-batch:") == 2
+    assert january.count("test session 0") == 1
+    assert january.count("test session 6") == 1
+    assert january.count("event 0") == 1
+    assert "record created after crash" in archives + live
+    assert not _pending_path(python_repo).exists()
