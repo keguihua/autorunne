@@ -74,11 +74,31 @@ def test_workspace_lock_times_out_while_other_process_holds_it(tmp_path: Path):
 def test_jsonl_repairs_only_an_incomplete_final_line(tmp_path: Path):
     target = tmp_path / ".autorunne/state/events.jsonl"
     target.parent.mkdir(parents=True)
-    target.write_text(
-        '{"type":"first"}\n{"type":"second"', encoding="utf-8"
-    )
+    original = '{"type":"first"}\n{"type":"second"'
+    target.write_text(original, encoding="utf-8")
+    assert not original.endswith("\n")
     assert read_jsonl_recovering(target) == [{"type": "first"}]
     assert target.read_text(encoding="utf-8") == '{"type": "first"}\n'
+
+
+def test_jsonl_incomplete_final_fragment_without_newline_is_repaired(tmp_path: Path):
+    target = tmp_path / ".autorunne/state/events.jsonl"
+    target.parent.mkdir(parents=True)
+    original = b'{"type":"first"}\n{"type":"second"'
+    target.write_bytes(original)
+    assert not original.endswith(b"\n")
+    assert read_jsonl_recovering(target) == [{"type": "first"}]
+    assert target.read_text(encoding="utf-8") == '{"type": "first"}\n'
+
+
+def test_jsonl_newline_terminated_bad_final_record_fails_closed(tmp_path: Path):
+    target = tmp_path / ".autorunne/state/events.jsonl"
+    target.parent.mkdir(parents=True)
+    original = '{"type":"first"}\n{bad}\n'
+    target.write_bytes(original.encode("utf-8"))
+    with pytest.raises(StateCorruptionError, match="did not reset state"):
+        read_jsonl_recovering(target)
+    assert target.read_bytes() == original.encode("utf-8")
 
 
 def test_jsonl_middle_corruption_fails_closed(tmp_path: Path):
@@ -88,7 +108,7 @@ def test_jsonl_middle_corruption_fails_closed(tmp_path: Path):
     target.write_text(original, encoding="utf-8")
     with pytest.raises(StateCorruptionError, match="before the final line"):
         read_jsonl_recovering(target)
-    assert target.read_text(encoding="utf-8") == original
+    assert target.read_bytes() == original.encode("utf-8")
 
 
 def test_workspace_lock_is_reentrant_in_one_thread(tmp_path: Path):

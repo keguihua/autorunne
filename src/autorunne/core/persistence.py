@@ -210,6 +210,7 @@ def _parse_jsonl(
 ) -> tuple[list[dict[str, Any]], bool]:
     events: list[dict[str, Any]] = []
     repaired_tail = False
+    ended_with_newline = text.endswith("\n")
     lines = text.splitlines()
     last_index = len(lines) - 1
     for index, line in enumerate(lines):
@@ -220,7 +221,8 @@ def _parse_jsonl(
             parsed = json.loads(stripped)
         except json.JSONDecodeError:
             is_final_line = index == last_index
-            if allow_tail_repair and is_final_line:
+            incomplete_tail = is_final_line and not ended_with_newline
+            if allow_tail_repair and incomplete_tail:
                 repaired_tail = True
                 break
             if not is_final_line:
