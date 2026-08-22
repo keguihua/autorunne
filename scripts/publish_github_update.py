@@ -102,6 +102,21 @@ def default_body(version: str) -> str:
     release_url = f"https://github.com/HUAFIRE777/autorunne/releases/tag/v{version}"
     pypi_url = f"https://pypi.org/project/autorunne/{version}/"
 
+    if version == "0.6.34":
+        intro = """Autorunne 0.6.34 发布了。
+
+这是一版专门为长期项目准备的状态可靠性补丁。你仍然只需要打开项目、直接给 AI 派任务；Autorunne 继续在仓库本地告诉下一个 Agent：项目做到哪里、正在做什么、验证过什么、下一步是什么。"""
+        bullets = """
+- 多线程、多进程同时写状态时统一串行化，不再互相覆盖
+- JSON 原子保存，并保留最近一次有效备份
+- 状态和备份都损坏时 fail closed，不会静默清空项目历史
+- `events.jsonl` 只修复真正的末尾半行，完整坏记录不会被误删
+- 长期记忆 compact 支持同月追加和崩溃幂等恢复
+- pending compact 会在任何新状态写入前完成；恢复失败时阻止新写入，避免旧计划覆盖新进展
+""".strip()
+        why = """简单说：Autorunne 0.6.34 没有增加一堆新按钮，而是把“让 AI 长期记得项目做到哪里”这件事做得更稳。特别适合持续几个月、跨 Codex / Claude Code / Hermes / Cursor 反复接力的项目。"""
+        return f"""{intro}\n\n{bullets}\n\n{why}\n\n升级：\n\n```bash\npipx upgrade autorunne --pip-args=\"--no-cache-dir -i https://pypi.org/simple\"\n```\n\n检查版本：\n\n```bash\nautorunne --version\n```\n\nRelease: {release_url}\nPyPI: {pypi_url}\n""".strip()
+
     if version == "0.6.31":
         intro = """Autorunne 0.6.31 发布了。
 
@@ -302,6 +317,7 @@ def main() -> int:
 
     version = args.version.removeprefix("v")
     default_titles = {
+        "0.6.34": "Autorunne 0.6.34 发布：长期项目状态更可靠",
         "0.6.31": "Autorunne 0.6.31 发布：summary 自动生成，不再让用户写流程说明",
         "0.6.30": "Autorunne 0.6.30 发布：自动长期记忆压缩",
         "0.6.29": "Autorunne 0.6.29 发布：长期项目记忆管理",

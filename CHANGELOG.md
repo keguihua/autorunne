@@ -3,7 +3,7 @@
 All notable changes to Autorunne are documented here.
 
 
-## 0.6.34 - 2026-08-22
+## 0.6.34 - 2026-08-23
 
 ### Fixed
 - Concurrent Autorunne commands no longer clobber JSON state: a re-entrant workspace lock serializes the full read-modify-write-render transaction across threads and processes.
@@ -20,7 +20,7 @@ All notable changes to Autorunne are documented here.
 - Update-check tests cache `9.9.9` under `tmp_path`, not the source checkout.
 
 ### Verification
-- Focused persistence/state/memory/update tests, the full suite, `python -m build`, and a fresh-venv wheel install were run on this candidate. Wheel metadata reports `Version: 0.6.34`. This changelog entry is for a release candidate; GitHub Release and PyPI publish were not performed.
+- Focused persistence/state/memory/update tests, the full suite, `python -m build`, and a fresh-venv wheel install passed before release. Wheel metadata reports `Version: 0.6.34`.
 
 
 ## 0.6.33 - 2026-06-14

@@ -1,10 +1,13 @@
 # Autorunne 0.6.34 发布说明
 
-**状态：release candidate**
+**状态：正式发布**
+
+**发布日期：2026-08-23**
 
 0.6.34 是状态可靠性补丁，不是产品重写。AI 进入仓库后，仍然能立刻看到项目做到哪里、当前任务和下一步；`.autorunne/views/*` 交接文件和现有命令保持不变。
 
-在 GitHub tag、GitHub Release 和 PyPI 实际上传成功之前，这一版只能称为 **release candidate**。GitHub Release / PyPI 尚未发布。
+- GitHub Release：<https://github.com/HUAFIRE777/autorunne/releases/tag/v0.6.34>
+- PyPI：<https://pypi.org/project/autorunne/0.6.34/>
 
 ## 这一版修了什么
 
@@ -25,7 +28,6 @@
 - Git worktree adopt / `.git` 文件支持；
 - SQLite、数据库、云同步或远程锁；
 - CLI 命令名称、handoff 视图结构或默认 compact 阈值；
-- GitHub push、tag、Release、PyPI 上传或 Discussions。
 
 这些留给 0.6.35 或用户另行授权的发布流程。
 
@@ -36,9 +38,9 @@
 - 旧的同月归档没有 batch marker 时保持不动；第一次 0.6.34 compact 会在旧内容下面追加带 marker 的新批次。
 - 用户看到的命令和视图结构不变，只是锁超时和损坏恢复会给出可执行的错误说明。
 
-## 验证（候选构建，不是已发布）
+## 验证
 
-本候选在独立分支上实际跑过：
+0.6.34 在独立分支和合并后的发布构建中实际验证：
 
 - 40 个并发 `autorunne task add` 全部退出 0，40 个唯一任务都还在；
 - 主 `sessions.json` 损坏、backup 有效时，`open` 和 `doctor --handoff` 可继续；
@@ -50,4 +52,4 @@
 - 新的临时虚拟环境安装 wheel 后 `autorunne --version` 为 `AutoRunne 0.6.34`；
 - wheel metadata 为 `Name: autorunne`、`Version: 0.6.34`。
 
-以上只是候选构建证据，不代表外部发布已经完成。
+正式发布包由 `v0.6.34` 标签触发 GitHub Actions 构建并上传，版本号、wheel 元数据和 CLI 输出保持一致。

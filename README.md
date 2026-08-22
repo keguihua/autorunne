@@ -11,18 +11,17 @@ Autorunne 解决的是这个问题。
 
 它会在项目里维护一个 `.autorunne/` 工作区，把项目上下文、任务、决策、会话记录、推荐命令、验证证据和下一步整理成稳定文件。你仍然用自己熟悉的工具写代码，Autorunne 只负责把项目状态留在仓库本地。
 
-## 0.6.34 候选（release candidate）
+## 0.6.34 正式版：长期项目状态更可靠
 
-0.6.34 保持现有 UX：AI 进入项目后仍然先看当前进度、任务和下一步。这一版只加强本地状态层：
+0.6.34 保持现有使用方式：AI 进入项目后仍然先看当前进度、任务和下一步。这一版重点加固本地状态层，让 Autorunne 更适合持续数月、反复切换 Agent 的长期项目：
 
-- 并发状态写入串行化
-- JSON 原子保存和最近一次有效备份
-- 主文件与备份都坏时 fail closed，不静默清空
-- `events.jsonl` 安全追加和尾部恢复
-- 同月归档追加，压缩批次可幂等重试
-- 版本元数据统一为 0.6.34
+- **并发写入不再互相覆盖**：多线程、多进程共享同一把可重入工作区锁。
+- **状态文件可恢复**：JSON 原子保存，并保留最近一次有效备份。
+- **损坏时宁可停止也不清空历史**：主文件与备份都坏时 fail closed。
+- **事件日志更安全**：`events.jsonl` 安全追加，只修复真正的末尾半行。
+- **长期记忆压缩可重试**：同月归档持续追加；崩溃恢复不会重复归档，也不会覆盖崩溃后新写入的记录。
 
-详细说明见 [0.6.34 状态可靠性候选说明](docs/Autorunne-Release-Notes-0.6.34-ZH.md)。在外部发布完成前，不要把候选版当成已经上线的 GitHub Release 或 PyPI 包。
+详细说明见 [0.6.34 状态可靠性发布说明](docs/Autorunne-Release-Notes-0.6.34-ZH.md)。
 
 继续保留 0.6.32 的缓存过滤、0.6.31 的零提示 `checkpoint` / `finish` 能力，以及长期记忆压缩功能。
 
@@ -56,20 +55,23 @@ pipx install autorunne
 curl -fsSL https://raw.githubusercontent.com/HUAFIRE777/autorunne/main/scripts/install.sh | bash
 ```
 
-当前候选版本：**0.6.34**（release candidate；GitHub Release / PyPI 尚未发布）
+当前公开版本：**0.6.34**
+
+- [GitHub Release](https://github.com/HUAFIRE777/autorunne/releases/tag/v0.6.34)
+- [PyPI](https://pypi.org/project/autorunne/0.6.34/)
 
 ## 发布 GitHub 版本说说
 
 每次发新版后，可以用脚本自动发一条 GitHub Discussions 更新：
 
 ```bash
-python scripts/publish_github_update.py --version 0.6.31
+python scripts/publish_github_update.py --version 0.6.34
 ```
 
 先预览、不发布：
 
 ```bash
-python scripts/publish_github_update.py --version 0.6.31 --dry-run
+python scripts/publish_github_update.py --version 0.6.34 --dry-run
 ```
 
 脚本使用本机 `gh` 登录态，不保存 token。
@@ -188,26 +190,24 @@ autorunne export-session --last 20
 6. [商业计划书](docs/Autorunne-商业计划书-ZH.md)
 7. [对外定位与销售话术](docs/Autorunne-对外定位与销售话术-ZH.md)
 8. [商业稳定性说明](docs/Autorunne-商业稳定性说明-ZH.md)
-9. [0.6.20 PyPI/GitHub 同步发布说明](docs/Autorunne-Release-Notes-0.6.20-ZH.md)
-10. [0.6.34 状态可靠性候选说明](docs/Autorunne-Release-Notes-0.6.34-ZH.md)
+9. [0.6.34 状态可靠性发布说明](docs/Autorunne-Release-Notes-0.6.34-ZH.md)
 10. [0.6.31 自动 summary fallback](docs/Autorunne-Release-Notes-0.6.31-ZH.md)
-10. [0.6.30 自动长期记忆压缩](docs/Autorunne-Release-Notes-0.6.30-ZH.md)
-11. [0.6.29 长期项目记忆管理](docs/Autorunne-Release-Notes-0.6.29-ZH.md)
-11. [0.6.28 status / doctor 干净度补丁](docs/Autorunne-Release-Notes-0.6.28-ZH.md)
-11. [0.6.27 交接 doctor / repair 与 diff 分类加固](docs/Autorunne-Release-Notes-0.6.27-ZH.md)
-11. [0.6.26 真实交接状态一致性补丁](docs/Autorunne-Release-Notes-0.6.26-ZH.md)
-11. [0.6.25 交接洁净度补丁](docs/Autorunne-Release-Notes-0.6.25-ZH.md)
-12. [0.6.24 自动 Git 初始化](docs/Autorunne-Release-Notes-0.6.24-ZH.md)
-13. [0.6.23 git init 新手提醒](docs/Autorunne-Release-Notes-0.6.23-ZH.md)
-14. [0.6.22 workspace open 日志洁净度打磨](docs/Autorunne-Release-Notes-0.6.22-ZH.md)
-15. [0.6.21 finish next_product_task 回退修复](docs/Autorunne-Release-Notes-0.6.21-ZH.md)
-12. [0.6.16 状态可视化发布说明](docs/Autorunne-Release-Notes-0.6.16-ZH.md)
-12. [与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
-13. [English usage guide](docs/Autorunne-Usage-EN.md)
+11. [0.6.30 自动长期记忆压缩](docs/Autorunne-Release-Notes-0.6.30-ZH.md)
+12. [0.6.29 长期项目记忆管理](docs/Autorunne-Release-Notes-0.6.29-ZH.md)
+13. [0.6.28 status / doctor 干净度补丁](docs/Autorunne-Release-Notes-0.6.28-ZH.md)
+14. [0.6.27 交接 doctor / repair 与 diff 分类加固](docs/Autorunne-Release-Notes-0.6.27-ZH.md)
+15. [0.6.26 真实交接状态一致性补丁](docs/Autorunne-Release-Notes-0.6.26-ZH.md)
+16. [0.6.25 交接洁净度补丁](docs/Autorunne-Release-Notes-0.6.25-ZH.md)
+17. [0.6.24 自动 Git 初始化](docs/Autorunne-Release-Notes-0.6.24-ZH.md)
+18. [0.6.23 git init 新手提醒](docs/Autorunne-Release-Notes-0.6.23-ZH.md)
+19. [0.6.20 PyPI/GitHub 同步发布说明](docs/Autorunne-Release-Notes-0.6.20-ZH.md)
+20. [0.6.16 状态可视化发布说明](docs/Autorunne-Release-Notes-0.6.16-ZH.md)
+21. [与大模型开发对接说明](docs/Autorunne-LLM-Integration-ZH.md)
+22. [English usage guide](docs/Autorunne-Usage-EN.md)
 
 ## 当前阶段
 
-0.6.34 候选版在不改变交接体验的前提下，把并发写入、损坏恢复和同月归档做成可验证的可靠性补丁。0.6.31 仍然让自动化更顺手：用户只派任务，agent / wrapper 可以直接调用 checkpoint 或 finish，Autorunne 自动生成 summary，不再因为缺少流程说明打断。
+0.6.34 正式版在不改变交接体验的前提下，把并发写入、损坏恢复和长期记忆压缩做成可验证的可靠性补丁。0.6.31 的零提示工作流继续保留：用户只派任务，agent / wrapper 可以直接调用 checkpoint 或 finish，Autorunne 自动生成 summary，不再因为缺少流程说明打断。
 
 更准确地说：Autorunne 现在是一个可持续使用的 Beta 项目记忆层。它不是最终企业平台，但已经足够支撑真实项目里的“接着做”和上线后的日常维护。
 

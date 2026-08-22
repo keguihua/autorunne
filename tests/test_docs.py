@@ -144,7 +144,7 @@ def test_release_notes_0631_documents_automatic_summary_fallback():
     assert "PyPI：`autorunne==0.6.31`" in release
 
 
-def test_release_notes_0634_document_reliability_candidate_without_publication_claim():
+def test_release_notes_0634_document_formal_reliability_release():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     release = RELEASE_NOTES_0634.read_text(encoding="utf-8")
@@ -154,8 +154,9 @@ def test_release_notes_0634_document_reliability_candidate_without_publication_c
     assert "原子" in release
     assert "备份" in release
     assert "同月" in release
-    assert "release candidate" in release
+    assert "状态：正式发布" in release
     assert "daemon" in release
     assert "worktree" in release
-    assert "GitHub Release / PyPI 尚未发布" in release
-    assert "release candidate" in changelog.lower() or "release candidate" in changelog
+    assert "releases/tag/v0.6.34" in release
+    assert "pypi.org/project/autorunne/0.6.34" in release
+    assert "当前公开版本：**0.6.34**" in readme
