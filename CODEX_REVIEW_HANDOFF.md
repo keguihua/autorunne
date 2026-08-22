@@ -96,15 +96,33 @@ AUTORUNNE_DISABLE_UPDATE_CHECK=1 PATH="$PWD/.venv/bin:$PATH" \
 
 ### Hygiene
 
-`git diff --check` on the recovery-gate commit: exit 0.
+```bash
+git diff --check
+git diff --check c2ed45b316e008ff9d18d5b800f8fec1f5d4c72a..HEAD
+```
 
-`git diff --check c2ed45b316e008ff9d18d5b800f8fec1f5d4c72a..HEAD` after that commit: exit 0.
+- `git diff --check`: exit 0
+- `git diff --check c2ed45b..HEAD`: exit 0
 
-The previous handoff line `Persistence after issues 1–2: ...` had trailing whitespace. That line is removed in this rewrite. Re-run `git diff --check` and the range check after the documentation commit and record the real exit codes there.
+The previous handoff line with trailing whitespace was removed in this rewrite.
 
 ### Build / metadata / fresh venv
 
-Re-run after the documentation commit. Expected unchanged: wheel `Name: autorunne`, `Version: 0.6.34`, fresh venv `AutoRunne 0.6.34`.
+```bash
+.venv/bin/python -m build
+unzip -p dist/autorunne-0.6.34-py3-none-any.whl \
+  'autorunne-0.6.34.dist-info/METADATA' | sed -n '1,6p'
+```
+
+- build exit code: 0
+- `Successfully built autorunne-0.6.34.tar.gz and autorunne-0.6.34-py3-none-any.whl`
+- METADATA contains `Name: autorunne` and `Version: 0.6.34`
+
+Fresh Python 3.11 venv installed that wheel plus dependencies, then `autorunne --version`:
+
+- pip exit code: 0
+- CLI output: `AutoRunne 0.6.34`
+- Temporary venv deleted afterwards; worktree `.venv` was not replaced.
 
 ## Remaining risk
 
