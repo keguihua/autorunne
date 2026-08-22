@@ -8,7 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from autorunne.core.paths import ensure_dir, load_config, state_file, workflow_dir, workflow_file
-from autorunne.core.persistence import atomic_write_jsonl, atomic_write_text, workspace_locked
+from autorunne.core.persistence import (
+    atomic_write_json,
+    atomic_write_jsonl,
+    atomic_write_text,
+    read_json_recovering,
+    workspace_locked,
+)
 from autorunne.core.state_engine import append_event, load_events, load_workspace_state, render_views, save_workspace_state, utc_now
 
 
@@ -109,6 +115,58 @@ def _merge_archive_batch(
 
 def _write_events(repo_root: Path, events: list[dict[str, Any]]) -> None:
     atomic_write_jsonl(state_file(repo_root, "events.jsonl"), events)
+
+
+def _pending_compaction_path(repo_root: Path) -> Path:
+    return workflow_dir(repo_root) / "runtime" / "pending-compaction.json"
+
+
+def _load_pending_compaction(repo_root: Path) -> dict[str, Any] | None:
+    path = _pending_compaction_path(repo_root)
+    if not path.exists():
+        return None
+    payload = read_json_recovering(path, default=None)
+    if not isinstance(payload, dict) or not payload.get("batches"):
+        return None
+    return payload
+
+
+def _store_pending_compaction(repo_root: Path, plan: dict[str, Any]) -> None:
+    atomic_write_json(_pending_compaction_path(repo_root), plan)
+
+
+def _clear_pending_compaction(repo_root: Path) -> None:
+    path = _pending_compaction_path(repo_root)
+    if path.exists():
+        path.unlink()
+
+
+def _apply_compaction_plan(repo_root: Path, plan: dict[str, Any]) -> dict[str, Any]:
+    archive_dir = ensure_dir(workflow_dir(repo_root) / "archive")
+    for batch in plan.get("batches") or []:
+        _merge_archive_batch(
+            archive_dir / f"{batch['month']}.md",
+            month=batch["month"],
+            batch_id=batch["batch_id"],
+            timestamp=plan["timestamp"],
+            sessions=batch.get("sessions") or [],
+            events=batch.get("events") or [],
+        )
+    state = load_workspace_state(repo_root)
+    state.setdefault("sessions", {})["items"] = list(plan.get("sessions") or [])
+    if plan.get("compact_payload") is not None:
+        state.setdefault("current", {})["last_action"] = plan["current_last_action"]
+        state.setdefault("current", {})["updated_at"] = plan["timestamp"]
+    save_workspace_state(repo_root, state)
+    _write_events(repo_root, list(plan.get("events") or []))
+    if plan.get("compact_payload") is not None:
+        existing = load_events(repo_root)
+        if not existing or existing[-1].get("type") != "memory_compacted":
+            append_event(repo_root, "memory_compacted", plan["compact_payload"])
+    atomic_write_text(workflow_file(repo_root, "SUMMARY.md"), plan["summary_text"])
+    render_views(repo_root)
+    _clear_pending_compaction(repo_root)
+    return plan["result"]
 
 
 def build_memory_summary(state: dict[str, Any]) -> str:
@@ -256,7 +314,17 @@ def compact_memory(repo_root: Path, *, keep_sessions: int = 200, dry_run: bool =
     if dry_run:
         return result
 
-    archive_dir = ensure_dir(workflow_dir(repo_root) / "archive")
+    pending = _load_pending_compaction(repo_root)
+    if pending is not None:
+        return _apply_compaction_plan(repo_root, pending)
+
+    if not old_sessions and not old_events:
+        save_workspace_state(repo_root, state)
+        _write_events(repo_root, kept_events)
+        atomic_write_text(workflow_file(repo_root, "SUMMARY.md"), summary_text)
+        render_views(repo_root)
+        return result
+
     grouped_sessions: dict[str, list[dict[str, Any]]] = defaultdict(list)
     grouped_events: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in old_sessions:
@@ -264,41 +332,45 @@ def compact_memory(repo_root: Path, *, keep_sessions: int = 200, dry_run: bool =
     for item in old_events:
         grouped_events[_month_key(item.get("timestamp"))].append(item)
     timestamp = utc_now()
+    batches = []
     for month in sorted(set(grouped_sessions) | set(grouped_events)):
         month_sessions = grouped_sessions.get(month, [])
         month_events = grouped_events.get(month, [])
-        _merge_archive_batch(
-            archive_dir / f"{month}.md",
-            month=month,
-            batch_id=_archive_batch_id(month_sessions, month_events),
-            timestamp=timestamp,
-            sessions=month_sessions,
-            events=month_events,
-        )
-
-    state.setdefault("sessions", {})["items"] = kept_sessions
-    if old_sessions or old_events:
-        state["sessions"]["items"].append(
+        batches.append(
             {
-                "timestamp": timestamp,
-                "title": "memory compacted",
-                "lines": [
-                    f"Kept recent detailed records: {keep_sessions}",
-                    f"Archived sessions: {len(old_sessions)}",
-                    f"Archived events: {len(old_events)}",
-                    f"Archive files: {', '.join(archive_files) or 'none'}",
-                ],
+                "month": month,
+                "batch_id": _archive_batch_id(month_sessions, month_events),
+                "sessions": month_sessions,
+                "events": month_events,
             }
         )
-        state.setdefault("current", {})["last_action"] = "memory_compacted"
-        state.setdefault("current", {})["updated_at"] = timestamp
-    save_workspace_state(repo_root, state)
-    _write_events(repo_root, kept_events)
-    if old_sessions or old_events:
-        append_event(repo_root, "memory_compacted", {k: v for k, v in result.items() if k != "dry_run"})
-    atomic_write_text(workflow_file(repo_root, "SUMMARY.md"), summary_text)
-    render_views(repo_root)
-    return result
+    final_sessions = list(kept_sessions)
+    compact_payload = {k: v for k, v in result.items() if k != "dry_run"}
+    final_sessions.append(
+        {
+            "timestamp": timestamp,
+            "title": "memory compacted",
+            "lines": [
+                f"Kept recent detailed records: {keep_sessions}",
+                f"Archived sessions: {len(old_sessions)}",
+                f"Archived events: {len(old_events)}",
+                f"Archive files: {', '.join(archive_files) or 'none'}",
+            ],
+        }
+    )
+    plan = {
+        "timestamp": timestamp,
+        "keep_sessions": keep_sessions,
+        "batches": batches,
+        "sessions": final_sessions,
+        "events": kept_events,
+        "compact_payload": compact_payload,
+        "summary_text": summary_text,
+        "current_last_action": "memory_compacted",
+        "result": result,
+    }
+    _store_pending_compaction(repo_root, plan)
+    return _apply_compaction_plan(repo_root, plan)
 
 
 def maybe_auto_compact(repo_root: Path, *, reason: str = "command") -> dict[str, Any]:

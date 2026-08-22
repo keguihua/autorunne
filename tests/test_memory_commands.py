@@ -222,3 +222,71 @@ def test_archive_batch_write_is_idempotent(python_repo: Path, monkeypatch):
     archive = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
     assert archive.count("<!-- autorunne-archive-batch:") == 1
     assert archive.count("test session 0") == 1
+    assert archive.count("event 0") == 1
+
+
+def test_compact_retry_after_event_rewrite_crash_is_idempotent(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _run_in(python_repo, ["open"])
+    for idx in range(6):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+
+    original_write = memory._write_events
+    calls = {"count": 0}
+
+    def fail_once(repo_root, events):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise RuntimeError("simulated crash after session save")
+        return original_write(repo_root, events)
+
+    monkeypatch.setattr(memory, "_write_events", fail_once)
+    with pytest.raises(RuntimeError, match="simulated crash after session save"):
+        memory.compact_memory(python_repo, keep_sessions=3)
+
+    monkeypatch.setattr(memory, "_write_events", original_write)
+    memory.compact_memory(python_repo, keep_sessions=3)
+
+    archive = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
+    assert archive.count("<!-- autorunne-archive-batch:") == 1
+    assert archive.count("test session 0") == 1
+    assert archive.count("event 0") == 1
+    assert archive.count("event 1") == 1
+
+
+def test_compact_after_crash_retry_still_appends_a_new_batch(python_repo: Path, monkeypatch):
+    from autorunne.core import memory
+
+    _run_in(python_repo, ["open"])
+    for idx in range(6):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+
+    original_write = memory._write_events
+    calls = {"count": 0}
+
+    def fail_once(repo_root, events):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise RuntimeError("simulated crash after session save")
+        return original_write(repo_root, events)
+
+    monkeypatch.setattr(memory, "_write_events", fail_once)
+    with pytest.raises(RuntimeError, match="simulated crash after session save"):
+        memory.compact_memory(python_repo, keep_sessions=3)
+    monkeypatch.setattr(memory, "_write_events", original_write)
+    memory.compact_memory(python_repo, keep_sessions=3)
+
+    for idx in range(6, 12):
+        _append_session(python_repo, idx)
+        _append_event(python_repo, idx)
+    memory.compact_memory(python_repo, keep_sessions=3)
+
+    archive = (python_repo / ".autorunne" / "archive" / "2026-01.md").read_text(encoding="utf-8")
+    assert archive.count("<!-- autorunne-archive-batch:") == 2
+    assert archive.count("test session 0") == 1
+    assert archive.count("test session 6") == 1
+    assert archive.count("event 0") == 1
+    assert archive.count("event 6") == 1
