@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import multiprocessing
+import threading
 import time
 from pathlib import Path
 
@@ -109,6 +110,33 @@ def test_jsonl_middle_corruption_fails_closed(tmp_path: Path):
     with pytest.raises(StateCorruptionError, match="before the final line"):
         read_jsonl_recovering(target)
     assert target.read_bytes() == original.encode("utf-8")
+
+
+def test_workspace_lock_times_out_while_other_thread_holds_it(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    held = threading.Event()
+    release = threading.Event()
+
+    def holder() -> None:
+        with workspace_lock(repo, timeout=2.0):
+            held.set()
+            release.wait(timeout=2.0)
+
+    thread = threading.Thread(target=holder)
+    thread.start()
+    assert held.wait(timeout=2.0)
+    started = time.monotonic()
+    try:
+        with pytest.raises(StateLockTimeoutError, match="retry"):
+            with workspace_lock(repo, timeout=0.1, poll_interval=0.01):
+                raise AssertionError("waiter entered the critical section")
+        elapsed = time.monotonic() - started
+        assert elapsed < 0.35
+    finally:
+        release.set()
+        thread.join(timeout=2.0)
+        assert not thread.is_alive()
 
 
 def test_workspace_lock_is_reentrant_in_one_thread(tmp_path: Path):

@@ -98,6 +98,13 @@ def _corruption_message(path: Path, detail: str) -> str:
     )
 
 
+def _lock_timeout_error(repo_root: Path) -> StateLockTimeoutError:
+    return StateLockTimeoutError(
+        f"Autorunne state is busy for {repo_root}. "
+        "Wait for the other command to finish, then retry."
+    )
+
+
 @contextmanager
 def workspace_lock(
     repo_root: Path,
@@ -106,21 +113,24 @@ def workspace_lock(
     poll_interval: float = 0.05,
 ) -> Iterator[None]:
     state = _lock_state(repo_root)
-    state.gate.acquire()
+    deadline = time.monotonic() + timeout
+    remaining = deadline - time.monotonic()
+    if remaining <= 0 or not state.gate.acquire(timeout=max(remaining, 0.0)):
+        raise _lock_timeout_error(repo_root)
     try:
         if state.depth == 0:
             path = repo_root / ".autorunne/runtime/state.lock"
             path.parent.mkdir(parents=True, exist_ok=True)
             handle = path.open("a+b")
-            deadline = time.monotonic() + timeout
-            while not _try_os_lock(handle):
-                if time.monotonic() >= deadline:
-                    handle.close()
-                    raise StateLockTimeoutError(
-                        f"Autorunne state is busy for {repo_root}. "
-                        "Wait for the other command to finish, then retry."
-                    )
-                time.sleep(poll_interval)
+            try:
+                while not _try_os_lock(handle):
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        raise _lock_timeout_error(repo_root)
+                    time.sleep(min(poll_interval, remaining))
+            except BaseException:
+                handle.close()
+                raise
             state.handle = handle
         state.depth += 1
         try:
