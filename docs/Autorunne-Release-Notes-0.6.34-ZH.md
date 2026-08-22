@@ -13,7 +13,7 @@
 - **安全自动恢复**：主文件坏、备份好时，`open` 和 `doctor` 会把备份原子恢复回主文件，然后继续。
 - **无有效备份时 fail closed**：主文件和备份都坏时，命令以非零退出，明确写出 `Autorunne state is corrupt` 和 `did not reset state`，并保留原文件字节。Autorunne 不会用空 dict、空列表或 seed state 覆盖损坏历史。
 - **events.jsonl 安全追加**：追加时持锁，写完一行后 flush + fsync。只有没有换行符的末尾半行才视为中断写入并修复；已经换行结束的坏记录、中间坏行都会 fail closed，不改文件。
-- **同月归档只追加、批次幂等**：`.autorunne/archive/YYYY-MM.md` 不再被第二次 compact 覆盖。每个压缩批次带确定性 SHA-256 marker。compact 会先把原始批次写入 `.autorunne/runtime/pending-compaction.json`，崩溃重试识别原始批次，而不是按已裁剪状态重算。已有无 marker 的旧归档内容原样保留。
+- **同月归档只追加、批次幂等**：`.autorunne/archive/YYYY-MM.md` 不再被第二次 compact 覆盖。每个压缩批次带确定性 SHA-256 marker。compact 会先把原始批次写入 `.autorunne/runtime/pending-compaction.json`。任何后续状态写入都会在同一把 workspace lock 里先完成 pending 恢复，再提交新 session/event；恢复失败则 fail closed，不会先写入再被旧 plan 覆盖。已有无 marker 的旧归档内容原样保留。
 - **版本一致**：`autorunne.__version__`、`pyproject.toml`、`WorkflowConfig.version` 和仓库 skill 的 version 行统一为 `0.6.34`。
 - **测试隔离**：update-check 的 `9.9.9` 缓存只写到测试用的 `tmp_path`，不再污染真实 checkout。
 

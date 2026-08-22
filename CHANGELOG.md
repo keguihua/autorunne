@@ -10,6 +10,7 @@ All notable changes to Autorunne are documented here.
 - Malformed primary JSON is restored from the last valid `*.bak` copy; if both primary and backup are unreadable, commands fail closed and leave the original bytes untouched.
 - Interrupted `events.jsonl` appends repair only a malformed trailing fragment that has no terminating newline. A newline-terminated bad final record fails closed and is not deleted.
 - Same-month `autorunne compact` archives append instead of replacing earlier batches. A retried batch is idempotent even if sessions were saved before events were rewritten.
+- Public state mutators finish any pending compact under the same workspace lock before writing new sessions or events, so a crash-era journal cannot overwrite later records.
 - `workspace_lock(timeout=...)` now times out same-process thread waiters as well as cross-process OS lock waiters.
 
 ### Reliability
